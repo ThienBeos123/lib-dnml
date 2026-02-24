@@ -192,3 +192,8 @@ void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k) {
         x->limbs[i] = (x->limbs[i] << k) | previous_dbits;
     }
 }
+void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t limb) {}
+void __BIGINT_INTERNAL_LLSHIFT__(bigInt *x, size_t limb) {}
+
+
+
