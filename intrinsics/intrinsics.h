@@ -27,14 +27,7 @@ static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
     #else
         uint64_t sum, temp_carry_out;
         uint8_t carry_in = (*carry) ? 1 : 0;
-        __asm__ (
-            "addq %2, %0\n\t"
-            "adcq $0, %0\n\t"
-            "setc %1"
-            : "=r" (sum), "=r" (temp_carry_out)
-            : "r" (b), "0" (a)
-            : "cc"
-        );
+        // ---- FUNCTION HERE ---- //
         *carry = temp_carry_out;
         return sum;
     #endif
@@ -55,14 +48,7 @@ static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint64_t *borrow) {
         uint64_t diff;
         uint64_t temp_borrow_out;
         uint8_t borrow_in = (*borrow) ? 1 : 0;
-        __asm__ (
-            "subq %3, %0\n\t"
-            "sbbq %2, %0\n\t"
-            "setc %1"
-            : "=&r" (res), "=r" (temp_borrow_out)
-            : "r" (b), "0" (a), "1" (borrow_in)
-            : "cc"
-        );
+        // ---- FUNCTION HERE ---- //
         *borrow = temp_borrow_out;
         return diff;
     #endif
@@ -128,9 +114,20 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
     #endif
 }
 
+/* Single-limb Modular Inverse */
+static inline uint64_t __MODINV_UI64__(uint64_t x) {
+    uint64_t res = 2 - x;
+    for (uint8_t i = 0; i < 5; ++i) res *= 2 - x * res;
+    return res;
+}
+
 
 /* CLZ + CTZ */
 static inline uint8_t __CLZ_UI64__(uint64_t x) {
+    #if x == 0
+        return 64;
+    #endif
+    // The actual code
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_clzll(x);
     #elif __compiler_msvc
@@ -143,6 +140,10 @@ static inline uint8_t __CLZ_UI64__(uint64_t x) {
 }
 
 static inline uint8_t __CTZ_UI64__(uint64_t x) {
+    #if x == 0
+        return 64;
+    #endif
+    // The actual code
     #if (__compiler_gcc || __compiler_clang) 
         return __builtin_ctzll(x);
     #elif __compilter_msvc

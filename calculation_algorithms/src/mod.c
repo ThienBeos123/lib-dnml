@@ -34,5 +34,19 @@ void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem) {
     __BIGINT_INTERNAL_FREE__(&precomputation);
     __BIGINT_INTERNAL_FREE__(&a_after_shift);
 }
-void __BIGINT_MONT_REDC__(const bigInt *a, const bigInt *n, bigInt *rem) {}
+void __BIGINT_MONT_REDC__(const bigInt *t, const bigInt *n, bigInt *rem) {
+    uint64_t nprime = -__MODINV_UI64__(n->limbs[0]);
+    uint64_t m = t->limbs[0] * nprime;
+    uint64_t carry = 0, k = n->n;
+    __BIGINT_INTERNAL_ENSCAP__(rem, 2*k - 1);
+    for (size_t i = 0; i < k; ++i) {
+        uint64_t lo, hi;
+        lo = __MUL_UI64__(n->limbs[i], m, &hi);
+        rem->limbs[i] = __ADD_UI64__(t->limbs[i], lo + carry, &carry);
+        carry += hi;
+    } rem->limbs[k] += carry;
+    // Right Limb Shift by 1  --  t +>> 1 (+>> or +<< means LIMB SHIFT)
+    for (size_t j = 0; j < 2*k - 1; ++j) rem->limbs[j] = t->limbs[j+1];
+    if (__BIGINT_INTERNAL_COMP__(rem, n) > 0) __BIGINT_INTERNAL_SUB__(rem, n);
+}
 void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem) {}
