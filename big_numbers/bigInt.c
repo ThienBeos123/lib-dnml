@@ -1459,8 +1459,23 @@ static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt
     arena_reset(_DASI_MAGLCM_ARENA, tmp_mark);
     arena_reset(_DASI_MAGLCM_ARENA, gcdres_mark);
 }
-static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus) {}
-static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {}
+static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus) {
+    uint64_t curr_rem = 0;
+    for (size_t i = a->n - 1; i >= 0; --i) {
+        uint64_t tmp_quot;
+        __DIV_HELPER_UI64__(
+            a->limbs[i], curr_rem, modulus, // Operands
+            tmp_quot, &curr_rem // Result holders
+        );
+    } *res = curr_rem;
+}
+static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {
+    dnml_arena *_DASI_MAGEMOD_ARENA = _USE_ARENA();
+    size_t tmp_mark = arena_mark(_DASI_MAGEMOD_ARENA);
+    limb_t *tmp_limbs = arena_alloc(_DASI_MAGEMOD_ARENA, a->n * BYTES_IN_UINT64_T);
+    bigInt tmp_quot = { .limbs = tmp_limbs, /**/ .n = 0, /**/ .cap = a->n, /**/ .sign = 1 };
+    __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot);
+}
 static void __BIGINT_MAGNITUDED_PRIMATEST__(const bigInt *x) {}
 /* ----------------- MAGNITUDED MODULAR-ARITHMETIC ------------------ */
 static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}

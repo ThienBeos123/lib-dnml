@@ -22,7 +22,7 @@ extern "C" {
 
 void __BIGINT_BARETT__(const bigInt *a, const bigInt *b, bigInt *rem);
 void __BIGINT_MONT_REDC__(const bigInt *a, const bigInt *b, bigInt *rem);
-void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *rem);
+void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigInt *tmp_quot)
 
 
 #ifdef __cplusplus

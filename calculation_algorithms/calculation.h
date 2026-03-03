@@ -1,4 +1,6 @@
 #include "header/div.h"
 #include "header/mul.h"
+#include "header/mod.h"
+#include "header/mod_op.h"
 #include "header/pow_root.h"
 #include "header/num_theory.h"

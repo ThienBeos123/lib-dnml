@@ -52,23 +52,9 @@ void __BIGINT_MONT_REDC__(const bigInt *t, const bigInt *n, bigInt *rem) {
     if (__BIGINT_INTERNAL_COMP__(&tmp_t, n) > 0) __BIGINT_INTERNAL_SUB__(&tmp_t, n);
     __BIGINT_INTERNAL_COPY__(rem, &tmp_t); __BIGINT_INTERNAL_FREE__(&tmp_t);
 }
-void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem) {
-    __BIGINT_INTERNAL_ENSCAP__(rem, n->n);
-    if (n->n < BIGINT_SHORT) {
-        // Short Divison
-        bigInt tmp_quot; __BIGINT_INTERNAL_LINIT__(&tmp_quot, a->n);
-        __BIGINT_SHORT_DIVISION__(a, n, &tmp_quot, rem);
-        __BIGINT_INTERNAL_FREE__(&tmp_quot);
-    } else if (n->n < BIGINT_KNUTH) {
-        // Knuth D
-        bigInt tmp_quot; __BIGINT_INTERNAL_LINIT__(&tmp_quot, a->n);
-        __BIGINT_KNUTH_D__(a, n, &tmp_quot, rem);
-        __BIGINT_INTERNAL_FREE__(&tmp_quot);
-    } else if (n->n < BIGINT_BARETT) __BIGINT_BARETT__(a, n, rem);
-    else {
-        // Newton Reciprocal
-        bigInt tmp_quot; __BIGINT_INTERNAL_LINIT__(&tmp_quot, a->n);
-        __BIGINT_NEWTON_RECIPROCAL__(a, n, &tmp_quot, rem);
-        __BIGINT_INTERNAL_FREE__(&tmp_quot);
-    }
+void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigInt *tmp_quot) {
+    if (n->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, n, &tmp_quot, rem);
+    else if (n->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, n, &tmp_quot, rem);
+    else if (n->n < BIGINT_BARETT) __BIGINT_BARETT__(a, n, rem);
+    else __BIGINT_NEWTON_RECIPROCAL__(a, n, &tmp_quot, rem);
 }
