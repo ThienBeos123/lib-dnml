@@ -33,7 +33,7 @@
 
 
 //* =========== KEYWORDS & FUNCTIONALITIES =========== *//
-/* Thread Locality - ESSENTIAL FOR ARENAS */
+/* Thread Local Storage - TLS - ESSENTIAL FOR ARENAS */
 #if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_THREADS__) 
     #include <threads.h>
     #define local_thread thread_local
@@ -43,6 +43,13 @@
     #define local_thread __declspec(thread)
 #endif
 
+
+/* Inline Assembly */
+#if (__compiler_gcc || __compiler_clang)
+    #define asm __asm__
+#elif __compiler_msvc
+    #define asm(code) __asm code
+#endif
 
 /* 128 bit Integer */
 #if defined(__SIZEOF_INT128__)
