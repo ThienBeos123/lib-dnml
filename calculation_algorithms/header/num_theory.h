@@ -1,5 +1,5 @@
-#ifndef DNML_MOD_H
-#define DNML_MOD_H
+#ifndef DNML_NUM_THEORY_H
+#define DNML_NUM_THEORY_H
 
 
 

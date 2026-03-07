@@ -201,6 +201,54 @@ calculation_algorithms/src/div.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/div.c.s
 .PHONY : calculation_algorithms/src/div.c.s
 
+calculation_algorithms/src/mod.o: calculation_algorithms/src/mod.c.o
+.PHONY : calculation_algorithms/src/mod.o
+
+# target to build an object file
+calculation_algorithms/src/mod.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod.c.o
+.PHONY : calculation_algorithms/src/mod.c.o
+
+calculation_algorithms/src/mod.i: calculation_algorithms/src/mod.c.i
+.PHONY : calculation_algorithms/src/mod.i
+
+# target to preprocess a source file
+calculation_algorithms/src/mod.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod.c.i
+.PHONY : calculation_algorithms/src/mod.c.i
+
+calculation_algorithms/src/mod.s: calculation_algorithms/src/mod.c.s
+.PHONY : calculation_algorithms/src/mod.s
+
+# target to generate assembly for a file
+calculation_algorithms/src/mod.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod.c.s
+.PHONY : calculation_algorithms/src/mod.c.s
+
+calculation_algorithms/src/mod_op.o: calculation_algorithms/src/mod_op.c.o
+.PHONY : calculation_algorithms/src/mod_op.o
+
+# target to build an object file
+calculation_algorithms/src/mod_op.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod_op.c.o
+.PHONY : calculation_algorithms/src/mod_op.c.o
+
+calculation_algorithms/src/mod_op.i: calculation_algorithms/src/mod_op.c.i
+.PHONY : calculation_algorithms/src/mod_op.i
+
+# target to preprocess a source file
+calculation_algorithms/src/mod_op.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod_op.c.i
+.PHONY : calculation_algorithms/src/mod_op.c.i
+
+calculation_algorithms/src/mod_op.s: calculation_algorithms/src/mod_op.c.s
+.PHONY : calculation_algorithms/src/mod_op.s
+
+# target to generate assembly for a file
+calculation_algorithms/src/mod_op.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/mod_op.c.s
+.PHONY : calculation_algorithms/src/mod_op.c.s
+
 calculation_algorithms/src/mul.o: calculation_algorithms/src/mul.c.o
 .PHONY : calculation_algorithms/src/mul.o
 
@@ -248,6 +296,30 @@ calculation_algorithms/src/num_theory.s: calculation_algorithms/src/num_theory.c
 calculation_algorithms/src/num_theory.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/num_theory.c.s
 .PHONY : calculation_algorithms/src/num_theory.c.s
+
+calculation_algorithms/src/pow_root.o: calculation_algorithms/src/pow_root.c.o
+.PHONY : calculation_algorithms/src/pow_root.o
+
+# target to build an object file
+calculation_algorithms/src/pow_root.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/pow_root.c.o
+.PHONY : calculation_algorithms/src/pow_root.c.o
+
+calculation_algorithms/src/pow_root.i: calculation_algorithms/src/pow_root.c.i
+.PHONY : calculation_algorithms/src/pow_root.i
+
+# target to preprocess a source file
+calculation_algorithms/src/pow_root.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/pow_root.c.i
+.PHONY : calculation_algorithms/src/pow_root.c.i
+
+calculation_algorithms/src/pow_root.s: calculation_algorithms/src/pow_root.c.s
+.PHONY : calculation_algorithms/src/pow_root.s
+
+# target to generate assembly for a file
+calculation_algorithms/src/pow_root.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/bigInt.dir/build.make CMakeFiles/bigInt.dir/calculation_algorithms/src/pow_root.c.s
+.PHONY : calculation_algorithms/src/pow_root.c.s
 
 internal_utils/bigNum_utils.o: internal_utils/bigNum_utils.c.o
 .PHONY : internal_utils/bigNum_utils.o
@@ -387,12 +459,21 @@ help:
 	@echo "... calculation_algorithms/src/div.o"
 	@echo "... calculation_algorithms/src/div.i"
 	@echo "... calculation_algorithms/src/div.s"
+	@echo "... calculation_algorithms/src/mod.o"
+	@echo "... calculation_algorithms/src/mod.i"
+	@echo "... calculation_algorithms/src/mod.s"
+	@echo "... calculation_algorithms/src/mod_op.o"
+	@echo "... calculation_algorithms/src/mod_op.i"
+	@echo "... calculation_algorithms/src/mod_op.s"
 	@echo "... calculation_algorithms/src/mul.o"
 	@echo "... calculation_algorithms/src/mul.i"
 	@echo "... calculation_algorithms/src/mul.s"
 	@echo "... calculation_algorithms/src/num_theory.o"
 	@echo "... calculation_algorithms/src/num_theory.i"
 	@echo "... calculation_algorithms/src/num_theory.s"
+	@echo "... calculation_algorithms/src/pow_root.o"
+	@echo "... calculation_algorithms/src/pow_root.i"
+	@echo "... calculation_algorithms/src/pow_root.s"
 	@echo "... internal_utils/bigNum_utils.o"
 	@echo "... internal_utils/bigNum_utils.i"
 	@echo "... internal_utils/bigNum_utils.s"

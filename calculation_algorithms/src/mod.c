@@ -3,11 +3,12 @@
 /* ----------------- BigInt ----------------- */
 void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem) {
     //* ---- 1. PRECOMPUTATION - μ ---- *//
-    bigInt numerator, precomputation; // Precomputation
+    bigInt numerator, precomputation, tmp; // Precomputation
     __BIGINT_INTERNAL_LINIT__(&numerator, 2 * n->n + 1);
     __BIGINT_INTERNAL_LINIT__(&precomputation, 2 * n->n + 1);
+    __BIGINT_INTERNAL_LINIT__(&tmp, n->n);
     numerator.limbs[2 * n->n] = 1;
-    __BIGINT_DIVMOD_DISPATCH__(&numerator, n, &precomputation, rem);
+    __BIGINT_DIVMOD_DISPATCH__(&numerator, n, &precomputation, &tmp);
     //. *rem here serves a temporary holder job
 
 
@@ -25,14 +26,15 @@ void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem) {
     //* ---- 3. FINAL CALCULATION ---- *//
     // precomputation now acts as the quotient to save memory
     remaining_limbs = numerator.n - (n->n + 1); __BIGINT_INTERNAL_ENSCAP__(&precomputation, remaining_limbs);
-    memcpy(precomputation.limbs, &numerator.limbs[n->n - 1], remaining_limbs * BYTES_IN_UINT64_T);
-    __BIGINT_MUL_DISPATCH__(&a_after_shift, &precomputation, n);
-    __BIGINT_INTERNAL_COPY__(rem, a); __BIGINT_INTERNAL_SUB__(rem, &a_after_shift);
+    memcpy(numerator.limbs, &numerator.limbs[n->n - 1], remaining_limbs * BYTES_IN_UINT64_T);
+    __BIGINT_MUL_DISPATCH__(&tmp, &numerator, n);
+    __BIGINT_INTERNAL_COPY__(rem, a); __BIGINT_INTERNAL_SUB__(rem, &tmp);
     int8_t comp_res = __BIGINT_INTERNAL_COMP__(rem, n);
     while (comp_res == 1 || !comp_res) __BIGINT_INTERNAL_SUB__(rem, n);
     __BIGINT_INTERNAL_FREE__(&numerator);
     __BIGINT_INTERNAL_FREE__(&precomputation);
     __BIGINT_INTERNAL_FREE__(&a_after_shift);
+    __BIGINT_INTERNAL_FREE__(&tmp);
 }
 void __BIGINT_MONT_REDC__(const bigInt *t, const bigInt *n, bigInt *rem) {
     uint64_t nprime = -__MODINV_UI64__(n->limbs[0]);
