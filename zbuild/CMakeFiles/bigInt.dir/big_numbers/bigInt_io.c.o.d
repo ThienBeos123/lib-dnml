@@ -158,9 +158,10 @@ CMakeFiles/bigInt.dir/big_numbers/bigInt_io.c.o: \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/../../internal_utils/../sconfigs/numeric_config.h \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/../../internal_utils/../sconfigs/arena.h \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/../../big_numbers/bigNums.h \
-  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/mul.h \
-  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/pow_root.h \
-  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/num_theory.h \
+  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/mod_op.h \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/mod.h \
+  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/mul.h \
+  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/num_theory.h \
+  /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../calculation_algorithms/header/pow_root.h \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/../internal_utils/util.h \
   /Users/admin/Desktop/Programming/Passion\ Projects/Dynamol/big_numbers/bigNums.h

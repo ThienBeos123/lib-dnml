@@ -1404,8 +1404,7 @@ static void __BIGINT_MAGNITUDED_SUB__(bigInt *res, const bigInt *a, const bigInt
         uint64_t y = (i < b->n) ? b->limbs[i] : 0;
         res->limbs[i] = __SUB_UI64__(a->limbs[i], y, &borrow);
         // Do single-limb subtraction with borrow ---> Stores the borrow
-    }
-    res->n = a->n;
+    } res->n = a->n;
 }
 static void __BIGINT_MAGNITUDED_MUL__(bigInt *res, const bigInt *a, const bigInt *b) {
     __BIGINT_MUL_DISPATCH__(res, a, b);
@@ -1459,9 +1458,25 @@ static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt
     arena_reset(_DASI_MAGLCM_ARENA, tmp_mark);
     arena_reset(_DASI_MAGLCM_ARENA, gcdres_mark);
 }
-static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus) {}
-static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {}
-static void __BIGINT_MAGNITUDED_PRIMATEST__(const bigInt *x) {}
+static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus) {
+    uint64_t curr_rem = 0;
+    for (size_t i = a->n - 1; i >= 0; --i) {
+        uint64_t tmp_quot = 0;
+        __DIV_HELPER_UI64__(
+            a->limbs[i], curr_rem, modulus, // Operands
+            &tmp_quot, &curr_rem // Result holders
+        );
+    } *res = curr_rem;
+}
+static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {
+    dnml_arena *_DASI_MAGEMOD_ARENA = _USE_ARENA();
+    size_t tmp_mark = arena_mark(_DASI_MAGEMOD_ARENA);
+    limb_t *tmp_limbs = arena_alloc(_DASI_MAGEMOD_ARENA, a->n * BYTES_IN_UINT64_T);
+    bigInt tmp_quot = { .limbs = tmp_limbs, /**/ .n = 0, /**/ .cap = a->n, /**/ .sign = 1 };
+    __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot);
+    arena_reset(_DASI_MAGEMOD_ARENA, tmp_mark); tmp_limbs == NULL;
+}
+static uint8_t __BIGINT_MAGNITUDED_PRIMATEST__(const bigInt *x) {}
 /* ----------------- MAGNITUDED MODULAR-ARITHMETIC ------------------ */
 static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
 static void __BIGINT_MAGNITUDED_MODSUB__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
@@ -2092,30 +2107,112 @@ bigInt __BIGINT_LCM__(const bigInt x, const bigInt y) {
 }
 bool __BIGINT_IS_PRIME__(const bigInt x) {}
 /* ---------------- Modular Reduction ---------------- */
-void __BIGINT_MUT_MODULO_UI64__(bigInt *x, uint64_t modulus) {}
-void __BIGINT_MUT_MODULO_I64__(bigInt *x, int64_t modulus) {}
-void __BIGINT_MUT_MODULO__(bigInt *x, const bigInt modulus) {}
-uint64_t __BIGINT_MODULO_UI64__(const bigInt x, uint64_t modulus) {}
-int64_t __BIGINT_MODULO_I64__(const bigInt x, int64_t modulus) {}
-bigInt __BIGINT_MODULO__(const bigInt x, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODULO_UI64__(bigInt *x, uint64_t modulus) {
+    assert(__BIGINT_PVALIDATE__(x));
+    if (!modulus) return BIGINT_ERR_INVAL;
+    else if (!x->n);
+    else if (modulus == 1) __BIGINT_RESET__(x);
+    else if (x->n == 1 && x->limbs[0] < modulus && x->sign == 1);
+    else {
+        uint64_t res_rem;
+        __BIGINT_MAGNITUDED_EUCMOD_UI64__(&res_rem, x, modulus);
+        if (x->sign == -1 && res_rem) {
+            res_rem = (modulus - res_rem) % modulus;
+        } x->limbs[0] = res_rem; x->sign = 1; 
+    } return BIGINT_SUCCESS;
+}
+dnml_status __BIGINT_MUT_MODULO_I64__(bigInt *x, int64_t modulus) {
+    assert(__BIGINT_PVALIDATE__(x));
+    if (!modulus) return BIGINT_ERR_INVAL;
+    else if (!x->n);
+    else if (modulus == 1 || modulus == -1) __BIGINT_RESET__(x);
+    else if (x->n == 1 && x->limbs[0] < __MAG_I64__(modulus) && x->sign == 1);
+    else {
+        uint64_t mag_modulus = __MAG_I64__(modulus), res_rem;
+        __BIGINT_MAGNITUDED_EUCMOD_UI64__(&res_rem, x, mag_modulus);
+        if (x->sign == -1 && res_rem) {
+            res_rem = (mag_modulus - res_rem) % mag_modulus;
+        } x->limbs[0] = res_rem; x->sign = 1;
+    } return BIGINT_SUCCESS;
+}
+dnml_status __BIGINT_MUT_MODULO__(bigInt *x, const bigInt modulus) {
+    assert(__BIGINT_PVALIDATE__(x) && __BIGINT_VALIDATE__(modulus));
+    if (!modulus.n) return BIGINT_ERR_INVAL;
+    else if (!x->n);
+    else if (modulus.n == 1 && modulus.limbs[0] == 1) __BIGINT_RESET__(x);
+    else if (__BIGINT_COMPARE_MAGNITUDE__(x, &modulus) == -1 && x->sign == 1);
+    else { dnml_arena *_DASI_MUT_MODULO_ARENA = _USE_ARENA();
+        size_t tmp_mark = arena_mark(_DASI_MUT_MODULO_ARENA);
+        limb_t *tmp_limbs = arena_alloc(_DASI_MUT_MODULO_ARENA, modulus.n);
+        bigInt tmp_res = { 
+            .limbs = tmp_limbs, /**/ .n = 0, /**/ 
+            .cap = modulus.n, /**/ .sign = 1 
+        }; __BIGINT_MAGNITUDED_EUCMOD__(&tmp_res, x, &modulus);
+        if (x->sign == -1 && tmp_res.n) {
+            __BIGINT_MAGNITUDED_SUB__(&tmp_res, &modulus, &tmp_res);
+            __BIGINT_MAGNITUDED_EUCMOD__(&tmp_res, &tmp_res, &modulus);
+        } __BIGINT_INTERNAL_COPY__(x, &tmp_res);
+    } return BIGINT_SUCCESS;
+}
+uint64_t __BIGINT_MODULO_UI64__(const bigInt x, uint64_t modulus, dnml_status *err) {
+    assert(__BIGINT_VALIDATE__(x));
+    if (!modulus) { *err = BIGINT_ERR_INVAL; return -1; }
+    else if (modulus == 1 || !x.n) { *err = BIGINT_SUCCESS; return 0; }
+    else if ( x.n == 1 && 
+        x.limbs[0] < modulus && 
+        x.sign == 1) { *err = BIGINT_SUCCESS; return x.limbs[0]; }
+    uint64_t res; __BIGINT_MAGNITUDED_EUCMOD_UI64__(&res, &x, modulus);
+    if (x.sign == -1 && res) res = (modulus - res) % modulus;
+    *err = BIGINT_SUCCESS; return res;
+}
+uint64_t __BIGINT_MODULO_I64__(const bigInt x, int64_t modulus, dnml_status *err) {
+    assert(__BIGINT_VALIDATE__(x));
+    if (!modulus) { *err = BIGINT_ERR_INVAL; return -1; }
+    else if (modulus == 1 || modulus == -1 || !x.n) { *err = BIGINT_SUCCESS; return 0; }
+    else if ( x.n == 1 && 
+        x.limbs[0] < __MAG_I64__(modulus) && 
+        x.sign == 1) { *err = BIGINT_SUCCESS; return x.limbs[0]; }
+    uint64_t res, mag_modulus = __MAG_I64__(modulus); 
+    __BIGINT_MAGNITUDED_EUCMOD_UI64__(&res, &x, mag_modulus);
+    if (x.sign == -1 && res) res = (mag_modulus - res) % mag_modulus;
+    *err = BIGINT_SUCCESS; return res; // Return a uint64_t to holds |INT64_MIN|
+}
+bigInt __BIGINT_MODULO__(const bigInt x, const bigInt modulus, dnml_status *err) {
+    assert(err && __BIGINT_VALIDATE__(x) && __BIGINT_VALIDATE__(modulus));
+    if (!modulus.n) { *err = BIGINT_ERR_INVAL; return __BIGINT_ERROR_VALUE__(); }
+    bigInt res; if (!x.n) __BIGINT_EMPTY_INIT__(&res);
+    else if (modulus.n == 1 && modulus.limbs[0] == 1) __BIGINT_EMPTY_INIT__(&res);
+    else if (
+        __BIGINT_COMPARE_MAGNITUDE__(&x, &modulus) == -1 
+        && x.sign == 1
+    ) __BIGINT_STANDARD_INIT__(&res, x);
+    else { 
+        __BIGINT_LIMBS_INIT__(&res, modulus.n);
+        __BIGINT_MAGNITUDED_EUCMOD__(&res, &x, &modulus);
+        if (x.sign == -1 && res.n) {
+            __BIGINT_MAGNITUDED_SUB__(&res, &modulus, &res);
+            __BIGINT_MAGNITUDED_EUCMOD__(&res, &res, &modulus);
+        }
+    } *err = BIGINT_SUCCESS; return res;
+}
 /* ---------------- SMALL Modular Arithmetic --------------- */
-void __BIGINT_MUT_MODADD_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
-void __BIGINT_MUT_MODSUB_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
-void __BIGINT_MUT_MODADD__(bigInt *x, const bigInt y, const bigInt modulus) {}
-void __BIGINT_MUT_MODSUB__(bigInt *x, const bigInt y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODADD_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODSUB_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODADD__(bigInt *x, const bigInt y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODSUB__(bigInt *x, const bigInt y, const bigInt modulus) {}
 uint64_t __BIGINT_MODADD_UI64__(const bigInt x, const bigInt y, uint64_t modulus) {}
 uint64_t __BIGINT_MODSUB_UI64__(const bigInt x, const bigInt y, uint64_t modulus) {}
 bigInt __BIGINT_MODADD__(const bigInt x, const bigInt y, const bigInt modulus) {}
 bigInt __BIGINT_MODSUB__(const bigInt x, const bigInt y, const bigInt modulus) {}
 /* ---------------- LARGE Modular Arithmetic --------------- */
-void __BIGINT_MUT_MODMUL_UI64_UI64__(bigInt *x, uint64_t y, uint64_t modulus) {}
-void __BIGINT_MUT_MODDIV_UI64_UI64__(bigInt *x, uint64_t y, uint64_t modulus) {}
-void __BIGINT_MUT_MODMUL_BI_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
-void __BIGINT_MUT_MODDIV_BI_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
-void __BIGINT_MUT_MODMUL_UI64_BI__(bigInt *x, uint64_t y, const bigInt modulus) {}
-void __BIGINT_MUT_MODDIV_UI64_BI__(bigInt *x, uint64_t y, const bigInt modulus) {}
-void __BIGINT_MUT_MODMUL__(bigInt *x, const bigInt y, const bigInt modulus) {}
-void __BIGINT_MUT_MODDIV__(bigInt *x, const bigInt y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODMUL_UI64_UI64__(bigInt *x, uint64_t y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODDIV_UI64_UI64__(bigInt *x, uint64_t y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODMUL_BI_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODDIV_BI_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODMUL_UI64_BI__(bigInt *x, uint64_t y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODDIV_UI64_BI__(bigInt *x, uint64_t y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODMUL__(bigInt *x, const bigInt y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODDIV__(bigInt *x, const bigInt y, const bigInt modulus) {}
 uint64_t __BIGINT_MODMUL_UI64_UI64__(const bigInt x, uint64_t y, uint64_t modulus) {}
 uint64_t __BIGINT_MODDIV_UI64_UI64__(const bigInt x, uint64_t y, uint64_t modulus) {}
 uint64_t __BIGINT_MODMUL_BI_UI64__(const bigInt x, const bigInt y, uint64_t modulus) {}
@@ -2125,12 +2222,12 @@ bigInt __BIGINT_MODDIV_UI64_BI__(const bigInt x, uint64_t y, const bigInt modulu
 bigInt __BIGINT_MODMUL__(const bigInt x, const bigInt y, const bigInt modulus) {}
 bigInt __BIGINT_MODDIV__(const bigInt x, const bigInt y, const bigInt modulus) {}
 /* ---------------------- Modular Algebraic ------------------ */
-void __BIGINT_MUT_MODEXP_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
-void __BIGINT_MUT_MODSQR_UI64__(bigInt *x, uint64_t modulus) {}
-void __BIGINT_MUT_MODINV_UI64__(bigInt *x, uint64_t modulus) {}
-void __BIGINT_MUT_MODEXP__(bigInt *x, const bigInt y, const bigInt modulus) {}
-void __BIGINT_MUT_MODSQR__(bigInt *x, const bigInt modulus) {}
-void __BIGINT_MUT_MODINV__(bigInt *x, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODEXP_UI64__(bigInt *x, const bigInt y, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODSQR_UI64__(bigInt *x, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODINV_UI64__(bigInt *x, uint64_t modulus) {}
+dnml_status __BIGINT_MUT_MODEXP__(bigInt *x, const bigInt y, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODSQR__(bigInt *x, const bigInt modulus) {}
+dnml_status __BIGINT_MUT_MODINV__(bigInt *x, const bigInt modulus) {}
 uint64_t __BIGINT_MODEXP_UI64__(const bigInt x, const bigInt y, uint64_t modulus) {}
 uint64_t __BIGINT_MODSQR_UI64__(const bigInt x, uint64_t modulus) {}
 uint64_t __BIGINT_MODINV_UI64__(const bigInt x, uint64_t modulus) {}
