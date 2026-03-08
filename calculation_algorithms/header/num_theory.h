@@ -32,10 +32,11 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v);
 
 
 //todo ================================== PRIMALITY TESTING ================================== todo//
-bool __BIGINT_TRIAL_DIV__(const bigInt *x);
-bool __BIGINT_MILLER_RABIN__(const bigInt *x);
-bool __BIGINT_BPSW_MIX__(const bigInt *x);
-bool __BIGINT_ECPP__(const bigInt *x);
+uint8_t __BIGINT_TRIAL_DIV__(const bigInt *x);
+uint8_t __BIGINT_SMALL_MRABIN__(const bigInt *x);
+uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x);
+uint8_t __BIGINT_BPSW_MIX__(const bigInt *x);
+uint8_t __BIGINT_ECPP__(const bigInt *x);
 
 
 #ifdef __cplusplus

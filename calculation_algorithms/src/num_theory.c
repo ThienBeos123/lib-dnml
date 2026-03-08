@@ -59,7 +59,22 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v) {
 }
 
 /* Primality Testing */
-bool __BIGINT_TRIAL_DIV__(const bigInt *x) {}
-bool __BIGINT_MILLER_RABIN__(const bigInt *x) {}
-bool __BIGINT_BPSW_MIX__(const bigInt *x) {}
-bool __BIGINT_ECPP__(const bigInt *x) {}
+uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
+    if (x <= 1) return 0;
+    else if (x == 2 || x == 3 || x == 5) return 1;
+    else if (!(x & 1) || !(x % 3) || !(x % 5)) return 0;
+    uint8_t steps[8] = {6, 4, 2, 4, 2, 4, 6, 2};
+    uint8_t steps_i = 1;
+    for (uint64_t i = 7; 
+        i <= (uint64_t)(sqrt(x)) + 1; 
+        i += steps[steps_i]
+    ) { 
+        if (x % i == 0) return 0;
+        steps_i = (steps_i < 7) ? steps_i + 1 : 0;
+    } return 1;
+}
+uint8_t __BIGINT_SMALL_MRABIN__(const bigInt *x) {}
+uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x) {}
+uint8_t __BIGINT_BPSW_MIX__(const bigInt *x) {}
+uint8_t __BIGINT_ECPP__(const bigInt *x) {}
+uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x) {}
