@@ -36,22 +36,19 @@ void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem) {
     __BIGINT_INTERNAL_FREE__(&a_after_shift);
     __BIGINT_INTERNAL_FREE__(&tmp);
 }
-void __BIGINT_MONT_REDC__(const bigInt *t, const bigInt *n, bigInt *rem) {
-    uint64_t nprime = -__MODINV_UI64__(n->limbs[0]);
-    // mod _Beta_ (2^64) is already enforced through uint64_t overflow rounding
-    uint64_t m = t->limbs[0] * nprime;
-    uint64_t carry = 0, k = n->n;
-    bigInt tmp_t; __BIGINT_INTERNAL_LINIT__(&tmp_t, 2*k);
-    __BIGINT_INTERNAL_ENSCAP__(rem, k);
-    for (size_t i = 0; i < k; ++i) {
+void __BIGINT_MONT_REDC__(const bigInt *t, mont_ctx ctx, bigInt *rem) {
+    uint64_t m = t->limbs[0] * ctx.nprime, carry = 0;
+    bigInt tmp_t; __BIGINT_INTERNAL_LINIT__(&tmp_t, 2*ctx.k);
+    __BIGINT_INTERNAL_ENSCAP__(rem, ctx.k);
+    for (size_t i = 0; i < ctx.k; ++i) {
         uint64_t lo, hi;
-        lo = __MUL_UI64__(n->limbs[i], m, &hi);
+        lo = __MUL_UI64__(ctx.n->limbs[i], m, &hi);
         tmp_t.limbs[i] = __ADD_UI64__(t->limbs[i], lo + carry, &carry);
         carry += hi;
-    } tmp_t.limbs[k] += carry;
+    } tmp_t.limbs[ctx.k] += carry;
     // Right Limb Shift by 1  --  t +>> 1 (+>> or +<< means LIMB SHIFT)
-    for (size_t j = 0; j < 2*k - 1; ++j) tmp_t.limbs[j] = t->limbs[j+1];
-    if (__BIGINT_INTERNAL_COMP__(&tmp_t, n) > 0) __BIGINT_INTERNAL_SUB__(&tmp_t, n);
+    for (size_t j = 0; j < 2*ctx.k - 1; ++j) tmp_t.limbs[j] = t->limbs[j+1];
+    if (__BIGINT_INTERNAL_COMP__(&tmp_t, ctx.n) > 0) __BIGINT_INTERNAL_SUB__(&tmp_t, ctx.n);
     __BIGINT_INTERNAL_COPY__(rem, &tmp_t); __BIGINT_INTERNAL_FREE__(&tmp_t);
 }
 void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigInt *tmp_quot) {

@@ -46,10 +46,9 @@
 #define BIGINT_HALF_XGCD            2048
 
 /* Primality Testing */
-#define DETERMINISTIC_MR            64
-#define MILLER_RABIN                1024
-#define MR_BPSW                     4096
-#define ECPP                        4096  
+#define DETERMINISTIC_MR            1
+#define MIXED_MAIN                  1 // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
+#define ECPP                        0  // PROOF OF PRIMALITY ONLY
 
 #define __bienable_mont__       1   
 #define __bienable_newton__     1

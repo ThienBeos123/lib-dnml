@@ -73,8 +73,8 @@ uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
         steps_i = (steps_i < 7) ? steps_i + 1 : 0;
     } return 1;
 }
-uint8_t __BIGINT_SMALL_MRABIN__(const bigInt *x) {}
-uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x) {}
+uint8_t __BIGINT_SMALL_MRABIN__(uint64_t x) {}
+uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x, uint64_t base) {}
 uint8_t __BIGINT_BPSW_MIX__(const bigInt *x) {}
 uint8_t __BIGINT_ECPP__(const bigInt *x) {}
 uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x) {}
