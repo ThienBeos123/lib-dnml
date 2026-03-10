@@ -22,15 +22,24 @@ void __BIGINT_BINARY_MODEXP__(
 
     //* ----- 2. MAIN LOOP ----- *//
     bigInt tmp_res; __BIGINT_INTERNAL_LINIT__(&tmp_res, modulus->n);
-    while (power->n > 0) {
-        if (power->limbs[0] & 1) {
+    bigInt tmp_exp; __BIGINT_INTERNAL_LINIT__(&tmp_exp, modulus->n);
+    __BIGINT_INTERNAL_COPY__(&tmp_exp, modulus);
+    tmp_res.limbs[0] = 1; tmp_res.n = 1; tmp_res.sign = 1;
+    while (tmp_exp.n > 0) {
+        if (tmp_exp.limbs[0] & 1) {
             __BIGINT_MONTMUL__(&tmp_res, base, modexp_contx, &tmp);
             __BIGINT_INTERNAL_COPY__(&tmp_res, &tmp);
         }
         __BIGINT_MONTMUL__(&base, &base, modexp_contx, &tmp);
         __BIGINT_INTERNAL_COPY__(&base, &tmp);
-        
+        __BIGINT_INTERNAL_RSHIFT__(&tmp_exp, 1);
     }
+
+    //* ---- 3. FINAL CLEANUP ---- *//
+    __BIGINT_INTERNAL_COPY__(res, &tmp_res);
+    __BIGINT_INTERNAL_FREE__(&r); __BIGINT_INTERNAL_FREE__(&r_mod_n);
+    __BIGINT_INTERNAL_FREE__(&tmp_res); __BIGINT_INTERNAL_FREE__(&tmp_exp);
+    __BIGINT_INTERNAL_FREE__(&tmp);
 }
 
 

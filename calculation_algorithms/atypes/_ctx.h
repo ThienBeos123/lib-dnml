@@ -1,5 +1,5 @@
-#ifndef DNML_MONT_CTX
-#define DNML_MONT_CTX
+#ifndef DNML_CTX
+#define DNML_CTX
 
 #include "../../system/include.h"
 #include "../../system/compiler.h"
@@ -17,6 +17,10 @@ typedef struct {
     const bigInt* r2;
     size_t k;
 } mont_ctx;
+
+typedef struct {
+    dnml_arena *arena;
+} calc_ctx;
 
 
 
