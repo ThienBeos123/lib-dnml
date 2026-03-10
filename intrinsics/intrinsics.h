@@ -12,7 +12,9 @@
 #define max(x, y) ( ((x) > (y)) ? (x) : (y) )
 
 
-/* Single-Limb Addition + Carry */
+//* --------------------------- *//
+//*    SINGLE-LIMB ARITHMETIC   *//
+//* --------------------------- *//
 static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
     #if __compiler_clang
         return __builtin_addcll(a, b, *carry, carry);
@@ -32,9 +34,6 @@ static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
         return sum;
     #endif
 }
-
-
-/* Single-Limb Subtraction + Borrow */
 static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint64_t *borrow) {
     #if __compiler_msvc
         uint64_t diff;
@@ -53,9 +52,6 @@ static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint64_t *borrow) {
         return diff;
     #endif
 }
-
-
-/* Wide Multiplication ---> 128 bit */
 static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
     #if __HAS_int128__
         uint128 res = ((uint128)a) * ((uint128)b);
@@ -114,16 +110,52 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
     #endif
 }
 
-/* Single-limb Modular Inverse */
+
+//* ----------------------------------- *//
+//*    SINGLE-LIMB MODULAR ARITHMETIC   *//
+//* ----------------------------------- *//
 static inline uint64_t __MODINV_UI64__(uint64_t x) {
     uint64_t res = 2 - x;
     for (uint8_t i = 0; i < 5; ++i) res *= 2 - x * res;
     return res;
 }
+static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
+    uint64_t hi, lo;
+    lo = __MUL_UI64__(a, b, &hi);
+    #if __HAS_int128__
+        return (uint64_t)(((unsigned __int128)hi << 64 | lo) % mod);
+    #else
+        if (hi == 0) return lo % mod;
+        uint64_t rem = hi % mod;
+        for (uinit8_t i = 63; i >= 0; --i) {
+            rem = (rem >= mod - rem) ?
+                    rem - (mod - rem) :
+                    rem + rem;
+            if ((lo >> i) & 1) {
+                ++rem;
+                if (rem >= mod) rem -= mod;
+            }
+        }
+    #endif
+}
+static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod) {
+    if (mod == 1) return 0;
+    if (exp == 0) return 1;
+    if (exp == 1) return base;
+    base %= mod;
+    uint64_t res = 1;
+    while (exp > 0) {
+        if (exp & 1) res = __MODMUL_UI64__(res, base, mod);
+        base = __MODMUL_UI64__(base, base, mod);
+        exp >>= 1;
+    } return res;
+}
 
 
-/* CLZ + CTZ */
-static inline uint8_t __CLZ_UI64__(uint64_t x) {
+//* --------------------------- *//
+//*      GENERAL UTILITIES      *//
+//* --------------------------- *//
+static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
     #if x == 0
         return 64;
     #endif
@@ -138,8 +170,7 @@ static inline uint8_t __CLZ_UI64__(uint64_t x) {
         return n;
     #endif
 }
-
-static inline uint8_t __CTZ_UI64__(uint64_t x) {
+static inline uint8_t __CTZ_UI64__(uint64_t x) {        // COUNT TRAILING ZEROS
     #if x == 0
         return 64;
     #endif
@@ -154,10 +185,7 @@ static inline uint8_t __CTZ_UI64__(uint64_t x) {
         return n;
     #endif
 }
-
-
-/* Byte Swap */
-static inline uint64_t __BSWAP_UI64__(uint64_t x) {
+static inline uint64_t __BSWAP_UI64__(uint64_t x) {     // BYTESWAP
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_bswap64(x);
     #elif __compiler_msvc

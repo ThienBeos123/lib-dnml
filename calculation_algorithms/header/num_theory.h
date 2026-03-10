@@ -20,6 +20,7 @@ extern "C" {
 #include "div.h"
 #include "mul.h"
 #include "mod.h"
+#include "mod_op.h"
 
 //todo ============================== GREATEST COMMON DIVISORS ============================== todo//
 uint64_t __BIGINT_EUCLID__(uint64_t u, uint64_t v);
@@ -32,11 +33,12 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v);
 
 
 //todo ================================== PRIMALITY TESTING ================================== todo//
-uint8_t __BIGINT_TRIAL_DIV__(const bigInt *x);
-uint8_t __BIGINT_SMALL_MRABIN__(const bigInt *x);
-uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x);
+uint8_t __BIGINT_TRIAL_DIV__(uint64_t x);
+uint8_t __BIGINT_SMALL_MRABIN__(uint64_t x);
+uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x, uint64_t base);
 uint8_t __BIGINT_BPSW_MIX__(const bigInt *x);
 uint8_t __BIGINT_ECPP__(const bigInt *x);
+uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x);
 
 
 #ifdef __cplusplus

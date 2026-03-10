@@ -1,7 +1,20 @@
 #include "../header/mod_op.h"
 
+
+void __BIGINT_MONTMUL__(
+    const bigInt *a, const bigInt *b, 
+    mont_ctx ctx, bigInt *res
+) {
+    bigInt t; __BIGINT_INTERNAL_LINIT__(&t, a->n + b->n);
+    __BIGINT_MUL_DISPATCH__(&t, a, b);
+    __BIGINT_MONT_REDC__(&t, ctx, res);
+}
+void __BIGINT_CLASSICAL_MODMUL__(
+    const bigInt *x, const bigInt *b, 
+    const bigInt *modulus, bigInt *res
+) {}
 void __BIGINT_BINARY_MODEXP__(
-    bigInt *res, const bigInt *modulus,
+    bigInt *res, const bigInt *modulus, 
     const bigInt *base, const bigInt *power
 ) {
     //* --- 1. SETUP ---- *//
@@ -41,18 +54,4 @@ void __BIGINT_BINARY_MODEXP__(
     __BIGINT_INTERNAL_FREE__(&tmp_res); __BIGINT_INTERNAL_FREE__(&tmp_exp);
     __BIGINT_INTERNAL_FREE__(&tmp);
 }
-
-
-void __BIGINT_MONTMUL__(
-    const bigInt *a, const bigInt *b, 
-    mont_ctx ctx, bigInt *res
-) {
-    bigInt t; __BIGINT_INTERNAL_LINIT__(&t, a->n + b->n);
-    __BIGINT_MUL_DISPATCH__(&t, a, b);
-    __BIGINT_MONT_REDC__(&t, ctx, res);
-}
-
-
-void __BIGINT_CLASSICAL_MODMUL__() {}
-
 

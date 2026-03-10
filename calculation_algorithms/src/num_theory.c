@@ -1,6 +1,10 @@
 #include "../header/num_theory.h"
 
-
+static const uint32_t dmr_bases[7] = {
+    2, 325, 9375, 28178, 
+    450775, 9780504, 
+    1794265022
+};
 
 /* GCD - GREATEST COMMON DIVISOR */
 uint64_t __BIGINT_EUCLID__(uint64_t u, uint64_t v) {
@@ -73,7 +77,23 @@ uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
         steps_i = (steps_i < 7) ? steps_i + 1 : 0;
     } return 1;
 }
-uint8_t __BIGINT_SMALL_MRABIN__(uint64_t x) {}
+uint8_t __BIGINT_SMALL_MRABIN__(uint64_t n) {
+    uint64_t s = 0, d = n - 1, x;
+    uint8_t composite = 1;
+    while (!(d & 1)) { ++s; d >>= 1; }
+    for (uint8_t i = 0; i < 7; ++i) {
+        uint32_t curr_base = dmr_bases[i];
+        x = __MODEXP_UI64__(curr_base, d, n);
+        // 1. Check a^d mod(n) = 1
+        if (x == 1 || x == n - 1) continue;
+        // 2. Check for a^(2^r * d) mod(n) = n - 1
+        composite = 1;
+        for (uint64_t r = 1; r < s; ++r) {
+            x = __MODMUL_UI64__(x, x, n);
+            if (x == n - 1) { composite = 0; break; }
+        } if (composite) return 0;
+    } return 1;
+}
 uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x, uint64_t base) {}
 uint8_t __BIGINT_BPSW_MIX__(const bigInt *x) {}
 uint8_t __BIGINT_ECPP__(const bigInt *x) {}
