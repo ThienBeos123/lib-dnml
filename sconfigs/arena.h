@@ -21,7 +21,7 @@ typedef struct {
     dnml_arena arena;
 } dnml_ctx;
 
-//* ============= Functionalities =============
+//* ============= FUNCTIONALITIES ============= *//
 static inline void init_arena(dnml_arena *a, size_t init_cap) {
     if (a->base) return;
     a->base = malloc(init_cap);
@@ -46,11 +46,9 @@ static inline size_t arena_grow(dnml_arena *a, size_t min_cap) {
     uint8_t *buf = realloc(a->base, new_cap);
     if (!buf) abort();
     a->base     = buf;
-    a->cap      = new_cap; 
+    a->cap      = new_cap;
     return new_cap;
 }
-
-// Accepts any type (CRUCIAL)
 static inline void *arena_alloc(dnml_arena *a, size_t space) {
     size_t align = alignof(max_align_t);
     size_t aligned_offset = align_forward(a->offset, align);
@@ -63,6 +61,12 @@ static inline void *arena_alloc(dnml_arena *a, size_t space) {
 }
 static inline size_t arena_mark(dnml_arena *a) { return a->offset; }
 static inline void arena_reset(dnml_arena *a, size_t mark) { if (mark <= a->offset) a->offset = mark; }
-static inline void arena_wipe(dnml_arena *a) { a->offset = 0; }
+
+
+
+//* ================== ADAPTERS ===================== *//
+static inline void* arena_alloc_adapter(void *state, size_t n) { return arena_alloc((dnml_arena*)state, n); }
+static inline size_t arena_mark_adapter(void *state) { return arena_mark((dnml_arena*)state); }
+static inline void arena_reset_adapter(void *state, size_t n) { arena_reset((dnml_arena*)state, n); }
 
 #endif

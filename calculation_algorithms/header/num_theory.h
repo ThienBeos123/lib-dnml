@@ -36,7 +36,7 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v);
 uint8_t __BIGINT_TRIAL_DIV__(uint64_t x);
 uint8_t __BIGINT_SMALL_MRABIN__(uint64_t x);
 uint8_t __BIGINT_MILLER_RABIN__(const bigInt *x, uint64_t base);
-uint8_t __BIGINT_BPSW_MIX__(const bigInt *x);
+uint8_t __BIGINT_BPSW__(const bigInt *x);
 uint8_t __BIGINT_ECPP__(const bigInt *x);
 uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x);
 

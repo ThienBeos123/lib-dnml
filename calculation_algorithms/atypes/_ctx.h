@@ -19,9 +19,14 @@ typedef struct {
 } mont_ctx;
 
 typedef struct {
-    dnml_arena *arena;
+    void* (*alloc)(void *state, size_t size);
+    size_t (*mark)(void *state);
+    void (*reset)(void *state, size_t mark);
+    void *state;
 } calc_ctx;
-
+static inline void* scratch_alloc(calc_ctx *ctx, size_t n) { return ctx->alloc(ctx->state, n); }
+static inline size_t scratch_mark(calc_ctx *ctx) { return ctx->mark(ctx->state); }
+static inline void scratch_reset(calc_ctx *ctx, size_t mark) { ctx->reset(ctx->state, mark); }
 
 
 #endif
