@@ -46,9 +46,14 @@
 #define BIGINT_HALF_XGCD            2048
 
 /* Primality Testing */
-#define DETERMINISTIC_MR            1
+#define TRIAL_DIVISION              207936
+#define DETERMINISTIC_MR            207936
 #define MIXED_MAIN                  1 // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
-#define ECPP                        0  // PROOF OF PRIMALITY ONLY
+#define ECPP                        0 // PROOF OF PRIMALITY ONLY
+
+#define MRROUNDS_DNML               5 // Dynamol - Scientific Calculation
+#define MRROUNDS_DBEDDED            5 // dBedded - Embedded Development
+#define MRROUNDS_DRYPTO             20 // Drypto - Cryptography
 
 #define __bienable_mont__       1   
 #define __bienable_newton__     1

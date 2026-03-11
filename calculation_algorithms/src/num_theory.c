@@ -151,4 +151,18 @@ uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base) {
 }
 uint8_t __BIGINT_BPSW__(const bigInt *x) {}
 uint8_t __BIGINT_ECPP__(const bigInt *x) {}
-uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x) {}
+uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x) {
+    if (x->n <= MIXED_MAIN) {
+        if (x->limbs[0] <= TRIAL_DIVISION) return __BIGINT_TRIAL_DIV__(x->limbs[0]);
+        else return __BIGINT_SMALL_MRABIN__(x->limbs[0]);
+    } else { bigInt random_base; if (!__BIGINT_BPSW__(x)) { 
+            __BIGINT_INTERNAL_FREE__(&random_base); return 0; 
+        }  for (size_t i = 0; i < MRROUNDS_DNML; ++i) {
+            // RNG RIGHT HERE
+            if (!__BIGINT_MILLER_RABIN__(x, &random_base)) { 
+                __BIGINT_INTERNAL_FREE__(&random_base); 
+                return 0; 
+            }
+        } return 1;
+    }
+}
