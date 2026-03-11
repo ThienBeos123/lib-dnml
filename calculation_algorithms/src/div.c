@@ -50,11 +50,8 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
         carry = (shift ? x >> BITS_IN_UINT64_T : 0);
     }
     b_copy.n = n;
-
-    /* 2. Quotient init */
-    __BIGINT_INTERNAL_ENSCAP__(quot, m - n + 1);
-
     quot->n = m - n + 1;
+
     /* 3-5. Main Loop */
     for (size_t j = m - n + 1; j > 0; --j) {
         /* 3. Estimation */
@@ -151,7 +148,6 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
     }
 
     /* 6. Denormalize */
-    __BIGINT_INTERNAL_ENSCAP__(rem, n);
     carry = 0;
     for (size_t i = n; i > 0; --i) {
         uint64_t x = a_copy.limbs[i];

@@ -2,7 +2,6 @@
 
 /* SIMPLE - INTERMEDIATE ALGORITHMS */
 void __BIGINT_SCHOOLBOOK__(bigInt *res, const bigInt *a, const bigInt *b) {
-    __BIGINT_INTERNAL_ENSCAP__(res, a->n + b->n);
     memset(res->limbs, 0, (a->n + b->n) * sizeof(uint64_t)); // Set every bytes to 0 in res, basically CALLOC() without the MALLOC()
     // Implementing schoolbook multiplication, treating each limb like a digit
     // -----> Inner loop access each limb of b and multiplying by 1 limb of a before going to the next a's limb

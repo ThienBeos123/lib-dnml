@@ -11,6 +11,7 @@ extern "C" {
 #include "../../system/compiler.h"
 #include "../../sconfigs/arena.h"
 #include "../../sconfigs/numeric_config.h"
+#include "../atypes/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
 #include "../../intrinsics/limb_math.h"
@@ -21,7 +22,7 @@ extern "C" {
 #include "mul.h"
 
 void __BIGINT_BARETT__(const bigInt *a, const bigInt *b, bigInt *rem);
-void __BIGINT_MONT_REDC__(const bigInt *a, const bigInt *b, bigInt *rem);
+void __BIGINT_MONT_REDC__(const bigInt *t, mont_ctx ctx, bigInt *rem);
 void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigInt *tmp_quot);
 
 
