@@ -19,7 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/big_numbers)
 # =====================================================
 # BigInt Executable (compilation test)
 # =====================================================
-add_executable(bigInt
+add_executable(main
     big_numbers/bigInt.c
     big_numbers/bigInt_io.c
     internal_utils/bigNum_utils.c
@@ -34,5 +34,5 @@ add_executable(bigInt
     calculation_algorithms/src/pow_root.c
 )
 
-target_compile_options(bigInt PRIVATE -Wno-unused-function)
-target_sources(bigInt PRIVATE ztest/main.c)
+target_compile_options(main PRIVATE -Wno-unused-function)
+target_sources(main PRIVATE ztest/main.c)

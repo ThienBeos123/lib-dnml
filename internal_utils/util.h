@@ -71,6 +71,8 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val);
 void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y);
 void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k);
 void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k);
+void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t limb);
+void __BIGINT_INTERNAL_LLSHIFT__(bigInt *x, size_t limb);
 
 
 

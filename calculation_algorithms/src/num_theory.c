@@ -1,6 +1,10 @@
 #include "../header/num_theory.h"
 
-
+static const uint32_t dmr_bases[7] = {
+    2, 325, 9375, 28178, 
+    450775, 9780504, 
+    1794265022
+};
 
 /* GCD - GREATEST COMMON DIVISOR */
 uint64_t __BIGINT_EUCLID__(uint64_t u, uint64_t v) {
@@ -59,7 +63,106 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v) {
 }
 
 /* Primality Testing */
-bool __BIGINT_TRIAL_DIV__(const bigInt *x) {}
-bool __BIGINT_MILLER_RABIN__(const bigInt *x) {}
-bool __BIGINT_BPSW_MIX__(const bigInt *x) {}
-bool __BIGINT_ECPP__(const bigInt *x) {}
+uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
+    if (x <= 1) return 0;
+    else if (x == 2 || x == 3 || x == 5) return 1;
+    else if (!(x & 1) || !(x % 3) || !(x % 5)) return 0;
+    uint8_t steps[8] = {6, 4, 2, 4, 2, 4, 6, 2};
+    uint8_t steps_i = 1;
+    for (uint64_t i = 7; 
+        i <= (uint64_t)(sqrt(x)) + 1; 
+        i += steps[steps_i]
+    ) { 
+        if (x % i == 0) return 0;
+        steps_i = (steps_i < 7) ? steps_i + 1 : 0;
+    } return 1;
+}
+uint8_t __BIGINT_SMALL_MRABIN__(uint64_t n) {
+    uint64_t s = 0, d = n - 1, x;
+    uint8_t composite = 1;
+    while (!(d & 1)) { ++s; d >>= 1; }
+    for (uint8_t i = 0; i < 7; ++i) {
+        uint32_t curr_base = dmr_bases[i];
+        x = __MODEXP_UI64__(curr_base, d, n);
+        // 1. Check a^d mod(n) = 1
+        if (x == 1 || x == n - 1) continue;
+        // 2. Check for a^(2^r * d) mod(n) = n - 1
+        composite = 1;
+        for (uint64_t r = 1; r < s; ++r) {
+            x = __MODMUL_UI64__(x, x, n);
+            if (x == n - 1) { composite = 0; break; }
+        } if (composite) return 0;
+    } return 1;
+}
+uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base) {
+    if (n->sign == -1) return 0; uint8_t prim_status = 0; uint64_t a[1] = {1};
+    bigInt n_minus_one; __BIGINT_INTERNAL_LINIT__(&n_minus_one, n->n);
+    bigInt constant_one = { .limbs = a, .n = 1, .cap = 1, .sign = 1 };
+    __BIGINT_INTERNAL_COPY__(&n_minus_one, n);
+    __BIGINT_INTERNAL_SUB__(&n_minus_one, &constant_one);
+    size_t s = __BIGINT_CTZ__(&n_minus_one);
+    bigInt d; __BIGINT_INTERNAL_LINIT__(&d, n_minus_one.n);
+    __BIGINT_INTERNAL_COPY__(&d, &n_minus_one);
+    __BIGINT_INTERNAL_RLSHIFT__(&d, (uint64_t)(s / BITS_IN_UINT64_T));
+    __BIGINT_INTERNAL_RSHIFT__(&d, (uint64_t)(s % BITS_IN_UINT64_T));
+    s = (uint64_t)s;
+    
+    // 1st test: a^d mod(n)
+    bigInt x; __BIGINT_INTERNAL_LINIT__(&x, n->n);
+    __BIGINT_BINARY_MODEXP__(&x, n, base, &d);
+    if (x.n == 1 && x.limbs[0] == 1) prim_status = 1; // a^d mod(n) = 1
+    else if (!__BIGINT_INTERNAL_COMP__(&x, &n_minus_one)) prim_status = 1; // a^d mod(n) = n - 1
+
+    // 2nd test: a^(2^r * d) mod(n)
+    if (s <= 5) {
+        for (uint64_t mrr = 1; mrr < s; ++mrr) {
+            __BIGINT_CLASSICAL_MODMUL__(&x, &x, n, &x);
+            if (x.n == 1 && x.limbs[0] == 1) { prim_status = 1; break; }
+            else if (!__BIGINT_INTERNAL_COMP__(&x, &n_minus_one)) { prim_status = 1; break; }
+        }
+    } else {
+        mont_ctx mrabin_ctx = {
+            .n = n,     /**/    .nprime = __MODINV_UI64__(n->limbs[0]),
+            .k = n->n,  /**/
+        }; bigInt r, r_mod_n, tmp;
+        __BIGINT_INTERNAL_LINIT__(&r, n->n + 1);
+        __BIGINT_INTERNAL_LINIT__(&r_mod_n, n->n);
+        __BIGINT_INTERNAL_LINIT__(&tmp, n->n + 1);
+        r.limbs[n->n] = 1; __BIGINT_MOD_DISPATCH__(&r, n, &r_mod_n, &tmp);
+        __BIGINT_INTERNAL_ENSCAP__(&tmp, n->n * 2);
+        __BIGINT_INTERNAL_ENSCAP__(&r, n->n * 2);
+        __BIGINT_MUL_DISPATCH__(&tmp, &r_mod_n, &r_mod_n);
+        __BIGINT_MOD_DISPATCH__(&tmp, n, &r_mod_n, &r);
+        mrabin_ctx.r2 = &r_mod_n;
+        // Conversions
+        constant_one.limbs = NULL; __BIGINT_INTERNAL_LINIT__(&constant_one, n->n); 
+        constant_one.limbs[0] = 1; constant_one.n = 1; constant_one.sign = 1;
+        __BIGINT_MONTMUL__(&x, mrabin_ctx.r2, mrabin_ctx, &x);
+        __BIGINT_MONTMUL__(&n_minus_one, mrabin_ctx.r2, mrabin_ctx, &n_minus_one);
+        __BIGINT_MONTMUL__(&constant_one, mrabin_ctx.r2, mrabin_ctx, &constant_one);
+        for (uint64_t mrr = 1; mrr < s; ++mrr) {
+            __BIGINT_MONTMUL__(&x, &x, mrabin_ctx, &x);
+            if (!__BIGINT_INTERNAL_COMP__(&x, &constant_one)) { prim_status = 1; break; }
+            else if (!__BIGINT_INTERNAL_COMP__(&x, &n_minus_one)) { prim_status = 1; break; }
+        } __BIGINT_INTERNAL_FREE__(&r); __BIGINT_INTERNAL_FREE__(&r_mod_n); __BIGINT_INTERNAL_FREE__(&tmp);
+    } __BIGINT_INTERNAL_FREE__(&n_minus_one); __BIGINT_INTERNAL_FREE__(&constant_one);
+    __BIGINT_INTERNAL_FREE__(&s); __BIGINT_INTERNAL_FREE__(&d); __BIGINT_INTERNAL_FREE__(&x);
+    return prim_status;
+}
+uint8_t __BIGINT_BPSW__(const bigInt *x) {}
+uint8_t __BIGINT_ECPP__(const bigInt *x) {}
+uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x) {
+    if (x->n <= MIXED_MAIN) {
+        if (x->limbs[0] <= TRIAL_DIVISION) return __BIGINT_TRIAL_DIV__(x->limbs[0]);
+        else return __BIGINT_SMALL_MRABIN__(x->limbs[0]);
+    } else { bigInt random_base; if (!__BIGINT_BPSW__(x)) { 
+            __BIGINT_INTERNAL_FREE__(&random_base); return 0; 
+        }  for (size_t i = 0; i < MRROUNDS_DNML; ++i) {
+            // RNG RIGHT HERE
+            if (!__BIGINT_MILLER_RABIN__(x, &random_base)) { 
+                __BIGINT_INTERNAL_FREE__(&random_base); 
+                return 0; 
+            }
+        } return 1;
+    }
+}

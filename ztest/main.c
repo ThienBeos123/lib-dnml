@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "atest_include.h"
 
 int main(void) {
     return 0;
