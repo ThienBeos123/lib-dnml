@@ -245,36 +245,35 @@ uint8_t __BIGINT_MORE_OR_EQUAL__(const bigInt a, const bigInt b);
 *               THE UTMOST CAUTION TO PREVENT FATAL ERRORS OR MEMORY LEAKS 
 */
 /* ------- Magnitude Arithmetic ------- */
-static void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *__outputted_bigInteger, const bigInt *__x__, const uint64_t __I64VAL);
-static void __BIGINT_MAGNITUDED_DIVMOD_UI64__
-    (bigInt *__outputted_bigInteger_quotient, 
-    uint64_t *__outputted_I64_remainder, 
-    const bigInt *__x__, const uint64_t val);
-static void __BIGINT_MAGNITUDED_ADD__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
-static void __BIGINT_MAGNITUDED_SUB__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
-static inline void __BIGINT_MAGNITUDED_MUL__(
-    bigInt *__outputted_bigInteger, 
-    const bigInt *__a__, 
-    const bigInt *__b__);
-static inline void __BIGINT_MAGNITUDED_DIVMOD__
-    (bigInt *__outputted_bigInteger_quotient, 
-    bigInt *__outputted_bigInteger_remainder, 
-    const bigInt *__a__, const bigInt *__b__);
+// static void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *__outputted_bigInteger, const bigInt *__x__, const uint64_t __I64VAL);
+// static void __BIGINT_MAGNITUDED_DIVMOD_UI64__
+//     (bigInt *__outputted_bigInteger_quotient, 
+//     uint64_t *__outputted_I64_remainder, 
+//     const bigInt *__x__, const uint64_t val);
+// static void __BIGINT_MAGNITUDED_ADD__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
+// static void __BIGINT_MAGNITUDED_SUB__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
+// static inline void __BIGINT_MAGNITUDED_MUL__(
+//     bigInt *__outputted_bigInteger, 
+//     const bigInt *__a__, 
+//     const bigInt *__b__);
+// static inline void __BIGINT_MAGNITUDED_DIVMOD__
+//     (bigInt *__outputted_bigInteger_quotient, 
+//     bigInt *__outputted_bigInteger_remainder, 
+//     const bigInt *__a__, const bigInt *__b__);
 /* ------- Magnituded Core Number-Theoretic ------- */
-uint64_t ___GCD_UI64___(uint64_t a, uint64_t b);
-static void __BIGINT_MAGNITUDED_GCD__(bigInt *res, const bigInt *a, const bigInt *b);
-static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b);
-static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus);
-static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus);
-static uint8_t __BIGINT_MAGNITUDED_PRIMATEST__(const bigInt *x);
-/* ------- Magnituded Modular Arithmetic ------- */
-static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODSUB__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODMUL__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODDIV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODEXP__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODSQR__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-static void __BIGINT_MAGNITUDED_MODINV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// uint64_t ___GCD_UI64___(uint64_t a, uint64_t b);
+// static void __BIGINT_MAGNITUDED_GCD__(bigInt *res, const bigInt *a, const bigInt *b);
+// static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b);
+// static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus);
+// static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus);
+// /* ------- Magnituded Modular Arithmetic ------- */
+// static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODSUB__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODMUL__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODDIV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODEXP__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODSQR__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
+// static void __BIGINT_MAGNITUDED_MODINV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
 
 
 

@@ -1412,7 +1412,7 @@ static void __BIGINT_MAGNITUDED_MUL__(bigInt *res, const bigInt *a, const bigInt
 static void __BIGINT_MAGNITUDED_DIVMOD__(bigInt *quot, bigInt *rem, const bigInt *a, const bigInt *b) {
     __BIGINT_DIVMOD_DISPATCH__(a, b, quot, rem);
 }
-static inline void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *res, const bigInt *x, const uint64_t val) {
+static void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *res, const bigInt *x, const uint64_t val) {
     // Since the divisor size is small (n <= 1), we implement inline schoolbook multiplication
     __BIGINT_RESERVE__(res, x->n + 1);
     uint64_t carry = 0;
@@ -1426,7 +1426,10 @@ static inline void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *res, const bigInt *x, 
     res->n = x->n;
     if (carry) { res->limbs[res->n++] = carry; }
 }
-static inline void __BIGINT_MAGNITUDED_DIVMOD_UI64__(bigInt *quot, uint64_t *rem, const bigInt *x, const uint64_t val) {
+static void __BIGINT_MAGNITUDED_DIVMOD_UI64__(
+    bigInt *quot, uint64_t *rem, 
+    const bigInt *x, const uint64_t val
+) {
     // Since the divisior size is small (n <= 1), we implement inline normal/long division
     assert(val); // Checks for invalid operation ( x / 0 )
     __BIGINT_RESERVE__(&quot, x->n+1); quot->n = x->n;
@@ -1476,7 +1479,6 @@ static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const big
     __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot);
     arena_reset(_DASI_MAGEMOD_ARENA, tmp_mark); tmp_limbs == NULL;
 }
-static uint8_t __BIGINT_MAGNITUDED_PRIMATEST__(const bigInt *x) {}
 /* ----------------- MAGNITUDED MODULAR-ARITHMETIC ------------------ */
 static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
 static void __BIGINT_MAGNITUDED_MODSUB__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
@@ -2105,7 +2107,7 @@ bigInt __BIGINT_LCM__(const bigInt x, const bigInt y) {
         __BIGINT_MAGNITUDED_LCM__(&res, &x, &y);
     } return res;
 }
-bool __BIGINT_IS_PRIME__(const bigInt x) {}
+bool __BIGINT_IS_PRIME__(const bigInt x) { return (bool)(__BIGINT_PTEST_DISPATCH__(&x)); }
 /* ---------------- Modular Reduction ---------------- */
 dnml_status __BIGINT_MUT_MODULO_UI64__(bigInt *x, uint64_t modulus) {
     assert(__BIGINT_PVALIDATE__(x));
