@@ -1,6 +1,5 @@
 #include "../header/mod_op.h"
 
-
 void __BIGINT_MONTMUL__(
     const bigInt *a, const bigInt *b, 
     mont_ctx ctx, bigInt *res
