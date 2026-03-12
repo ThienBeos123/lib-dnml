@@ -1412,7 +1412,14 @@ static void __BIGINT_MAGNITUDED_SUB__(bigInt *res, const bigInt *a, const bigInt
     } res->n = a->n;
 }
 static void __BIGINT_MAGNITUDED_MUL__(bigInt *res, const bigInt *a, const bigInt *b) {
-    __BIGINT_MUL_DISPATCH__(res, a, b);
+    dnml_arena *_DASI_MAGMUL_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGMUL_ARENA, __BIGINT_MUL_WS__(a->n, b->n));
+    calc_ctx magmul_ctx = {
+        .alloc = arena_alloc_adapter,
+        .mark = arena_mark_adapter,
+        .reset = arena_reset_adapter,
+        .state = _DASI_MAGMUL_ARENA
+    }; __BIGINT_MUL_DISPATCH__(a, b, res, magmul_ctx);
 }
 static void __BIGINT_MAGNITUDED_DIVMOD__(bigInt *quot, bigInt *rem, const bigInt *a, const bigInt *b) {
     dnml_arena *_DASI_MAGDIVMOD_ARENA = _USE_LOW_ARENA();
