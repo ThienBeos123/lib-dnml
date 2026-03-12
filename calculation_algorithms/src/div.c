@@ -13,7 +13,7 @@ void __BIGINT_SHORT_DIVISION__(
 ) {}
 
 size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
-    size_t raw_size = a_size + 1 + b_size;
+    size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
     return raw_size + 2 * alignof(max_align_t);
     // Ensure a safe upperbound for 
     // alignmnent paddings of the 2 objects
@@ -24,24 +24,11 @@ void __BIGINT_KNUTH_D__(
 ) {
     // Setup
     uint8_t shift = __CLZ_UI64__(b->limbs[b->n - 1]);
-    size_t m = a->n, n = b->n;
-
-    size_t a_mark = scratch_mark(&knuth_ctx); 
+    size_t m = a->n, n = b->n, knuth_mark = scratch_mark(&knuth_ctx); 
     limb_t *a_limbs = scratch_alloc(&knuth_ctx, BYTES_IN_UINT64_T * (m + 1));
     limb_t *b_limbs = scratch_alloc(&knuth_ctx, BYTES_IN_UINT64_T * (n));
-    size_t b_mark = scratch_mark(&knuth_ctx) - (BYTES_IN_UINT64_T * n); // Get the aligned offset
-    bigInt a_copy = {
-        .limbs = a_limbs,           
-        .cap   = m + 1,             //  +)  Arena Allocation
-        .n     = 0,                 //      and Initialization
-        .sign  = 1                  //      of a_copy & b_copy
-    };                              //
-    bigInt b_copy = {               //  +)  This is to improve performances
-        .limbs = b_limbs,           //      and decrease the cost of
-        .cap   = n,                 //      discrete, independent,
-        .n     = 0,                 //      limbs for intermediate placeholder bigints
-        .sign  = 1
-    };
+    bigInt a_copy = {.limbs = a_limbs, .sign  = 1,    /**/   .cap = m + 1, .n = 0};
+    bigInt b_copy = {.limbs = b_limbs, .sign  = 1,    /**/   .cap = n, .n = 0};
 
     /* 1. Normalization */
     /*  - This stage basically make sure b is large enough to be divided by a
@@ -169,8 +156,7 @@ void __BIGINT_KNUTH_D__(
     rem->n = n;
     __BIGINT_INTERNAL_TRIM_LZ__(quot);      /**/     __BIGINT_INTERNAL_TRIM_LZ__(rem);
     if (quot->n == 0) quot->sign = 1;       /**/     if (rem->n == 0) rem->sign = 1;
-    scratch_reset(&knuth_ctx, b_mark); // Free b_copy
-    scratch_reset(&knuth_ctx, a_mark); // Free a_copy
+    scratch_reset(&knuth_ctx, knuth_mark); // Free all temporaries
 }
 
 size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}

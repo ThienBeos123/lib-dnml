@@ -78,7 +78,6 @@ bigInt __BIGINT_ERROR_VALUE__(void) {
 
 /* General Utilities */
 inline void __BIGINT_INTERNAL_COPY__(bigInt *dst, const bigInt *source) {
-    __BIGINT_INTERNAL_ENSCAP__(dst, source->n);
     if (source->n == 0) { __BIGINT_INTERNAL_ZSET__(dst); return; }
     memcpy(dst->limbs, source->limbs, source->n * BYTES_IN_UINT64_T);
     dst->n = source->n;

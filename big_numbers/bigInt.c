@@ -1492,10 +1492,17 @@ static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, ui
 }
 static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {
     dnml_arena *_DASI_MAGEMOD_ARENA = _USE_ARENA();
-    size_t tmp_mark = arena_mark(_DASI_MAGEMOD_ARENA);
+    dnml_arena *_DASI_MAGEMOD_ALGRENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGEMOD_ALGRENA, __BIGINT_MOD_WS__(a->n, modulus->n));
+    calc_ctx magemod_ctx = {
+        .alloc = arena_alloc_adapter,
+        .mark = arena_mark_adapter,
+        .reset = arena_reset_adapter,
+        .state = _DASI_MAGEMOD_ALGRENA
+    }; size_t tmp_mark = arena_mark(_DASI_MAGEMOD_ARENA);
     limb_t *tmp_limbs = arena_alloc(_DASI_MAGEMOD_ARENA, a->n * BYTES_IN_UINT64_T);
     bigInt tmp_quot = { .limbs = tmp_limbs, /**/ .n = 0, /**/ .cap = a->n, /**/ .sign = 1 };
-    __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot);
+    __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot, magemod_ctx);
     arena_reset(_DASI_MAGEMOD_ARENA, tmp_mark); tmp_limbs == NULL;
 }
 /* ----------------- MAGNITUDED MODULAR-ARITHMETIC ------------------ */
