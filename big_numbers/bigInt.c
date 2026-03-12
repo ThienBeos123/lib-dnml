@@ -19,10 +19,15 @@
 
 /* Global, Thread-local Arena */
 static local_thread dnml_arena ___DASI_NUMERIC_ARENA_;
+static local_thread dnml_arena ___DASI_LOWLVL_ARENA_;
 static inline dnml_arena* _USE_ARENA(void) {
     // Support 512 limbs (the gold standard)
     if (___DASI_NUMERIC_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 4096);
     return &___DASI_NUMERIC_ARENA_;
+} 
+static inline dnml_arena* _USE_LOW_ARENA(void) {
+    if (___DASI_LOWLVL_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 4096);
+    return &___DASI_LOWLVL_ARENA_;
 }
 
 
@@ -1410,7 +1415,14 @@ static void __BIGINT_MAGNITUDED_MUL__(bigInt *res, const bigInt *a, const bigInt
     __BIGINT_MUL_DISPATCH__(res, a, b);
 }
 static void __BIGINT_MAGNITUDED_DIVMOD__(bigInt *quot, bigInt *rem, const bigInt *a, const bigInt *b) {
-    __BIGINT_DIVMOD_DISPATCH__(a, b, quot, rem);
+    dnml_arena *_DASI_MAGDIVMOD_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGDIVMOD_ARENA, __BIGINT_DIVMOD_WS__(a->n, b->n));
+    calc_ctx magdivmod_ctx = {
+        .alloc = arena_alloc_adapter,
+        .mark = arena_mark_adapter,
+        .reset = arena_reset_adapter,
+        .state = _DASI_MAGDIVMOD_ARENA
+    }; __BIGINT_DIVMOD_DISPATCH__(a, b, quot, rem, magdivmod_ctx);
 }
 static void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *res, const bigInt *x, const uint64_t val) {
     // Since the divisor size is small (n <= 1), we implement inline schoolbook multiplication

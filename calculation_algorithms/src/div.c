@@ -1,23 +1,35 @@
 #include "../header/div.h"
 
-/* SIMPLE ALGORITHMS */
-void __BIGINT_SHORT_DIVISION__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem) {}
-void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem) {
+
+//* NOTE: +) THE WORKSPACE SIZE FUNCTION IS A SAFE UPPERBOUND
+//*       +) THE WORKSPACE SIZE FUNCTION DOES NOT COMPUTE EXACTLY THE 
+//*          CORRECT SIZE WITH CORRECT ALIGNMENT PADDINGS TAKEN INTO ACCOUNT
+
+
+size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size) {}
+void __BIGINT_SHORT_DIVISION__(
+    const bigInt *a, const bigInt *b, 
+    bigInt *quot, bigInt *rem, calc_ctx short_divctx
+) {}
+
+size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
+    size_t raw_size = a_size + 1 + b_size;
+    return raw_size + 2 * alignof(max_align_t);
+    // Ensure a safe upperbound for 
+    // alignmnent paddings of the 2 objects
+} 
+void __BIGINT_KNUTH_D__(
+    const bigInt *a, const bigInt *b,
+     bigInt *quot, bigInt *rem, calc_ctx knuth_ctx
+) {
     // Setup
     uint8_t shift = __CLZ_UI64__(b->limbs[b->n - 1]);
     size_t m = a->n, n = b->n;
-    static local_thread dnml_arena _KNUTH_ARENA;
-    static local_thread bool _KNUTH_INITIATED_ = false;
-    if (!_KNUTH_INITIATED_) {
-        // For convenient abundance in storage
-        init_arena(&_KNUTH_ARENA, BYTES_IN_UINT64_T * (m + 1 + n) * 10);
-        _KNUTH_INITIATED_ = true;
-    }
 
-    size_t a_mark = arena_mark(&_KNUTH_ARENA); 
-    limb_t *a_limbs = arena_alloc(&_KNUTH_ARENA, BYTES_IN_UINT64_T * (m + 1));
-    limb_t *b_limbs = arena_alloc(&_KNUTH_ARENA, BYTES_IN_UINT64_T * (n));
-    size_t b_mark = arena_mark(&_KNUTH_ARENA) - (BYTES_IN_UINT64_T * n); // Get the aligned offset
+    size_t a_mark = scratch_mark(&knuth_ctx); 
+    limb_t *a_limbs = scratch_alloc(&knuth_ctx, BYTES_IN_UINT64_T * (m + 1));
+    limb_t *b_limbs = scratch_alloc(&knuth_ctx, BYTES_IN_UINT64_T * (n));
+    size_t b_mark = scratch_mark(&knuth_ctx) - (BYTES_IN_UINT64_T * n); // Get the aligned offset
     bigInt a_copy = {
         .limbs = a_limbs,           
         .cap   = m + 1,             //  +)  Arena Allocation
@@ -157,14 +169,29 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
     rem->n = n;
     __BIGINT_INTERNAL_TRIM_LZ__(quot);      /**/     __BIGINT_INTERNAL_TRIM_LZ__(rem);
     if (quot->n == 0) quot->sign = 1;       /**/     if (rem->n == 0) rem->sign = 1;
-
-    arena_reset(&_KNUTH_ARENA, b_mark); // Free b_copy
-    arena_reset(&_KNUTH_ARENA, a_mark); // Free a_copy
+    scratch_reset(&knuth_ctx, b_mark); // Free b_copy
+    scratch_reset(&knuth_ctx, a_mark); // Free a_copy
 }
-void __BIGINT_NEWTON_RECIPROCAL__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem) {}
-void __BIGINT_DIVMOD_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem) {
-    if (b->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, b, quot, rem);
-    if (b->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, b, quot, rem);
-    else __BIGINT_NEWTON_RECIPROCAL__(a, b, quot, rem);
+
+size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}
+void __BIGINT_NEWTON_RECIPROCAL__(
+    const bigInt *a, const bigInt *b, 
+    bigInt *quot, bigInt *rem, calc_ctx newton_divctx
+) {}
+
+
+
+size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size) {
+    if      (b_size < BIGINT_SHORT) return __BIGINT_SHORTDIV_WS__(a_size, b_size);
+    else if (b_size < BIGINT_KNUTH) return __BIGINT_KNUTH_WS__(a_size, b_size);
+    else __BIGINT_NEWTON_WS__(a_size, b_size);
+} 
+void __BIGINT_DIVMOD_DISPATCH__(
+    const bigInt *a, const bigInt *b, 
+    bigInt *quot, bigInt *rem, calc_ctx div_ctx
+) {
+    if      (b->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, b, quot, rem, div_ctx);
+    else if (b->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, b, quot, rem, div_ctx);
+    else __BIGINT_NEWTON_RECIPROCAL__(a, b, quot, rem, div_ctx);
 }
 
