@@ -8,7 +8,7 @@ size_t __BIGINT_CMODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
     size_t fcall_size = max(
         __BIGINT_MUL_WS__(a_size, b_size),
         __BIGINT_MOD_WS__((a_size + b_size), mod_size)
-    ); return raw_size + fcall_size;
+    ); return raw_size + fcall_size + (2*alignof(max_align_t));
 }
 size_t __BIGINT_MONTMUL_WS__(size_t a_size, size_t b_size, mont_ctx ctx) {
     size_t raw_size = (2*ctx.k + 1) * BYTES_IN_UINT64_T;
@@ -19,7 +19,7 @@ size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_si
     size_t raw_size = (base_size + 2*mod_size + pow_size) * BYTES_IN_UINT64_T;
     size_t fcall_size = max(__BIGINT_MOD_WS__(base_size, mod_size), 
                             __BIGINT_CMODMUL_WS__(mod_size, mod_size, mod_size));
-    return raw_size + fcall_size;
+    return raw_size + fcall_size + (4*alignof(max_align_t));
 }
 size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     // Binary ModExp's objects
