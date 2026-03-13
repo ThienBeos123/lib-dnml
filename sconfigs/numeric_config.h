@@ -40,10 +40,21 @@
 #define BIGINT_LEHMER               2048
 #define BIGINT_HALF_GCD             2048
 
-/* Modular Inverse */
-#define BIGINT_XEUCLID              256
-#define BIGINT_BINARY_XGCD          2048
-#define BIGINT_HALF_XGCD            2048
+/* Modular Arithmetic */
+typedef enum {
+    // Modular Multiplication
+    BIGINT_CLASSICAL    = 8,
+    BIGINT_MONTGOMERY,
+    // Modular Exponentiation
+    BIGINT_MOD_BINARY   = 8,
+    BIGINT_MONT_BINARY  = 512,
+    BIGINT_MOD_SLIDING,
+    //todo MODULAR SQUARES HERE
+    // Modular Inverse
+    BIGINT_XEUCLID          = 256,
+    BIGINT_BINARY_XGCD      = 2048,
+    BIGINT_HALF_XGCD        = 2048
+} MOD_ARITHMETIC_THRESHOLDS
 
 /* Primality Testing */
 #define TRIAL_DIVISION              207936

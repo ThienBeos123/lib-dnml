@@ -28,7 +28,6 @@ size_t __BIGINT_BARETT_WS__(size_t a_size, size_t n_size) {
              + acopy_size + additional_size 
              + max_align + mul_divmod_size);
 }
-size_t __BIGINT_REDC_WS__(mont_ctx ctx) { return (2*ctx.k) * BYTES_IN_UINT64_T; }
 size_t __BIGINT_MOD_WS__(size_t a_size, size_t n_size) {
     if (n_size < BIGINT_SHORT) return __BIGINT_SHORTDIV_WS__(a_size, n_size);
     else if (n_size < BIGINT_KNUTH) return __BIGINT_KNUTH_WS__(a_size, n_size);
@@ -82,23 +81,20 @@ void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem, calc_ctx b
     while (__BIGINT_INTERNAL_COMP__(&a_copy, n) >= 0) __BIGINT_INTERNAL_SUB__(&a_copy, n);
     __BIGINT_INTERNAL_COPY__(rem, &a_copy); scratch_reset(&barett_ctx, barett_mark);
 }
-void __BIGINT_MONT_REDC__(const bigInt *t, mont_ctx mredc_ctx, bigInt *rem, calc_ctx redc_ctx) {
-    uint64_t m = t->limbs[0] * mredc_ctx.nprime, carry = 0;
-    size_t mont_redc_mark = scratch_mark(&redc_ctx);
-    limb_t *tmp_tlimbs = scratch_alloc(&redc_ctx, (2*mredc_ctx.k) * BYTES_IN_UINT64_T);
-    bigInt tmp_t = {.limbs = tmp_tlimbs, .n = 0, .cap = 2*mredc_ctx.k, .sign = 1};
+void __BIGINT_MONT_REDC__(bigInt *t, mont_ctx mredc_ctx, bigInt *rem, calc_ctx redc_ctx) {
+    uint64_t m, carry = 0;
     // Loop basically cancels k lowest limbs
     for (size_t i = 0; i < mredc_ctx.k; ++i) {
-        uint64_t lo, hi;
+        uint64_t lo, hi; m = t->limbs[i] * mredc_ctx.nprime;
         lo = __MUL_UI64__(mredc_ctx.n->limbs[i], m, &hi);
-        tmp_t.limbs[i] = __ADD_UI64__(t->limbs[i], lo + carry, &carry);
+        t->limbs[i] = __ADD_UI64__(t->limbs[i], lo + carry, &carry);
         carry += hi;
-    } tmp_t.limbs[mredc_ctx.k] += carry;
+    } t->limbs[mredc_ctx.k] += carry;
     // Right Limb Shift by k  --  t +>> k (+>> or +<< means LIMB SHIFT)
-    memcpy(&tmp_t.limbs[0], &t->limbs[mredc_ctx.k - 2], (mredc_ctx.k + 1) * BYTES_IN_UINT64_T);
-    tmp_t.n = mredc_ctx.k + 1; // From 2k + 1 (upperbound) ---> k + 1 (from the limb shift)
-    if (__BIGINT_INTERNAL_COMP__(&tmp_t, mredc_ctx.n) > 0) __BIGINT_INTERNAL_SUB__(&tmp_t, mredc_ctx.n);
-    __BIGINT_INTERNAL_COPY__(rem, &tmp_t); scratch_reset(&mredc_ctx, mont_redc_mark);
+    memcpy(&t->limbs[0], &t->limbs[mredc_ctx.k], (mredc_ctx.k) * BYTES_IN_UINT64_T);
+    t->n = mredc_ctx.k + 1; // From 2k + 1 (upperbound) ---> k + 1 (from the limb shift)
+    if (__BIGINT_INTERNAL_COMP__(t, mredc_ctx.n) > 0) __BIGINT_INTERNAL_SUB__(t, mredc_ctx.n);
+    __BIGINT_INTERNAL_COPY__(rem, t);
 }
 void __BIGINT_MOD_DISPATCH__(
     const bigInt *a, const bigInt *n, 

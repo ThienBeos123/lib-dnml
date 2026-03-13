@@ -21,7 +21,6 @@ extern "C" {
 #include "div.h"
 #include "mul.h"
 size_t __BIGINT_BARETT_WS__(size_t a_size, size_t n_size);
-size_t __BIGINT_REDC_WS__(mont_ctx ctx);
 size_t __BIGINT_MOD_WS__(size_t a_size, size_t n_size);
 void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem, calc_ctx barett_ctx);
 void __BIGINT_MONT_REDC__(const bigInt *t, mont_ctx mredc_ctx, bigInt *rem, calc_ctx redc_ctx);

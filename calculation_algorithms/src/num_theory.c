@@ -109,7 +109,7 @@ uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base) {
     
     // 1st test: a^d mod(n)
     bigInt x; __BIGINT_INTERNAL_LINIT__(&x, n->n);
-    __BIGINT_BINARY_MODEXP__(&x, n, base, &d);
+    __BIGINT_MODEXP_DISPATCH__(&x, n, base, &d);
     if (x.n == 1 && x.limbs[0] == 1) prim_status = 1; // a^d mod(n) = 1
     else if (!__BIGINT_INTERNAL_COMP__(&x, &n_minus_one)) prim_status = 1; // a^d mod(n) = n - 1
 
@@ -121,10 +121,8 @@ uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base) {
             else if (!__BIGINT_INTERNAL_COMP__(&x, &n_minus_one)) { prim_status = 1; break; }
         }
     } else {
-        mont_ctx mrabin_ctx = {
-            .n = n,     /**/    .nprime = __MODINV_UI64__(n->limbs[0]),
-            .k = n->n,  /**/
-        }; bigInt r, r_mod_n, tmp;
+        mont_ctx mrabin_ctx = {.n = n, .nprime = __MODINV_UI64__(n->limbs[0]), .k = n->n}; 
+        bigInt r, r_mod_n, tmp;
         __BIGINT_INTERNAL_LINIT__(&r, n->n + 1);
         __BIGINT_INTERNAL_LINIT__(&r_mod_n, n->n);
         __BIGINT_INTERNAL_LINIT__(&tmp, n->n + 1);

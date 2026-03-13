@@ -171,17 +171,16 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
     return remainder;
 }
 void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y) {}
-void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k) {
+inline void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k) {
     if (!k) return;
     uint64_t discarded_bits = 0;
     for (size_t i = 0; i < x->n; ++i) {
         uint64_t positioned_bits = discarded_bits << (BITS_IN_UINT64_T - k);
         discarded_bits = x->limbs[i] & ((1U << k) - 1);
         x->limbs[i] = (x->limbs[i] >> k) | positioned_bits;
-    }
-    __BIGINT_INTERNAL_TRIM_LZ__(x);
+    } __BIGINT_INTERNAL_TRIM_LZ__(x);
 }
-void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k) {
+inline void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k) {
     if (!k) return;
     uint64_t discarded_bits = 0;
     for (size_t i = 0; i < x->n; ++i) {
@@ -189,10 +188,9 @@ void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k) {
         uint64_t iso_mask = (1U << k) - 1;
         discarded_bits = x->limbs[i] & (iso_mask << BITS_IN_UINT64_T - k);
         x->limbs[i] = (x->limbs[i] << k) | previous_dbits;
-    }
+    } __BIGINT_INTERNAL_TRIM_LZ__(x);
 }
-void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t limb) {}
-void __BIGINT_INTERNAL_LLSHIFT__(bigInt *x, size_t limb) {}
+
 
 
 
