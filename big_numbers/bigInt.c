@@ -1462,18 +1462,32 @@ static void __BIGINT_MAGNITUDED_DIVMOD_UI64__(
 /* --------------- MAGNITUDED CORE NUMBER-THEORETIC ---------------- */
 inline uint64_t ___GCD_UI64___(uint64_t a, uint64_t b) { return __BIGINT_EUCLID__(a, b); }
 static void __BIGINT_MAGNITUDED_GCD__(bigInt *res, const bigInt *a, const bigInt *b) {
-    __BIGINT_GCD_DISPATCH__(res, a, b);
+    dnml_arena *_DASI_MAGGCD_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGGCD_ARENA, __BIGINT_GCD_WS__(a->n, b->n));
+    calc_ctx _maggcd_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state = _DASI_MAGGCD_ARENA
+    }; __BIGINT_GCD_DISPATCH__(res, a, b, _maggcd_ctx);
 }
 static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b) {
     dnml_arena *_DASI_MAGLCM_ARENA = _USE_ARENA();
-    size_t gcdres_mark = arena_mark(_DASI_MAGLCM_ARENA);
+    dnml_arena *_DASI_MAGLCM_LARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGLCM_LARENA, __BIGINT_GCD_WS__(a->n, b->n));
+    calc_ctx _maglcm_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state = _DASI_MAGLCM_LARENA
+    }; size_t gcdres_mark = arena_mark(_DASI_MAGLCM_ARENA);
     limb_t *gcdres_limbs = arena_alloc(_DASI_MAGLCM_ARENA, min(a->n, b->n));
     size_t tmp_mark = arena_mark(_DASI_MAGLCM_ARENA);
     limb_t *tmp_limbs = arena_alloc(_DASI_MAGLCM_ARENA, min(a->n, b->n));
     gcdres_limbs = _DASI_MAGLCM_ARENA->base += gcdres_mark;
     bigInt gcd_res = { .limbs = gcdres_limbs, /**/ .n = 0, /**/ .cap = min(a->n, b->n) }; 
     bigInt temp_rem = { .limbs = tmp_limbs, /**/ .n = 0, /**/ .cap = min(a->n, b->n) }; 
-    __BIGINT_GCD_DISPATCH__(&gcd_res, a, b);
+    __BIGINT_GCD_DISPATCH__(&gcd_res, a, b, _maglcm_ctx);
     __BIGINT_MAGNITUDED_DIVMOD__(res, &temp_rem, a, &gcd_res);
     __BIGINT_MAGNITUDED_MUL__(&gcd_res, res, b);
     __BIGINT_MUT_COPY__(res, gcd_res);

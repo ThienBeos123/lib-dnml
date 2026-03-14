@@ -31,10 +31,10 @@ size_t __BIGINT_HALF_WS__(size_t u_size, size_t v_size);
 size_t __BIGINT_GCD_WS__(size_t u_size, size_t v_size);
 /* GCD - ALGORITHMS */
 uint64_t __BIGINT_EUCLID__(uint64_t u, uint64_t v);
-void __BIGINT_STEIN__(const bigInt *u, const bigInt *v, bigInt *res);
-void __BIGINT_LEHMER__(const bigInt *u, const bigInt *v, bigInt *res);
-void __BIGINT_HALF__(const bigInt *u, const bigInt *v, bigInt *res);
-void __BIGINT_GCD_DISPATCH__(const bigInt *u, const bigInt *v, bigInt *res);
+void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx stein_ctx);
+void __BIGINT_LEHMER__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx lehmer_ctx);
+void __BIGINT_HALF__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx half_ctx);
+void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx gcd_ctx);
 
 
 

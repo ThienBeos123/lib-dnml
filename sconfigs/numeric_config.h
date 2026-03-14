@@ -34,33 +34,35 @@
 #define BIGINT_BARETT               512 // n < 512            MOD
 #define BIGINT_NEWTON               512 // n >= 512     DIV + MOD
 
-/* GCD - Greatest Common Divisor */
-#define BIGINT_EUCLID               1
-#define BIGINT_STEIN                512
-#define BIGINT_LEHMER               2048
-#define BIGINT_HALF_GCD             2048
+typedef enum {
+    /* GCD - Greatest Common Divisor */
+    BIGINT_EUCLID           = 1,
+    BIGINT_STEIN            = 512,
+    BIGINT_LEHMER           = 2048,
+    BIGINT_HALF_GCD,
+
+    /* Primality Testing */
+    TRIAL_DIVISION          = 207936,
+    DETERMINISTIC_MR        = 207936,
+    MIXED_MAIN              = 1, // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
+    ECPP                    = 0, // PROOF OF PRIMALITY ONLY
+} NUM_THEORY_THRESHOLDS;
 
 /* Modular Arithmetic */
 typedef enum {
-    // Modular Multiplication
+    /* Modular Multiplication */
     BIGINT_CLASSICAL    = 8,
     BIGINT_MONTGOMERY,
-    // Modular Exponentiation
+    /* Modular Exponentiation */
     BIGINT_MOD_BINARY   = 8,
     BIGINT_MONT_BINARY  = 512,
     BIGINT_MOD_SLIDING,
     //todo MODULAR SQUARES HERE
-    // Modular Inverse
+    /* Modular Inverse */
     BIGINT_XEUCLID          = 256,
     BIGINT_BINARY_XGCD      = 2048,
     BIGINT_HALF_XGCD        = 2048
-} MOD_ARITHMETIC_THRESHOLDS
-
-/* Primality Testing */
-#define TRIAL_DIVISION              207936
-#define DETERMINISTIC_MR            207936
-#define MIXED_MAIN                  1 // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
-#define ECPP                        0 // PROOF OF PRIMALITY ONLY
+} MOD_ARITHMETIC_THRESHOLDS;
 
 #define MRROUNDS_DNML               5 // Dynamol - Scientific Calculation
 #define MRROUNDS_DBEDDED            5 // dBedded - Embedded Development
