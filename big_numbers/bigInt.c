@@ -2133,7 +2133,24 @@ bigInt __BIGINT_LCM__(const bigInt x, const bigInt y) {
         __BIGINT_MAGNITUDED_LCM__(&res, &x, &y);
     } return res;
 }
-bool __BIGINT_IS_PRIME__(const bigInt x) { return (bool)(__BIGINT_PTEST_DISPATCH__(&x)); }
+bool __BIGINT_IS_PRIME__(const bigInt x) { 
+    if (x.sign == -1) return false;
+    if (x.n == 1) { uint64_t val = x.limbs[0];
+        if (val <= 1) return false;
+        else if (val == 2 || val == 3 || val == 5) return true;
+        else if (!(val & 1) || val % 3 == 0 || val % 5 == 0) return false;
+    } else { if (!(x.limbs[0] & 1)) return true;
+        else if (x.limbs[0] % 10 == 5 || !(x.limbs[0] % 10)) return true;
+    }
+    dnml_arena *_DASI_LPRIME_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_LPRIME_ARENA, __BIGINT_PTEST_WS__(x.n));
+    calc_ctx _isprime_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_LPRIME_ARENA
+    }; return (bool)(__BIGINT_PTEST_DISPATCH__(&x, _isprime_ctx));
+}
 /* ---------------- Modular Reduction ---------------- */
 dnml_status __BIGINT_MUT_MODULO_UI64__(bigInt *x, uint64_t modulus) {
     assert(__BIGINT_PVALIDATE__(x));
