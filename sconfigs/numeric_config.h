@@ -22,17 +22,21 @@
 #define DASI_DC_PARSE            750 // digits > 750
 
 /* Multiplication */
-#define BIGINT_SCHOOLBOOK           64
-#define BIGINT_KARATSUBA            256
-#define BIGINT_TOOM                 1024
-#define BIGINT_SSA                  1024
+typedef enum {
+    BIGINT_SCHOOLBOOK       = 64,
+    BIGINT_KARATSUBA        = 256,
+    BIGINT_TOOM             = 1024,
+    BIGINT_SSA              = 1024,
+} MUL_THRESHOLDS;
 
 /* Division + Euclidean Modulo */
-#define BIGINT_SHORT                1   // n < 1        DIV + MOD
-#define BIGINT_KNUTH                64  // n < 64       DIV + MOD
-#define BIGINT_BURNIKEL             512 // n < 512      DIV
-#define BIGINT_BARETT               512 // n < 512            MOD
-#define BIGINT_NEWTON               512 // n >= 512     DIV + MOD
+typedef enum {
+    BIGINT_SHORT                = 1,   // n < 1        DIV + MOD
+    BIGINT_KNUTH                = 64,  // n < 64       DIV + MOD
+    BIGINT_BURNIKEL             = 512, // n < 512      DIV
+    BIGINT_BARETT               = 512, // n < 512            MOD
+    BIGINT_NEWTON               = 512, // n >= 512     DIV + MOD
+} DIV_THRESHOLDS;
 
 typedef enum {
     /* GCD - Greatest Common Divisor */
