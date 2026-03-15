@@ -23,17 +23,19 @@ size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_si
 }
 size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     // Binary ModExp's objects
-    size_t rsize = (mod_size + 1) * BYTES_IN_UINT64_T;
-    size_t rmodn_size = mod_size * BYTES_IN_UINT64_T;
-    size_t tmp_size = 2*mod_size * BYTES_IN_UINT64_T;
-    size_t tmp_comps = 3*mod_size * BYTES_IN_UINT64_T;
+    size_t max_tsize = max(2*mod_size, max(base_size, pow_size));
+    size_t rsize_tmpsize = max_tsize;
+    size_t rmodn_size = mod_size;
+    size_t ressize_basesize = 2*mod_size;
+    size_t tmpexp_size = pow_size;
     // Low-level Function Stackframe
     size_t max_frame = max(__BIGINT_MONTMUL_WS__(mod_size, mod_size, (mont_ctx){.k = mod_size}), 
                            max(__BIGINT_MUL_WS__(rmodn_size, rmodn_size),
-                               __BIGINT_MOD_WS__(rsize, mod_size)));
-    return (rsize + rmodn_size + tmp_size 
-          + tmp_comps + max_frame 
-          + (7 * alignof(max_align_t)));
+                               max(__BIGINT_MOD_WS__(max_tsize, mod_size),
+                                   __BIGINT_MOD_WS__(max_tsize, mod_size))));
+    return ((rsize_tmpsize + rmodn_size 
+          + ressize_basesize + + tmpexp_size 
+          + max_frame) * BYTES_IN_UINT64_T) + (7 * alignof(max_align_t));
 }
 void __BIGINT_CLASSICAL_MODMUL__(
     const bigInt *a, const bigInt *b, 
@@ -99,14 +101,15 @@ void __BIGINT_MBIN_MODEXP__(
         .nprime = __MODINV_UI64__(modulus->limbs[0]),
         .k      = modulus->n
     }; size_t binexp_mark = scratch_mark(&binexp_ctx), max_tsize = max(2*modulus->n, max(base->n, power->n));
-    limb_t *rlimbs = scratch_alloc(&binexp_ctx, (modulus->n + 1) * BYTES_IN_UINT64_T);
-    limb_t *rmodn_limbs = scratch_alloc(&binexp_ctx, modulus->n * BYTES_IN_UINT64_T);
-    limb_t *tmp_limbs = scratch_alloc(&binexp_ctx, max_tsize * BYTES_IN_UINT64_T);
+    limb_t *rlimbs = scratch_alloc(&binexp_ctx,         max_tsize * BYTES_IN_UINT64_T);
+    limb_t *rmodn_limbs = scratch_alloc(&binexp_ctx,    modulus->n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = scratch_alloc(&binexp_ctx,      max_tsize * BYTES_IN_UINT64_T);
     bigInt r = {.limbs = rlimbs, .sign = 1,               /**/    .n = modulus->n + 1, .cap = modulus->n + 1};
     bigInt r_mod_n = {.limbs = rmodn_limbs, .sign = 1,    /**/    .n = 0, .cap = modulus->n};
     bigInt tmp = {.limbs = tmp_limbs, .sign = 1,          /**/    .n = 0, .cap = modulus->n + 1};
     r.limbs[modulus->n] = 1; __BIGINT_MOD_DISPATCH__(&r, modulus, &r_mod_n, &tmp, binexp_ctx);
     __BIGINT_MUL_DISPATCH__(&r_mod_n, &r_mod_n, &tmp, binexp_ctx);
+    __BIGINT_MOD_DISPATCH__(&tmp, modulus, &tmp, &r, binexp_ctx);
     modexp_contx.r2 = &tmp;
 
     //* ----- 2. MAIN LOOP ----- *//

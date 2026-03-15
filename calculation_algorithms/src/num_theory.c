@@ -82,16 +82,16 @@ size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
     // Main, raw Miller-Rabin size
     // Obj_count also accounts for the function call workspace
     size_t obj_count = 4, additional_size;
-    size_t mrabin_setup_size = 2*n_size * BYTES_IN_UINT64_T;
-    size_t x_size = n_size * BYTES_IN_UINT64_T, max_fcall;
+    size_t mrabin_setup_size = 2*n_size;
+    size_t x_size = n_size, max_fcall;
     // Branching of Algorithm Dispatch (MODMULs)
     if (likely(n_size > BIGINT_CLASSICAL)) { obj_count += 3;
-        size_t rlimbs_size = (n_size + 1) * BYTES_IN_UINT64_T;
-        size_t rmodn_size = n_size * BYTES_IN_UINT64_T;
-        size_t tmp_size = 2*n_size * BYTES_IN_UINT64_T;
+        size_t rlimbs_size = 2*n_size;
+        size_t rmodn_size = n_size;
+        size_t tmp_size = 2*n_size;
         additional_size = rlimbs_size + rmodn_size + tmp_size;
         size_t zdomain_funcs = max(
-            __BIGINT_MOD_WS__(rlimbs_size, n_size),
+            __BIGINT_MOD_WS__(n_size + 1, n_size),
             max(__BIGINT_MUL_WS__(rmodn_size, rmodn_size),
                 __BIGINT_MOD_WS__(tmp_size, n_size))
         ); size_t outer_montmuls = max(
@@ -105,7 +105,8 @@ size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
         __BIGINT_CMODMUL_WS__(n_size, n_size, n_size)
     );
     max_fcall = max(max_fcall, __BIGINT_MODEXP_WS__(base_size, n_size, n_size));
-    return mrabin_setup_size + x_size + additional_size + max_fcall + (obj_count * alignof(max_align_t));
+    return ((mrabin_setup_size + x_size + additional_size) * BYTES_IN_UINT64_T)
+           + max_fcall + (obj_count * alignof(max_align_t));
 }
 size_t __BIGINT_BPSW_WS__(size_t n_size) {}
 size_t __BIGINT_ECPP_WS__(size_t n_size) {}
