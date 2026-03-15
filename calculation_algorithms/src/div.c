@@ -14,10 +14,8 @@ void __BIGINT_SHORT_DIVISION__(
 
 size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
     size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
-    return raw_size + 2 * alignof(max_align_t);
-    // Ensure a safe upperbound for 
-    // alignmnent paddings of the 2 objects
-} 
+    return raw_size + alignof(max_align_t);
+}
 void __BIGINT_KNUTH_D__(
     const bigInt *a, const bigInt *b,
      bigInt *quot, bigInt *rem, calc_ctx knuth_ctx

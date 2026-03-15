@@ -24,10 +24,8 @@ size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_si
 size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     // Binary ModExp's objects
     size_t max_tsize = max(2*mod_size, max(base_size, pow_size));
-    size_t rsize_tmpsize = max_tsize;
-    size_t rmodn_size = mod_size;
-    size_t ressize_basesize = 2*mod_size;
-    size_t tmpexp_size = pow_size;
+    size_t rsize_tmpsize = max_tsize, rmodn_size = mod_size;
+    size_t ressize_basesize = 2*mod_size, tmpexp_size = pow_size;
     // Low-level Function Stackframe
     size_t max_frame = max(__BIGINT_MONTMUL_WS__(mod_size, mod_size, (mont_ctx){.k = mod_size}), 
                            max(__BIGINT_MUL_WS__(rmodn_size, rmodn_size),
@@ -35,7 +33,7 @@ size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_s
                                    __BIGINT_MOD_WS__(max_tsize, mod_size))));
     return ((rsize_tmpsize + rmodn_size 
           + ressize_basesize + + tmpexp_size 
-          + max_frame) * BYTES_IN_UINT64_T) + (7 * alignof(max_align_t));
+          + max_frame) * BYTES_IN_UINT64_T) + (6 * alignof(max_align_t));
 }
 void __BIGINT_CLASSICAL_MODMUL__(
     const bigInt *a, const bigInt *b, 
@@ -83,11 +81,9 @@ void __BIGINT_BIN_MODEXP__(
     while (tmp_exp.n > 0) {
         if (tmp_exp.limbs[0] & 1) {
             __BIGINT_CLASSICAL_MODMUL__(&tmp_res, &tmp_base, modulus, &tmp_res, binexp_ctx);
-        } 
-        __BIGINT_CLASSICAL_MODMUL__(&tmp_base, &tmp_base, modulus, &tmp_base, binexp_ctx);
+        } __BIGINT_CLASSICAL_MODMUL__(&tmp_base, &tmp_base, modulus, &tmp_base, binexp_ctx);
         __BIGINT_INTERNAL_RSHIFT__(&tmp_exp, 1);
-    }
-    __BIGINT_INTERNAL_COPY__(res, &tmp_res); 
+    } __BIGINT_INTERNAL_COPY__(res, &tmp_res); 
     scratch_reset(&binexp_ctx, binexp_mark);
 
 }

@@ -2,31 +2,31 @@
 
 /* ----------------- BigInt ----------------- */
 size_t __BIGINT_BARETT_WS__(size_t a_size, size_t n_size) {
-    uint8_t object_count = 5;
+    uint8_t object_count = 7;
     // Precomputation Temporaries
-    size_t numlimbs_size = (2 * n_size + 1) * BYTES_IN_UINT64_T;
-    size_t prelimbs_size = (2 * n_size + 1) * BYTES_IN_UINT64_T;
-    size_t tmp_size = n_size * BYTES_IN_UINT64_T;
+    size_t numlimbs_size = (2 * n_size + 1);
+    size_t prelimbs_size = (2 * n_size + 1);
+    size_t tmp_size = n_size;
     // Numerator Calculation Temporaries
-    size_t aaslimbs_size = (a_size - n_size + 1) * BYTES_IN_UINT64_T;
-    size_t anumerator_size = (a_size + n_size + 2) * BYTES_IN_UINT64_T;
+    size_t aaslimbs_size = (a_size - n_size + 1);
+    size_t anumerator_size = (a_size + n_size + 2);
     // Final Calculation Temporaries
-    size_t acopy_size = a_size * BYTES_IN_UINT64_T;
+    size_t acopy_size = a_size;
     size_t additional_size = 0;
     if (likely((2 * n_size + 1) < (a_size + 1))) {
-        ++object_count; additional_size = (a_size + 1) * BYTES_IN_UINT64_T;
+        ++object_count; additional_size = (a_size + 1);
     }
     // Paddings & Low-level Arenas
-    size_t max_align = object_count * alignof(max_align_t);
+    size_t max_align = (object_count - 1) * alignof(max_align_t);
     size_t mul_divmod_size = max(
         __BIGINT_MUL_WS__(anumerator_size, n_size), max(
             __BIGINT_MUL_WS__(aaslimbs_size, prelimbs_size), 
             __BIGINT_DIVMOD_WS__(&numlimbs_size, n_size)
         )
-    ); return (numlimbs_size + prelimbs_size + tmp_size 
-             + aaslimbs_size + anumerator_size 
-             + acopy_size + additional_size 
-             + max_align + mul_divmod_size);
+    ); return ((numlimbs_size + prelimbs_size + tmp_size 
+              + aaslimbs_size + anumerator_size 
+              + acopy_size + additional_size) * BYTES_IN_UINT64_T)
+              + max_align + mul_divmod_size;
 }
 size_t __BIGINT_MOD_WS__(size_t a_size, size_t n_size) {
     if (n_size < BIGINT_SHORT) return __BIGINT_SHORTDIV_WS__(a_size, n_size);
