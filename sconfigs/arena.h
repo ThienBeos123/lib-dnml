@@ -1,14 +1,12 @@
 #ifndef __DNML_ARENA_H__
 #define __DNML_ARENA_H__
 
-#include <stdint.h>
-#include <stddef.h>
+
 #include <stdalign.h>
-#include <stdlib.h>
+#include "../system/include.h"
 #include "../system/compiler.h"
 
 //* ============= Declarations =============
-typedef uint64_t max_align_t;
 typedef struct {
     uint8_t *base;
     size_t  cap;
@@ -50,11 +48,10 @@ static inline size_t arena_grow(dnml_arena *a, size_t min_cap) {
     return new_cap;
 }
 static inline void *arena_alloc(dnml_arena *a, size_t space) {
-    size_t align = alignof(max_align_t);
-    size_t aligned_offset = align_forward(a->offset, align);
+    size_t aligned_offset = align_forward(a->offset, alignof(max_align_t));
     size_t new_offset = aligned_offset + space;
 
-    arena_grow(a, new_offset);
+    if (new_offset > a->cap) return NULL; // Swiftly prevents further operation through segfault.
     void *ptr = a->base + aligned_offset;
     a->offset = new_offset;
     return ptr;

@@ -1,15 +1,9 @@
 #ifndef DNML_CTX
 #define DNML_CTX
 
-#include "../../system/include.h"
-#include "../../system/compiler.h"
-#include "../../sconfigs/arena.h"
-#include "../../sconfigs/numeric_config.h"
-
-#include "../../intrinsics/intrinsics.h"
-#include "../../intrinsics/limb_math.h"
-#include "../../internal_utils/util.h"
-#include "../../big_numbers/bigNums.h"
+#include <stdalign.h>
+#include "../system/include.h"
+#include "../big_numbers/bigNums.h"
 
 typedef struct {
     const bigInt* n;
