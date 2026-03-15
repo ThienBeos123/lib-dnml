@@ -1,12 +1,5 @@
 #include "util.h"
 
-static local_thread dnml_arena _DASI_UTILS_ARENA;
-static inline dnml_arena* _USE_ARENA(void) {
-    // Support 512 limbs (the gold standard)
-    if (_DASI_UTILS_ARENA.base = NULL) init_arena(&_DASI_UTILS_ARENA, 4096);
-    return &_DASI_UTILS_ARENA;
-}
-
 /* Constructors and Destructors */
 inline void __BIGINT_INTERNAL_EMPINIT__(bigInt *x) {
     x->limbs = malloc(sizeof(uint64_t));
@@ -90,17 +83,15 @@ inline void __BIGINT_INTERNAL_ZSET__(bigInt *x) {
     x->n    = 0;
     x->sign = 1;
 }
-inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y) {
-    dnml_arena *buf_arena = _USE_ARENA();
-    size_t tmp_mark = arena_mark(buf_arena);
-    limb_t *tmp_buf = arena_alloc(buf_arena, y->n * BYTES_IN_UINT64_T);
-    __BIGINT_INTERNAL_ENSCAP__(x, y->n);
-    __BIGINT_INTERNAL_ENSCAP__(y, x->n);
+inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y, calc_ctx swap_ctx) {
+    size_t tmp_mark = scratch_mark(&swap_ctx);
+    limb_t *tmp_buf = scratch_alloc(&swap_ctx, y->n * BYTES_IN_UINT64_T);
     memcpy(tmp_buf, y->limbs, y->n * BYTES_IN_UINT64_T);
     memcpy(y->limbs, x->limbs, x->n * BYTES_IN_UINT64_T);
     memcpy(x->limbs, tmp_buf, y->n * BYTES_IN_UINT64_T);
-    arena_reset(buf_arena, tmp_mark); tmp_buf = NULL;
+    scratch_reset(&swap_ctx, tmp_mark); tmp_buf = NULL;
 }
+size_t __BIGINT_ISWAP_WS__(size_t y_size) { return y_size * BYTES_IN_UINT64_T; }
 size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base) {
     size_t first_few_bits = (x->n - 1) * BIGINT_LIMBS_BITS;
     size_t bits_per_digit;
@@ -190,7 +181,8 @@ inline void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k) {
         x->limbs[i] = (x->limbs[i] << k) | previous_dbits;
     } __BIGINT_INTERNAL_TRIM_LZ__(x);
 }
-
+inline void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t klimbs) {}
+inline void __BIGINT_INTERNAL_LLSHIFT__(bigInt *x, size_t klimbs) {}
 
 
 

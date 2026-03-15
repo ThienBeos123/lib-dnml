@@ -21,7 +21,7 @@ size_t __BIGINT_BARETT_WS__(size_t a_size, size_t n_size) {
     size_t mul_divmod_size = max(
         __BIGINT_MUL_WS__(anumerator_size, n_size), max(
             __BIGINT_MUL_WS__(aaslimbs_size, prelimbs_size), 
-            __BIGINT_DIVMOD_WS__(&numlimbs_size, n_size)
+            __BIGINT_DIVMOD_WS__(numlimbs_size, n_size)
         )
     ); return ((numlimbs_size + prelimbs_size + tmp_size 
               + aaslimbs_size + anumerator_size 

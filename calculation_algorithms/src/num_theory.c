@@ -8,7 +8,8 @@ static const uint32_t dmr_bases[7] = {
 
 //* ======== GCD - WORKSPACE RETURNER ======== */
 size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { 
-    return ((u_size + v_size) * BYTES_IN_UINT64_T) 
+    return ((u_size + v_size) * BYTES_IN_UINT64_T)
+          + __BIGINT_ISWAP_WS__(max(u_size, v_size));
           + alignof(max_align_t); 
 }
 size_t __BIGINT_LEHMER_WS__(size_t u_size, size_t v_size) {}
@@ -38,13 +39,13 @@ void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx st
     else if (v->n == 0) { __BIGINT_INTERNAL_COPY__(res, u); return; }
 
     // Setup - Identity #2 - gcd(2u, 2v) = gcd(u, v)
-    size_t stein_mark = scratch_mark(&stein_ctx);
-    limb_t *ucopy_limbs = scratch_alloc(&stein_ctx, u->n * BYTES_IN_UINT64_T);
-    limb_t *vcopy_limbs = scratch_alloc(&stein_ctx, v->n * BYTES_IN_UINT64_T);
+    size_t stein_mark = scratch_mark(&stein_ctx), maxsize = max(u->n, v->n); // maxsize is used for SWAP
+    limb_t *ucopy_limbs = scratch_alloc(&stein_ctx, maxsize * BYTES_IN_UINT64_T);
+    limb_t *vcopy_limbs = scratch_alloc(&stein_ctx, maxsize * BYTES_IN_UINT64_T);
     memcpy(ucopy_limbs, u->limbs, u->n * BYTES_IN_UINT64_T);
     memcpy(vcopy_limbs, v->limbs, v->n * BYTES_IN_UINT64_T);
-    bigInt u_copy = {.limbs = ucopy_limbs, .sign = 1,   /**/    .n = u->n, .cap = u->n};
-    bigInt v_copy = {.limbs = vcopy_limbs, .sign = 1,   /**/    .n = v->n, .cap = v->n};
+    bigInt u_copy = {.limbs = ucopy_limbs, .sign = 1,   /**/    .n = u->n, .cap = maxsize};
+    bigInt v_copy = {.limbs = vcopy_limbs, .sign = 1,   /**/    .n = v->n, .cap = maxsize};
     size_t i = __BIGINT_CTZ__(u); __BIGINT_INTERNAL_RSHIFT__(&u_copy, i);
     size_t j = __BIGINT_CTZ__(v); __BIGINT_INTERNAL_RSHIFT__(&v_copy, j);
     size_t k = min(i, j);
@@ -52,7 +53,7 @@ void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx st
     // Procedure
     int8_t comp_res = __BIGINT_INTERNAL_COMP__(&u_copy, &v_copy);
     while (comp_res) {
-        if (comp_res == -1) __BIGINT_INTERNAL_SWAP__(&u_copy, &v_copy);
+        if (comp_res == -1) __BIGINT_INTERNAL_SWAP__(&u_copy, &v_copy, stein_ctx);
         // Identity #4: gcd(u, v) = gcd(u, v - u)
         //  WHEN: +) u & v is ODD
         //        +) u <= v
@@ -219,7 +220,7 @@ uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x, calc_ctx ptest_ctx) {
         size_t ptest_mark = scratch_mark(&ptest_ctx);
         limb_t *randbase_limbs = scratch_alloc(&ptest_ctx, 2); // Whatever size
         bigInt random_base = {.limbs = randbase_limbs, .sign = 1,   /**/    .n = 0, .cap = 2}; 
-        if (!__BIGINT_BPSW__(x, ptest_ctx)) { scratch_rest(&ptest_ctx, ptest_mark); return 0; } 
+        if (!__BIGINT_BPSW__(x, ptest_ctx)) { scratch_reset(&ptest_ctx, ptest_mark); return 0; } 
         for (size_t i = 0; i < MRROUNDS_DNML; ++i) {
             /*
             todo    RNG RIGHT HERE

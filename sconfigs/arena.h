@@ -1,10 +1,9 @@
 #ifndef __DNML_ARENA_H__
 #define __DNML_ARENA_H__
 
-#include <stdint.h>
-#include <stddef.h>
+
 #include <stdalign.h>
-#include <stdlib.h>
+#include "../system/include.h"
 #include "../system/compiler.h"
 
 //* ============= Declarations =============

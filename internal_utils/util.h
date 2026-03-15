@@ -18,7 +18,7 @@ extern "C" {
 
 #include "../system/compiler.h"
 #include "../sconfigs/numeric_config.h"
-#include "../sconfigs/arena.h"
+#include "../../sconfigs/_ctx.h"
 
 /* ---------------------- */
 /* str_parse.c */
@@ -57,7 +57,8 @@ bigInt __BIGINT_ERROR_VALUE__(void);
 inline void __BIGINT_INTERNAL_COPY__(bigInt *dst, const bigInt *source);
 inline void __BIGINT_INTERNAL_TRIM_LZ__(bigInt *x);
 inline void __BIGINT_INTERNAL_ZSET__(bigInt *x);
-inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y);
+inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y, calc_ctx swap_ctx);
+size_t __BIGINT_ISWAP_WS__(size_t y_size);
 size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base);
 size_t __BIGINT_LIMBS_NEEDED__(size_t bits);
 uint8_t __BIGINT_WILL_OVERFLOW__(const bigInt *x, uint64_t threshold);
@@ -71,6 +72,8 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val);
 void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y);
 inline void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k);
 inline void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k);
+inline void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t klimbs);
+inline void __BIGINT_INTERNAL_LLSHIFT__(bigInt *x, size_t klimbs);
 
 
 
