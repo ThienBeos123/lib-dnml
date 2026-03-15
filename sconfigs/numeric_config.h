@@ -23,7 +23,7 @@
 
 /* Multiplication */
 typedef enum {
-    BIGINT_SCHOOLBOOK       = 64,
+    BIGINT_SCHOOLBOOK       = 32,
     BIGINT_KARATSUBA        = 256,
     BIGINT_TOOM             = 1024,
     BIGINT_SSA              = 1024,

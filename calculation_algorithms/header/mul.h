@@ -27,7 +27,7 @@ size_t __BIGINT_MUL_WS__(size_t a_size, size_t b_size);
 
 /* BIGINT ALGORITHMS */
 void __BIGINT_SCHOOLBOOK__(const bigInt *a, const bigInt *b, bigInt *res);
-void __BIGINT_KARATSUBA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx karat_ctx);
+void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ctx karat_ctx);
 void __BIGINT_TOOM__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx toom_ctx);
 void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx);
 void __BIGINT_MUL_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx mul_ctx);

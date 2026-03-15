@@ -38,7 +38,35 @@ void __BIGINT_SCHOOLBOOK__(const bigInt *a, const bigInt *b, bigInt *res) {
     }
     res->n = a->n + b->n;
 }
-void __BIGINT_KARATSUBA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx karat_ctx) {}
+void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ctx karat_ctx) {
+    if (x->n <= BIGINT_SCHOOLBOOK && y->n <= BIGINT_SCHOOLBOOK) {
+        __BIGINT_SCHOOLBOOK__(x, y, res);
+        return;
+    } //* ---- 1. SETUP ---- *?/
+    size_t  x0_range = (size_t)(x->n / 2),  x1_range = x->n - x0_range;
+    size_t  y0_range = (size_t)(y->n / 2),  y1_range = y->n - y0_range;
+    bigInt x0 = {.limbs = x->limbs,             .n = x0_range, .cap = x0_range};
+    bigInt x1 = {.limbs = x->limbs + x0_range,  .n = x1_range, .cap = x1_range};
+    bigInt y0 = {.limbs = y->limbs,             .n = y0_range, .cap = y0_range};
+    bigInt y1 = {.limbs = y->limbs + y0_range,  .n = y1_range, .cap = y1_range};
+
+    size_t karat_mark = scratch_mark(&karat_ctx);
+    limb_t *tmp1_limbs = scratch_alloc(&karat_ctx, (max(x0_range, x1_range) + 1) * BYTES_IN_UINT64_T);
+    limb_t *tmp2_limbs = scratch_alloc(&karat_ctx, (max(y0_range, y1_range) + 1) * BYTES_IN_UINT64_T);
+    limb_t *z0_limbs = scratch_alloc(&karat_ctx, (x0_range + y0_range) * BYTES_IN_UINT64_T);
+    limb_t *z2_limbs = scratch_alloc(&karat_ctx, (x1_range + y1_range) * BYTES_IN_UINT64_T);
+    limb_t *z1_limbs = scratch_alloc(&karat_ctx, 
+        (max(x1_range + y0_range, x0_range + y1_range) + 1) * BYTES_IN_UINT64_T);
+    bigInt tmp1 = {.limbs = tmp1_limbs, .n = 0, .cap = max(x0_range, x1_range) + 1};
+    bigInt tmp1 = {.limbs = tmp2_limbs, .n = 0, .cap = max(y0_range, y1_range) + 1};
+    bigInt z0 = {.limbs = z0_limbs, .n = 0, .cap = x0_range + y0_range};
+    bigInt z2 = {.limbs = z2_limbs, .n = 0, .cap = x1_range + y1_range};
+    bigInt z1 = {.limbs = z1_limbs, .n = 0, .cap = max(x1_range + y0_range, x0_range + y1_range) + 1};
+
+    //* ------- 2. ALGORITHM CALLS -------- *//
+    __BIGINT_KARATSUBA__(&x0, &y0, &z0, karat_ctx);
+    __BIGINT_KARATSUBA__(&x1, &y1, &z2, karat_ctx);
+}
 void __BIGINT_TOOM__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx toom_ctx) {}
 void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx) {}
 void __BIGINT_MUL_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx mul_ctx) {
