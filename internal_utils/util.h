@@ -69,7 +69,6 @@ inline uint8_t __BIGINT_IS_EVEN__(const bigInt *x);
 void __BIGINT_INTERNAL_ADD_UI64__(bigInt *x, uint64_t val);
 void __BIGINT_INTERNAL_MUL_UI64__(bigInt *x, uint64_t val);
 uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val);
-void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y);
 inline void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k);
 inline void __BIGINT_INTERNAL_LSHIFT__(bigInt *x, size_t k);
 inline void __BIGINT_INTERNAL_RLSHIFT__(bigInt *x, size_t klimbs);

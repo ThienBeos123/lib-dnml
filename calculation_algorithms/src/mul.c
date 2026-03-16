@@ -43,29 +43,47 @@ void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ct
         __BIGINT_SCHOOLBOOK__(x, y, res);
         return;
     } //* ---- 1. SETUP ---- *?/
-    size_t  x0_range = (size_t)(x->n / 2),  x1_range = x->n - x0_range;
-    size_t  y0_range = (size_t)(y->n / 2),  y1_range = y->n - y0_range;
+    size_t m = (size_t)(max(x->n, y->n) / 2);
+    size_t  x0_range = m,  x1_range = x->n - m;
+    size_t  y0_range = m,  y1_range = y->n - m;
     bigInt x0 = {.limbs = x->limbs,             .n = x0_range, .cap = x0_range};
     bigInt x1 = {.limbs = x->limbs + x0_range,  .n = x1_range, .cap = x1_range};
     bigInt y0 = {.limbs = y->limbs,             .n = y0_range, .cap = y0_range};
     bigInt y1 = {.limbs = y->limbs + y0_range,  .n = y1_range, .cap = y1_range};
 
     size_t karat_mark = scratch_mark(&karat_ctx);
+    size_t z1_size = max(x1_range+y0_range, x0_range+y1_range) + m+1;
+    size_t z2_size = max(max(z1_size, x1_range + y1_range + 2*m), x0_range + y0_range) + 1;
+
     limb_t *tmp1_limbs = scratch_alloc(&karat_ctx, (max(x0_range, x1_range) + 1) * BYTES_IN_UINT64_T);
     limb_t *tmp2_limbs = scratch_alloc(&karat_ctx, (max(y0_range, y1_range) + 1) * BYTES_IN_UINT64_T);
     limb_t *z0_limbs = scratch_alloc(&karat_ctx, (x0_range + y0_range) * BYTES_IN_UINT64_T);
-    limb_t *z2_limbs = scratch_alloc(&karat_ctx, (x1_range + y1_range) * BYTES_IN_UINT64_T);
-    limb_t *z1_limbs = scratch_alloc(&karat_ctx, 
-        (max(x1_range + y0_range, x0_range + y1_range) + 1) * BYTES_IN_UINT64_T);
+    limb_t *z1_limbs = scratch_alloc(&karat_ctx, z1_size * BYTES_IN_UINT64_T);
+    limb_t *z2_limbs = scratch_alloc(&karat_ctx, z2_size * BYTES_IN_UINT64_T);
+    
     bigInt tmp1 = {.limbs = tmp1_limbs, .n = 0, .cap = max(x0_range, x1_range) + 1};
-    bigInt tmp1 = {.limbs = tmp2_limbs, .n = 0, .cap = max(y0_range, y1_range) + 1};
+    bigInt tmp2 = {.limbs = tmp2_limbs, .n = 0, .cap = max(y0_range, y1_range) + 1};
     bigInt z0 = {.limbs = z0_limbs, .n = 0, .cap = x0_range + y0_range};
-    bigInt z2 = {.limbs = z2_limbs, .n = 0, .cap = x1_range + y1_range};
-    bigInt z1 = {.limbs = z1_limbs, .n = 0, .cap = max(x1_range + y0_range, x0_range + y1_range) + 1};
+    bigInt z1 = {.limbs = z1_limbs, .n = 0, .cap = z1_size};
+    bigInt z2 = {.limbs = z2_limbs, .n = 0, .cap = z2_size};
 
-    //* ------- 2. ALGORITHM CALLS -------- *//
+    //* ------- 2. QUADRATIC COMPONENTS CALCULATION -------- *//
+    // The procedure basically gpes:
+    //  z3 = (x1 + x0)(y1 + y0)
+    //  z2 = x1 * y1
+    //  z0 = x0 * y0
+    //  z1 = z3 - z2 - z1
     __BIGINT_KARATSUBA__(&x0, &y0, &z0, karat_ctx);
     __BIGINT_KARATSUBA__(&x1, &y1, &z2, karat_ctx);
+    __BIGINT_ADD_WC__(&tmp1, &x1, &x0); __BIGINT_ADD_WC__(&tmp2, &y1, &y0);
+    __BIGINT_KARATSUBA__(&tmp1, &tmp2, &z1, karat_ctx);
+    __BIGINT_SUB_WB__(&z1, &z1, &z2); __BIGINT_SUB_WB__(&z1, &z1, &z0);
+
+    //* ------------ 3. FINAL CALCULATION -------------- *//
+    __BIGINT_INTERNAL_LLSHIFT__(&z2, 2*m); __BIGINT_INTERNAL_LLSHIFT__(&z1, m);
+    __BIGINT_ADD_WC__(&z2, &z2, &z1); __BIGINT_ADD_WC__(&z2, &z2, &z0);
+    __BIGINT_INTERNAL_COPY__(res, &z2);
+    scratch_reset(&karat_ctx, karat_mark);
 }
 void __BIGINT_TOOM__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx toom_ctx) {}
 void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx) {}

@@ -18,8 +18,10 @@ extern "C" {
 #include "../../internal_utils/util.h"
 #include "../../big_numbers/bigNums.h"
 
+#include "add_sub.h"
 #include "div.h"
 #include "mul.h"
+
 size_t __BIGINT_BARETT_WS__(size_t a_size, size_t n_size);
 size_t __BIGINT_MOD_WS__(size_t a_size, size_t n_size);
 void __BIGINT_BARETT__(const bigInt *a, const bigInt *n, bigInt *rem, calc_ctx barett_ctx);

@@ -161,7 +161,6 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
     if (x->n == 0) x->sign = 1;
     return remainder;
 }
-void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y) {}
 inline void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k) {
     if (!k) return;
     uint64_t discarded_bits = 0;

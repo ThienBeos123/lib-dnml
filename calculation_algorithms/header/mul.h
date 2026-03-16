@@ -18,6 +18,7 @@ extern "C" {
 #include "../../internal_utils/util.h"
 #include "../../big_numbers/bigNums.h"
 
+#include "add_sub.h"
 
 /* BIGINT WORKSPACE SIZE */
 size_t __BIGINT_KARATSUBA_WS__(size_t a_size, size_t b_size);

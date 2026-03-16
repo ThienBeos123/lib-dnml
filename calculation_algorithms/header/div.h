@@ -18,6 +18,8 @@ extern "C" {
 #include "../../internal_utils/util.h"
 #include "../../big_numbers/bigNums.h"
 
+#include "add_sub.h"
+
 /* --------------------------------------------------- BIGNUMS --------------------------------------------------- */
 size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size);
 void __BIGINT_SHORT_DIVISION__(
