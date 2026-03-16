@@ -19,6 +19,7 @@ size_t __BIGINT_TOOM_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_SSA_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_MUL_WS__(size_t a_size, size_t b_size) {
     if (a_size < BIGINT_SCHOOLBOOK && b_size < BIGINT_SCHOOLBOOK) return 0; // Doesn't need any
+    else if (min(a_size, b_size) * 2 <= max(a_size, b_size)) return 0;
     else if (a_size < BIGINT_KARATSUBA && b_size < BIGINT_KARATSUBA) return __BIGINT_KARATSUBA_WS__(a_size, b_size);
     else if (a_size < BIGINT_TOOM && b_size < BIGINT_TOOM) return __BIGINT_TOOM_WS__(a_size, b_size);
     else return __BIGINT_SSA_WS__(a_size, b_size);
@@ -52,8 +53,7 @@ void __BIGINT_SCHOOLBOOK__(const bigInt *a, const bigInt *b, bigInt *res) {
 }
 void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ctx karat_ctx) {
     if (x->n <= BIGINT_SCHOOLBOOK && y->n <= BIGINT_SCHOOLBOOK) {
-        __BIGINT_SCHOOLBOOK__(x, y, res);
-        return;
+        __BIGINT_SCHOOLBOOK__(x, y, res); return;
     } //* ---- 1. SETUP ---- *?/
     size_t m = (size_t)(max(x->n, y->n) / 2);
     size_t  x0_range = m,  x1_range = x->n - m;
@@ -97,10 +97,27 @@ void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ct
     __BIGINT_INTERNAL_COPY__(res, &z2);
     scratch_reset(&karat_ctx, karat_mark);
 }
-void __BIGINT_TOOM__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx toom_ctx) {}
+void __BIGINT_TOOM__(const bigInt *m, const bigInt *n, bigInt *res, calc_ctx toom_ctx) {
+    if (m->n <= BIGINT_SCHOOLBOOK && n->n <= BIGINT_SCHOOLBOOK) {
+        __BIGINT_SCHOOLBOOK__(m, n, res); return;
+    } //* -------- 1. SETUP & SPLITTING -------- *//
+    size_t k = (size_t)(max(m->n, n->n) / 3) + 1;
+    size_t m0_m1_range = k,   /**/   m2_range = m->n - 2*k;
+    size_t n0_n1_range = k,   /**/   n2_range = n->n - 2*k;
+    bigInt m0 = {.limbs = m->limbs,         .n = m0_m1_range,   .cap = m0_m1_range};
+    bigInt m1 = {.limbs = m->limbs + k,     .n = m0_m1_range,   .cap = m0_m1_range};
+    bigInt m2 = {.limbs = m->limbs + 2*k,   .n = m2_range,      .cap = m2_range};
+    bigInt n0 = {.limbs = n->limbs,         .n = n0_n1_range,   .cap = n0_n1_range};
+    bigInt n1 = {.limbs = n->limbs + k,     .n = n0_n1_range,   .cap = n0_n1_range};
+    bigInt n2 = {.limbs = n->limbs + 2*k,   .n = n2_range,      .cap = n2_range};
+
+    //* -------- 2. EVALUATION & POINT-WISE MULTIPLICATION -------- *//
+
+}
 void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx) {}
 void __BIGINT_MUL_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx mul_ctx) {
     if (a->n < BIGINT_SCHOOLBOOK && b->n < BIGINT_SCHOOLBOOK) __BIGINT_SCHOOLBOOK__(a, b, res);
+    else if (min(a->n, b->n) * 2 <= max(a->n, b->n)) __BIGINT_SCHOOLBOOK__(a, b, res);
     else if (a->n < BIGINT_KARATSUBA && b->n < BIGINT_KARATSUBA) __BIGINT_KARATSUBA__(a, b, res, mul_ctx);
     else if (a->n < BIGINT_TOOM && b->n < BIGINT_TOOM) __BIGINT_TOOM__(a, b, res, mul_ctx);
     else __BIGINT_SSA__(a, b, res, mul_ctx);
