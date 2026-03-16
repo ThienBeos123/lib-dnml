@@ -2,7 +2,19 @@
 
 
 /* BIGINT WORKSPACE SIZE */
-size_t __BIGINT_KARATSUBA_WS__(size_t a_size, size_t b_size) {}
+size_t __BIGINT_KARATSUBA_WS__(size_t x_size, size_t y_size) {
+    size_t m = (size_t)(max(x_size, y_size) / 2);
+    size_t  x0_range = m,  x1_range = x_size - m;
+    size_t  y0_range = m,  y1_range = y_size - m;
+
+    size_t tmp1_size = max(x0_range, x1_range) + 1;
+    size_t tmp2_size = max(y0_range, y1_range) + 1;
+    size_t z0_size = x0_range + y0_range;
+    size_t z1_size = max(x1_range + y0_range, x0_range + y1_range) + m + 1;
+    size_t z2_size = max(max(z1_size, x1_range + y1_range + 2*m), x0_range + y0_range) + 1;
+
+    return 3*(tmp1_size + tmp2_size + z0_size + z1_size + z2_size) * BYTES_IN_UINT64_T;
+}
 size_t __BIGINT_TOOM_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_SSA_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_MUL_WS__(size_t a_size, size_t b_size) {
@@ -52,7 +64,7 @@ void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ct
     bigInt y1 = {.limbs = y->limbs + y0_range,  .n = y1_range, .cap = y1_range};
 
     size_t karat_mark = scratch_mark(&karat_ctx);
-    size_t z1_size = max(x1_range+y0_range, x0_range+y1_range) + m+1;
+    size_t z1_size = max(x1_range + y0_range, x0_range + y1_range) + m + 1;
     size_t z2_size = max(max(z1_size, x1_range + y1_range + 2*m), x0_range + y0_range) + 1;
 
     limb_t *tmp1_limbs = scratch_alloc(&karat_ctx, (max(x0_range, x1_range) + 1) * BYTES_IN_UINT64_T);
@@ -60,7 +72,7 @@ void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ct
     limb_t *z0_limbs = scratch_alloc(&karat_ctx, (x0_range + y0_range) * BYTES_IN_UINT64_T);
     limb_t *z1_limbs = scratch_alloc(&karat_ctx, z1_size * BYTES_IN_UINT64_T);
     limb_t *z2_limbs = scratch_alloc(&karat_ctx, z2_size * BYTES_IN_UINT64_T);
-    
+
     bigInt tmp1 = {.limbs = tmp1_limbs, .n = 0, .cap = max(x0_range, x1_range) + 1};
     bigInt tmp2 = {.limbs = tmp2_limbs, .n = 0, .cap = max(y0_range, y1_range) + 1};
     bigInt z0 = {.limbs = z0_limbs, .n = 0, .cap = x0_range + y0_range};

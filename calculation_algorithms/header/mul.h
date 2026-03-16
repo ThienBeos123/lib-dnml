@@ -21,7 +21,7 @@ extern "C" {
 #include "add_sub.h"
 
 /* BIGINT WORKSPACE SIZE */
-size_t __BIGINT_KARATSUBA_WS__(size_t a_size, size_t b_size);
+size_t __BIGINT_KARATSUBA_WS__(size_t x_size, size_t y_size);
 size_t __BIGINT_TOOM_WS__(size_t a_size, size_t b_size);
 size_t __BIGINT_SSA_WS__(size_t a_size, size_t b_size);
 size_t __BIGINT_MUL_WS__(size_t a_size, size_t b_size);
