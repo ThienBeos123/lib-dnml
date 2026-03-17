@@ -13,6 +13,21 @@ void __BIGINT_ADD_WC__(bigInt *res, const bigInt *a, const bigInt *b) {
     if (carry) res->limbs[max] = carry; // If carry still needed ---> stores the carry in the (res->cap - 1) limb
     res->n = max + (carry != 0);
 }
+void __BIGINT_ADD_SAW__(bigInt *res, const bigInt *x, const bigInt *y) {
+    if (!y->n);
+    else if (!x->n) __BIGINT_INTERNAL_COPY__(res, y);
+    else if (x->sign == y->sign) {
+        __BIGINT_ADD_WC__(res, x, y);
+        res->sign = x->sign;
+    } else {
+        int8_t comp_res = __BIGINT_INTERNAL_COMP__(x, y);
+        if (!comp_res) __BIGINT_INTERNAL_ZSET__(res);
+        else {
+            if (comp_res > 0) { __BIGINT_SUB_WB__(res, x, y); res->sign = x->sign; }
+            else { __BIGINT_SUB_WB__(res, x, y); res->sign = y->sign; }
+        }
+    }
+}
 
 
 void __BIGINT_SUB_WB__(bigInt *res, const bigInt *a, const bigInt *b) {
@@ -23,4 +38,18 @@ void __BIGINT_SUB_WB__(bigInt *res, const bigInt *a, const bigInt *b) {
         // Do single-limb subtraction with borrow ---> Stores the borrow
     } res->n = a->n;
 }
-
+void __BIGINT_SUB_SAW__(bigInt *res, const bigInt *x, const bigInt *y) {
+    if (!y->n);
+    else if (!x->n) { __BIGINT_INTERNAL_COPY__(res, y);  res->sign = -y->sign; }
+    else if (x->sign == y->sign) {
+        int8_t comp_res = __BIGINT_INTERNAL_COMP__(x, y);
+        if (!comp_res) __BIGINT_INTERNAL_ZSET__(x);
+        else {
+            if (comp_res > 0) { __BIGINT_SUB_WB__(res, x, y); res->sign = x->sign; }
+            else              { __BIGINT_SUB_WB__(res, x, y); res->sign = -x->sign; }
+        }
+    } else {
+        __BIGINT_ADD_WC__(res, x, y);
+        res->sign = x->sign;
+    }
+}
