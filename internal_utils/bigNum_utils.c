@@ -1,5 +1,7 @@
 #include "util.h"
 
+const uint64_t inv3 = 0xAAAAAAAAAAAAAAABULL; 
+
 /* Constructors and Destructors */
 inline void __BIGINT_INTERNAL_EMPINIT__(bigInt *x) {
     x->limbs = malloc(sizeof(uint64_t));
@@ -153,15 +155,30 @@ void __BIGINT_INTERNAL_MUL_UI64__(bigInt *x, uint64_t val) {
     if (carry) { x->limbs[x->n] = carry; 
                  x->n           += 1; }
 }
-uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
-    uint64_t remainder = 0;
-    for (size_t i = x->n - 1; i >= 0; --i) {
-       __DIV_HELPER_UI64__(remainder, x->limbs[i], val, &x->limbs[i], &remainder);
-    } __BIGINT_INTERNAL_TRIM_LZ__(x);
-    if (x->n == 0) x->sign = 1;
-    return remainder;
+void __BIGINT_DIV3__(bigInt *a) {
+    uint64_t carry = 0, borrow, q, t;
+    for (size_t i = 0; i < a->n; ++i) {
+        t = a->limbs[i] - carry;
+        borrow = (a->limbs < carry) ? 1 : 0;
+        q = __MUL_UI64__(t, inv3, &carry);
+        a->limbs[i] = q; carry = (uint64_t)(carry >> 64) + borrow;
+    } __BIGINT_INTERNAL_TRIM_LZ__(a);
 }
-void __BIGINT_INTERNAL_SUB__(bigInt *x, const bigInt *y) {}
+uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
+    if (val == 1) return 0;
+    else if (val == 2) {
+        uint64_t remainder = (x->limbs[0] & 1);
+        __BIGINT_INTERNAL_RSHIFT__(x, 1);
+        return remainder;
+    } else {
+        uint64_t remainder = 0;
+        for (size_t i = x->n - 1; i >= 0; --i) {
+        __DIV_HELPER_UI64__(remainder, x->limbs[i], val, &x->limbs[i], &remainder);
+        } __BIGINT_INTERNAL_TRIM_LZ__(x);
+        if (x->n == 0) x->sign = 1;
+        return remainder;
+    }
+}
 inline void __BIGINT_INTERNAL_RSHIFT__(bigInt *x, size_t k) {
     if (!k) return;
     uint64_t discarded_bits = 0;
