@@ -23,10 +23,10 @@
 
 /* Multiplication */
 typedef enum {
-    BIGINT_SCHOOLBOOK       = 64,
-    BIGINT_KARATSUBA        = 256,
-    BIGINT_TOOM             = 1024,
-    BIGINT_SSA              = 1024,
+    BIGINT_SCHOOLBOOK       = 24,    BIGINT_KARATSUBA        = 72,
+    BIGINT_TOOM_3           = 144,   BIGINT_TOOM_4           = 288,  BIGINT_TOOM_5           = 512,
+    BIGINT_TOOM_6p5         = 1024,  BIGINT_TOOM_7p5         = 1536, BIGINT_TOOM_8p5         = 3072,
+    BIGINT_SSA,
 } MUL_THRESHOLDS;
 
 /* Division + Euclidean Modulo */
@@ -35,20 +35,21 @@ typedef enum {
     BIGINT_KNUTH                = 64,  // n < 64       DIV + MOD
     BIGINT_BURNIKEL             = 512, // n < 512      DIV
     BIGINT_BARETT               = 512, // n < 512            MOD
-    BIGINT_NEWTON               = 512, // n >= 512     DIV + MOD
+    BIGINT_NEWTON, // n >= 512     DIV + MOD
 } DIV_THRESHOLDS;
 
 typedef enum {
     /* GCD - Greatest Common Divisor */
     BIGINT_EUCLID           = 1,
     BIGINT_STEIN            = 512,
-    BIGINT_LEHMER           = 2048,
+    BIGINT_LEHMER           = 4096,
     BIGINT_HALF_GCD,
 
-    /* Primality Testing */
-    TRIAL_DIVISION          = 207936,
-    DETERMINISTIC_MR        = 207936,
-    MIXED_MAIN              = 1, // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
+    /* Primality Testing */ 
+    TRIAL_DIVISION          = 207936, // Value, not limbs
+    DETERMINISTIC_MR        = 207936, // Value, not limbs
+    BPSW_ONLY               = 128, // Baillie-PSW ONLY
+    MIXED_MAIN                   , // Baillie-PSW + 10-20 Miller-Rabin random-base rounds
     ECPP                    = 0, // PROOF OF PRIMALITY ONLY
 } NUM_THEORY_THRESHOLDS;
 
@@ -56,16 +57,17 @@ typedef enum {
 typedef enum {
     /* Modular Multiplication */
     BIGINT_CLASSICAL    = 8,
-    BIGINT_MONTGOMERY,
+    BIGINT_MONTGOMERY   = 8,
     /* Modular Exponentiation */
     BIGINT_MOD_BINARY   = 8,
     BIGINT_MONT_BINARY  = 512,
+    BIGINT_MOD_FIXED    = 1536,
     BIGINT_MOD_SLIDING,
     //todo MODULAR SQUARES HERE
     /* Modular Inverse */
     BIGINT_XEUCLID          = 256,
     BIGINT_BINARY_XGCD      = 2048,
-    BIGINT_HALF_XGCD        = 2048
+    BIGINT_HALF_XGCD,
 } MOD_ARITHMETIC_THRESHOLDS;
 
 #define MRROUNDS_DNML               5 // Dynamol - Scientific Calculation

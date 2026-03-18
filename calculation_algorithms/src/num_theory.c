@@ -57,7 +57,7 @@ void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx st
         // Identity #4: gcd(u, v) = gcd(u, v - u)
         //  WHEN: +) u & v is ODD
         //        +) u <= v
-        __BIGINT_INTERNAL_SUB__(&u_copy, &v_copy);
+        __BIGINT_SUB_WB__(&u_copy, &u_copy, &v_copy);
         // Identity #3 - gcd(u, 2v) = gcd(u, v)
         i = __BIGINT_CTZ__(&u_copy);
         __BIGINT_INTERNAL_RSHIFT__(&u_copy, i);
@@ -164,7 +164,7 @@ uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base, calc_ctx mr
     memcpy(nmo_limbs, n->limbs, n->n * BYTES_IN_UINT64_T);
     bigInt n_minus_one = {.limbs = nmo_limbs, .sign = 1,    /**/    .n = n->n, .cap = n->n};
     bigInt constant_one = {.limbs = a, .n = 1, .cap = 1, .sign = 1 };
-    __BIGINT_INTERNAL_SUB__(&n_minus_one, &constant_one);
+    __BIGINT_SUB_WB__(&n_minus_one, &n_minus_one, &constant_one);
     size_t s = (uint64_t)(__BIGINT_CTZ__(&n_minus_one));
     limb_t *dlimbs = scratch_alloc(&mrabin_ctx, n_minus_one.n * BYTES_IN_UINT64_T);
     memcpy(dlimbs, n_minus_one.limbs, n_minus_one.n * BYTES_IN_UINT64_T);
