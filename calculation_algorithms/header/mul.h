@@ -20,17 +20,10 @@ extern "C" {
 
 #include "add_sub.h"
 
-/* BIGINT WORKSPACE SIZE */
-size_t __BIGINT_KARATSUBA_WS__(size_t x_size, size_t y_size);
-size_t __BIGINT_TOOM_WS__(size_t a_size, size_t b_size);
-size_t __BIGINT_SSA_WS__(size_t a_size, size_t b_size);
+/* WORKSPACE SIZE */
 size_t __BIGINT_MUL_WS__(size_t a_size, size_t b_size);
 
-/* BIGINT ALGORITHMS */
-void __BIGINT_SCHOOLBOOK__(const bigInt *a, const bigInt *b, bigInt *res);
-void __BIGINT_KARATSUBA__(const bigInt *x, const bigInt *y, bigInt *res, calc_ctx karat_ctx);
-void __BIGINT_TOOM__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx toom_ctx);
-void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx);
+/* ALGORITHMS */
 void __BIGINT_MUL_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx mul_ctx);
 
 
