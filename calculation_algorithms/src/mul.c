@@ -102,14 +102,13 @@ void __BIGINT_TOOM__(const bigInt *m, const bigInt *n, bigInt *res, calc_ctx too
         __BIGINT_SCHOOLBOOK__(m, n, res); return;
     } //* -------- 1. SETUP & SPLITTING -------- *//
     size_t k = (size_t)(max(m->n, n->n) / 3) + 1;
-    size_t m0_m1_range = k,   /**/   m2_range = m->n - 2*k;
-    size_t n0_n1_range = k,   /**/   n2_range = n->n - 2*k;
-    bigInt m0 = {.limbs = m->limbs,         .n = m0_m1_range,   .cap = m0_m1_range};
-    bigInt m1 = {.limbs = m->limbs + k,     .n = m0_m1_range,   .cap = m0_m1_range};
-    bigInt m2 = {.limbs = m->limbs + 2*k,   .n = m2_range,      .cap = m2_range};
-    bigInt n0 = {.limbs = n->limbs,         .n = n0_n1_range,   .cap = n0_n1_range};
-    bigInt n1 = {.limbs = n->limbs + k,     .n = n0_n1_range,   .cap = n0_n1_range};
-    bigInt n2 = {.limbs = n->limbs + 2*k,   .n = n2_range,      .cap = n2_range};
+    size_t m2size = m->n - (k << 1), /**/ n2size = n->n - (k << 1);
+    bigInt m0 = {.limbs = m->limbs,             .n = k,         .cap = k};
+    bigInt m1 = {.limbs = m->limbs + k,         .n = k,         .cap = k};
+    bigInt m2 = {.limbs = m->limbs + (k << 1),  .n = m2size,  .cap = m2size};
+    bigInt n0 = {.limbs = n->limbs,             .n = k,         .cap = k};
+    bigInt n1 = {.limbs = n->limbs + k,         .n = k,         .cap = k};
+    bigInt n2 = {.limbs = n->limbs + (k << 1),  .n = n2size,  .cap = n2size};
 
 
     //* -------- 2. EVALUATION & POINT-WISE MULTIPLICATION -------- *//
@@ -122,10 +121,10 @@ void __BIGINT_TOOM__(const bigInt *m, const bigInt *n, bigInt *res, calc_ctx too
     *   +) p(-2)  = 2*(p(-1) + m2) - m0              | +) q(-2)  = 2*(q(-1) + n2) - n0
     *   +) p(inf) = m2          (NO FULL TEMPORARY)  | +) q(inf) = n2          (NO FULL TEMPORARY) */
     // p(x) TEMPORARIES                                  // q(x) TEMPORARIES
-    BIGINT_TEMP(p_outer, m0_m1_range + 1, toom_ctx);     BIGINT_TEMP(q_outer, n0_n1_range + 1, toom_ctx);
-    BIGINT_TEMP(p1,      m0_m1_range + 2, toom_ctx);     BIGINT_TEMP(q1,      n0_n1_range + 2, toom_ctx);
-    BIGINT_TEMP(p_neg1,  m0_m1_range + 1, toom_ctx);     BIGINT_TEMP(q_neg1,  n0_n1_range + 1, toom_ctx);
-    BIGINT_TEMP(p_neg2,  m0_m1_range + 2, toom_ctx);     BIGINT_TEMP(q_neg2,  n0_n1_range + 2, toom_ctx);
+    BIGINT_TEMP(p_outer, k + 1, toom_ctx);     BIGINT_TEMP(q_outer, k + 1, toom_ctx);
+    BIGINT_TEMP(p1,      k + 2, toom_ctx);     BIGINT_TEMP(q1,      k + 2, toom_ctx);
+    BIGINT_TEMP(p_neg1,  k + 1, toom_ctx);     BIGINT_TEMP(q_neg1,  k + 1, toom_ctx);
+    BIGINT_TEMP(p_neg2,  k + 2, toom_ctx);     BIGINT_TEMP(q_neg2,  k + 2, toom_ctx);
     // p(x) CALCULATIONS                                // q(x) CALCULATIONS
     __BIGINT_ADD_WC__(&p_outer, &m0, &m2);              __BIGINT_ADD_WC__(&q_outer, &m0, &n2);
     __BIGINT_ADD_WC__(&p1, &p_outer, &m1);              __BIGINT_ADD_WC__(&q1, &q_outer, &n1);
@@ -139,11 +138,11 @@ void __BIGINT_TOOM__(const bigInt *m, const bigInt *n, bigInt *res, calc_ctx too
     *   +) r(-1)  = p(-1)  * q(-1)    
     *   +) r(-2)  = p(-2)  * q(-2)
     *   +) r(inf) = p(inf) * q(inf)                    */ 
-    BIGINT_TEMP(r0,     m0_m1_range + n0_n1_range, toom_ctx);
-    BIGINT_TEMP(r1,     p1.n + q1.n, toom_ctx);
-    BIGINT_TEMP(r_neg1, p_neg1.n + q_neg1.n, toom_ctx);
-    BIGINT_TEMP(r_neg2, p_neg2.n + q_neg2.n, toom_ctx);
-    BIGINT_TEMP(rinf,    m2_range + n2_range, toom_ctx);
+    BIGINT_TEMP(r0,     (k << 1),               toom_ctx); // 2k
+    BIGINT_TEMP(r1,     (k << 1) + 9,           toom_ctx); // 2k + 4 (original) --> 2k + 8 (interpolation - r1)
+    BIGINT_TEMP(r_neg1, (k << 1) + 9,           toom_ctx); // 2k + 2 (original) --> 2k + 7 (interpolation - r2)
+    BIGINT_TEMP(r_neg2, (k << 1) + 10,          toom_ctx); // 2k + 4 (original) --> 2k + 7 (interpolation - r3)
+    BIGINT_TEMP(rinf,   m2size + n2size + 4,    toom_ctx); // 2k (original) ---> 2k + 5 (bit-shifts accounted)
     __BIGINT_TOOM__(&m0, &n0, &r0, toom_ctx); __BIGINT_TOOM__(&p1, &q1, &r1, toom_ctx);
     __BIGINT_TOOM__(&p_neg1, &q_neg1, &r_neg1, toom_ctx);
     __BIGINT_TOOM__(&p_neg2, &q_neg2, &r_neg2, toom_ctx);
@@ -151,6 +150,23 @@ void __BIGINT_TOOM__(const bigInt *m, const bigInt *n, bigInt *res, calc_ctx too
 
 
     //* ------------- 3. INTERPOLATION & RECOMPOSITION ---------------- *//
+    // ------------------ INTERPOLATION ------------------ //
+    /* r3 = 2k + 5 */ __BIGINT_SUB_SAW__(&r_neg2, &r_neg2, &r_neg1); __BIGINT_DIV3__(&r_neg2);
+    /* r1 = 2k + 5 */ __BIGINT_SUB_SAW__(&r1, &r1, &r_neg1); __BIGINT_INTERNAL_RSHIFT__(&r_neg1, 1);
+    /* r2 = 2k + 3 */ __BIGINT_SUB_SAW__(&r_neg1, &r_neg1, &r0);
+    /* r3 = 2k + 7 */ __BIGINT_SUB_SAW__(&r_neg2, &r_neg1, &r_neg2); 
+    __BIGINT_INTERNAL_RSHIFT__(&r_neg2, 1); __BIGINT_INTERNAL_LSHIFT__(&rinf, 1);
+    __BIGINT_ADD_SAW__(&r_neg2, &r_neg2, &rinf);
+    /* r2 = 2k + 7 */ __BIGINT_ADD_SAW__(&r_neg1, &r_neg1, &r1); 
+    __BIGINT_INTERNAL_RSHIFT__(&rinf, 1); __BIGINT_SUB_SAW__(&r_neg1, &r_neg1, &rinf);
+    /* r1 = 2k + 8 */ __BIGINT_SUB_SAW__(&r1, &r1, &r_neg2);
+    // ------------------ RECOMPOSITION ------------------ //
+    BIGINT_TEMP(final_res, (k << 1) + 14, toom_ctx);
+    __BIGINT_INTERNAL_LLSHIFT__(&rinf, 4);   __BIGINT_INTERNAL_LLSHIFT__(&r_neg2, 3);
+    __BIGINT_INTERNAL_LLSHIFT__(&r_neg1, 2); __BIGINT_INTERNAL_LLSHIFT__(&r1, 1);
+    __BIGINT_ADD_WC__(&final_res, &rinf, &r_neg2); __BIGINT_ADD_WC__(&final_res, &final_res, &r_neg1);
+    __BIGINT_ADD_WC__(&final_res, &final_res, &r1); __BIGINT_ADD_WC__(&final_res, &final_res, &r0);
+    __BIGINT_INTERNAL_COPY__(res, &final_res); scratch_reset(&toom_ctx, toom_mark);
 }
 void __BIGINT_SSA__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx ssa_ctx) {}
 void __BIGINT_MUL_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *res, calc_ctx mul_ctx) {
