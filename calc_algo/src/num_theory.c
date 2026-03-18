@@ -7,13 +7,13 @@ static const uint32_t dmr_bases[7] = {
 };
 
 //* ======== GCD - WORKSPACE RETURNER ======== */
-size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { 
+static size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { 
     return ((u_size + v_size) * BYTES_IN_UINT64_T)
           + __BIGINT_ISWAP_WS__(max(u_size, v_size));
           + alignof(max_align_t); 
 }
-size_t __BIGINT_LEHMER_WS__(size_t u_size, size_t v_size) {}
-size_t __BIGINT_HALF_WS__(size_t u_size, size_t v_size) {}
+static size_t __BIGINT_LEHMER_WS__(size_t u_size, size_t v_size) {}
+static size_t __BIGINT_HALF_WS__(size_t u_size, size_t v_size) {}
 size_t __BIGINT_GCD_WS__(size_t u_size, size_t v_size) {
     if (u_size == 1 && v_size == 1) return 0; // Euclid 64 bit doesn't require arena
     size_t op_size = min(u_size, v_size);
@@ -33,7 +33,7 @@ uint64_t __BIGINT_EUCLID__(uint64_t u, uint64_t v) {
     }
     return dividend;
 }
-void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx stein_ctx) {
+static void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx stein_ctx) {
     // Base case - Identity #1 - gcd(u, 0) = u
     if (u->n == 0) { __BIGINT_INTERNAL_COPY__(res, v); return; }
     else if (v->n == 0) { __BIGINT_INTERNAL_COPY__(res, u); return; }
@@ -67,8 +67,8 @@ void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx st
     __BIGINT_INTERNAL_COPY__(res, &u_copy);
     scratch_reset(&stein_ctx, stein_mark);
 }
-void __BIGINT_LEHMER__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx lehmer_ctx) {}
-void __BIGINT_HALF__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx half_ctx) {}
+static void __BIGINT_LEHMER__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx lehmer_ctx) {}
+static void __BIGINT_HALF__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx half_ctx) {}
 void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v, calc_ctx gcd_ctx) {
     size_t op_size = min(u->n, v->n);
     __BIGINT_INTERNAL_ENSCAP__(res, op_size);
@@ -82,7 +82,7 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v, calc
 
 
 //* ======== Primality Testing - WORKSPACE RETURNER ======== */
-size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
+static size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
     // Main, raw Miller-Rabin size
     // Obj_count also accounts for the function call workspace
     size_t obj_count = 4, additional_size = 0;
@@ -112,7 +112,7 @@ size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
     return ((mrabin_setup_size + x_size + additional_size) * BYTES_IN_UINT64_T)
            + max_fcall + ((obj_count - 1) * alignof(max_align_t));
 }
-size_t __BIGINT_BPSW_WS__(size_t n_size) {}
+static size_t __BIGINT_BPSW_WS__(size_t n_size) {}
 size_t __BIGINT_ECPP_WS__(size_t n_size) {}
 size_t __BIGINT_PTEST_WS__(size_t x_size) {
     if (x_size < MIXED_MAIN) return 0;
@@ -126,7 +126,7 @@ size_t __BIGINT_PTEST_WS__(size_t x_size) {
     }
 }
 /* ======== Primality Testing - ALGORITHMS ======== */
-uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
+static uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
     if (x <= 1) return 0;
     else if (x == 2 || x == 3 || x == 5) return 1;
     else if (!(x & 1) || !(x % 3) || !(x % 5)) return 0;
@@ -140,7 +140,7 @@ uint8_t __BIGINT_TRIAL_DIV__(uint64_t x) {
         steps_i = (steps_i < 7) ? steps_i + 1 : 0;
     } return 1;
 }
-uint8_t __BIGINT_SMALL_MRABIN__(uint64_t n) {
+static uint8_t __BIGINT_SMALL_MRABIN__(uint64_t n) {
     uint64_t s = 0, d = n - 1, x;
     uint8_t composite = 1;
     while (!(d & 1)) { ++s; d >>= 1; }
@@ -157,7 +157,7 @@ uint8_t __BIGINT_SMALL_MRABIN__(uint64_t n) {
         } if (composite) return 0;
     } return 1;
 }
-uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base, calc_ctx mrabin_ctx) {
+static uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base, calc_ctx mrabin_ctx) {
     if (n->sign == -1) return 0; uint8_t prim_status = 0; uint64_t a[1] = {1};
     size_t mrabin_mark = scratch_mark(&mrabin_ctx);
     limb_t *nmo_limbs = scratch_alloc(&mrabin_ctx, n->n);
@@ -210,7 +210,7 @@ uint8_t __BIGINT_MILLER_RABIN__(const bigInt *n, const bigInt* base, calc_ctx mr
     } scratch_reset(&mrabin_ctx, mrabin_mark); 
     return prim_status;
 }
-uint8_t __BIGINT_BPSW__(const bigInt *n, calc_ctx mrabin_ctx) {}
+static uint8_t __BIGINT_BPSW__(const bigInt *n, calc_ctx mrabin_ctx) {}
 uint8_t __BIGINT_ECPP__(const bigInt *n, calc_ctx mrabin_ctx) {}
 uint8_t __BIGINT_PTEST_DISPATCH__(const bigInt *x, calc_ctx ptest_ctx) {
     if (x->n < MIXED_MAIN) {

@@ -1,0 +1,40 @@
+#ifndef DNML_DIV_H
+#define DNML_DIV_H
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "../../system/include.h"
+#include "../../system/compiler.h"
+#include "../../sconfigs/arena.h"
+#include "../../sconfigs/numeric_config.h"
+#include "../../sconfigs/_ctx.h"
+
+#include "../../intrinsics/intrinsics.h"
+#include "../../intrinsics/limb_math.h"
+#include "../../internal_utils/util.h"
+#include "../../big_numbers/bigNums.h"
+
+#include "add_sub.h"
+
+
+
+
+size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size);
+void __BIGINT_DIVMOD_DISPATCH__(
+    const bigInt *a, const bigInt *b, 
+    bigInt *quot, bigInt *rem, calc_ctx div_ctx
+);
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

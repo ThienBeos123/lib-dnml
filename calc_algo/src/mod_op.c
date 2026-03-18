@@ -1,7 +1,7 @@
 #include "../header/mod_op.h"
 
 //* ------------------------------ *//
-//* --- ALGORITHMS & WORKSPACE --- *//
+//* ----- WORKSPACE FUNCTIONS ---- *//
 //* ------------------------------ *//
 size_t __BIGINT_CMODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
     size_t raw_size = (2*(a_size + b_size)) * BYTES_IN_UINT64_T;
@@ -15,13 +15,13 @@ size_t __BIGINT_MONTMUL_WS__(size_t a_size, size_t b_size, mont_ctx ctx) {
     size_t mul_size = __BIGINT_MUL_WS__(a_size, b_size);
     return raw_size + mul_size + alignof(max_align_t); // Align for the MUL stackframe
 }
-size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
+static size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     size_t raw_size = (base_size + 2*mod_size + pow_size) * BYTES_IN_UINT64_T;
     size_t fcall_size = max(__BIGINT_MOD_WS__(base_size, mod_size), 
                             __BIGINT_CMODMUL_WS__(mod_size, mod_size, mod_size));
     return raw_size + fcall_size + (4*alignof(max_align_t));
 }
-size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
+static size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     // Binary ModExp's objects
     size_t max_tsize = max(2*mod_size, max(base_size, pow_size));
     size_t rsize_tmpsize = max_tsize, rmodn_size = mod_size;
@@ -35,6 +35,28 @@ size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_s
           + ressize_basesize + + tmpexp_size 
           + max_frame) * BYTES_IN_UINT64_T) + (6 * alignof(max_align_t));
 }
+size_t __BIGINT_MODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
+    if (mod_size <= BIGINT_CLASSICAL) return __BIGINT_CMODMUL_WS__(a_size, b_size, mod_size);
+    else { size_t montmul_internal = __BIGINT_MONTMUL_WS__(a_size, b_size, (mont_ctx){.k = mod_size});
+        size_t setup_size = (4*mod_size + 1) * BYTES_IN_UINT64_T;
+        size_t setup_fcall = max(
+            __BIGINT_MOD_WS__(mod_size + 1, mod_size), 
+            __BIGINT_MUL_WS__(mod_size, mod_size)
+        ); return montmul_internal + setup_size + setup_fcall;
+    }
+}
+size_t __BIGINT_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
+    if (mod_size <= BIGINT_MOD_BINARY) return __BIGINT_BIN_MODEXP_WS__(base_size, mod_size, pow_size);
+    else if (mod_size <= BIGINT_MONT_BINARY) return __BIGINT_MBIN_MODEXP_WS__(base_size, mod_size, pow_size);
+    else ; // FOR SLIDING WINDOW/2-ARY EXPONENTIATION
+}
+
+
+
+
+//* ------------------------------ *//
+//* --------- ALGORITHMS --------- *//
+//* ------------------------------ *//
 void __BIGINT_CLASSICAL_MODMUL__(
     const bigInt *a, const bigInt *b, 
     const bigInt *modulus, bigInt *res, calc_ctx modmul_ctx
@@ -63,7 +85,7 @@ void __BIGINT_MONTMUL__(
     __BIGINT_MONT_REDC__(&t, ctx, res, montmul_ctx);
     scratch_reset(&montmul_ctx, montmul_mark); 
 }
-void __BIGINT_BIN_MODEXP__(
+static void __BIGINT_BIN_MODEXP__(
     const bigInt *base, const bigInt *power, 
     const bigInt *modulus, bigInt *res, calc_ctx binexp_ctx
 ) {
@@ -87,7 +109,7 @@ void __BIGINT_BIN_MODEXP__(
     scratch_reset(&binexp_ctx, binexp_mark);
 
 }
-void __BIGINT_MBIN_MODEXP__(
+static void __BIGINT_MBIN_MODEXP__(
     const bigInt *base, const bigInt *power, 
     const bigInt *modulus, bigInt *res, calc_ctx binexp_ctx
 ) {
@@ -129,27 +151,6 @@ void __BIGINT_MBIN_MODEXP__(
         &tmp_res, &(bigInt){.limbs = a, .n = 1, .cap = 1, .sign = 1}, 
         modexp_contx, res, binexp_ctx
     ); scratch_reset(&binexp_ctx, binexp_mark);
-}
-
-
-
-//* ------------------------------ *//
-//* --------- DISPATCHES --------- *//
-//* ------------------------------ *//
-size_t __BIGINT_MODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
-    if (mod_size <= BIGINT_CLASSICAL) return __BIGINT_CMODMUL_WS__(a_size, b_size, mod_size);
-    else { size_t montmul_internal = __BIGINT_MONTMUL_WS__(a_size, b_size, (mont_ctx){.k = mod_size});
-        size_t setup_size = (4*mod_size + 1) * BYTES_IN_UINT64_T;
-        size_t setup_fcall = max(
-            __BIGINT_MOD_WS__(mod_size + 1, mod_size), 
-            __BIGINT_MUL_WS__(mod_size, mod_size)
-        ); return montmul_internal + setup_size + setup_fcall;
-    }
-}
-size_t __BIGINT_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
-    if (mod_size <= BIGINT_MOD_BINARY) return __BIGINT_BIN_MODEXP_WS__(base_size, mod_size, pow_size);
-    else if (mod_size <= BIGINT_MONT_BINARY) return __BIGINT_MBIN_MODEXP_WS__(base_size, mod_size, pow_size);
-    else ; // FOR SLIDING WINDOW/2-ARY EXPONENTIATION
 }
 void __BIGINT_MODMUL_DISPATCH__(
     const bigInt *a, const bigInt *b, 

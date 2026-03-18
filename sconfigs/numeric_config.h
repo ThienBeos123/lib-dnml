@@ -35,7 +35,7 @@ typedef enum {
     BIGINT_KNUTH                = 64,  // n < 64       DIV + MOD
     BIGINT_BURNIKEL             = 512, // n < 512      DIV
     BIGINT_BARETT               = 512, // n < 512            MOD
-    BIGINT_NEWTON, // n >= 512     DIV + MOD
+    BIGINT_NEWTON,                     // n >= 512     DIV + MOD
 } DIV_THRESHOLDS;
 
 typedef enum {
