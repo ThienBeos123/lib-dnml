@@ -177,149 +177,173 @@ big_numbers/bigInt_io.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/big_numbers/bigInt_io.c.s
 .PHONY : big_numbers/bigInt_io.c.s
 
-calculation_algorithms/src/div.o: calculation_algorithms/src/div.c.o
-.PHONY : calculation_algorithms/src/div.o
+calc_algo/src/add_sub.o: calc_algo/src/add_sub.c.o
+.PHONY : calc_algo/src/add_sub.o
 
 # target to build an object file
-calculation_algorithms/src/div.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/div.c.o
-.PHONY : calculation_algorithms/src/div.c.o
+calc_algo/src/add_sub.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/add_sub.c.o
+.PHONY : calc_algo/src/add_sub.c.o
 
-calculation_algorithms/src/div.i: calculation_algorithms/src/div.c.i
-.PHONY : calculation_algorithms/src/div.i
+calc_algo/src/add_sub.i: calc_algo/src/add_sub.c.i
+.PHONY : calc_algo/src/add_sub.i
 
 # target to preprocess a source file
-calculation_algorithms/src/div.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/div.c.i
-.PHONY : calculation_algorithms/src/div.c.i
+calc_algo/src/add_sub.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/add_sub.c.i
+.PHONY : calc_algo/src/add_sub.c.i
 
-calculation_algorithms/src/div.s: calculation_algorithms/src/div.c.s
-.PHONY : calculation_algorithms/src/div.s
+calc_algo/src/add_sub.s: calc_algo/src/add_sub.c.s
+.PHONY : calc_algo/src/add_sub.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/div.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/div.c.s
-.PHONY : calculation_algorithms/src/div.c.s
+calc_algo/src/add_sub.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/add_sub.c.s
+.PHONY : calc_algo/src/add_sub.c.s
 
-calculation_algorithms/src/mod.o: calculation_algorithms/src/mod.c.o
-.PHONY : calculation_algorithms/src/mod.o
+calc_algo/src/div.o: calc_algo/src/div.c.o
+.PHONY : calc_algo/src/div.o
 
 # target to build an object file
-calculation_algorithms/src/mod.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod.c.o
-.PHONY : calculation_algorithms/src/mod.c.o
+calc_algo/src/div.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/div.c.o
+.PHONY : calc_algo/src/div.c.o
 
-calculation_algorithms/src/mod.i: calculation_algorithms/src/mod.c.i
-.PHONY : calculation_algorithms/src/mod.i
+calc_algo/src/div.i: calc_algo/src/div.c.i
+.PHONY : calc_algo/src/div.i
 
 # target to preprocess a source file
-calculation_algorithms/src/mod.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod.c.i
-.PHONY : calculation_algorithms/src/mod.c.i
+calc_algo/src/div.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/div.c.i
+.PHONY : calc_algo/src/div.c.i
 
-calculation_algorithms/src/mod.s: calculation_algorithms/src/mod.c.s
-.PHONY : calculation_algorithms/src/mod.s
+calc_algo/src/div.s: calc_algo/src/div.c.s
+.PHONY : calc_algo/src/div.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/mod.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod.c.s
-.PHONY : calculation_algorithms/src/mod.c.s
+calc_algo/src/div.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/div.c.s
+.PHONY : calc_algo/src/div.c.s
 
-calculation_algorithms/src/mod_op.o: calculation_algorithms/src/mod_op.c.o
-.PHONY : calculation_algorithms/src/mod_op.o
+calc_algo/src/mod.o: calc_algo/src/mod.c.o
+.PHONY : calc_algo/src/mod.o
 
 # target to build an object file
-calculation_algorithms/src/mod_op.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod_op.c.o
-.PHONY : calculation_algorithms/src/mod_op.c.o
+calc_algo/src/mod.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod.c.o
+.PHONY : calc_algo/src/mod.c.o
 
-calculation_algorithms/src/mod_op.i: calculation_algorithms/src/mod_op.c.i
-.PHONY : calculation_algorithms/src/mod_op.i
+calc_algo/src/mod.i: calc_algo/src/mod.c.i
+.PHONY : calc_algo/src/mod.i
 
 # target to preprocess a source file
-calculation_algorithms/src/mod_op.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod_op.c.i
-.PHONY : calculation_algorithms/src/mod_op.c.i
+calc_algo/src/mod.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod.c.i
+.PHONY : calc_algo/src/mod.c.i
 
-calculation_algorithms/src/mod_op.s: calculation_algorithms/src/mod_op.c.s
-.PHONY : calculation_algorithms/src/mod_op.s
+calc_algo/src/mod.s: calc_algo/src/mod.c.s
+.PHONY : calc_algo/src/mod.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/mod_op.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mod_op.c.s
-.PHONY : calculation_algorithms/src/mod_op.c.s
+calc_algo/src/mod.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod.c.s
+.PHONY : calc_algo/src/mod.c.s
 
-calculation_algorithms/src/mul.o: calculation_algorithms/src/mul.c.o
-.PHONY : calculation_algorithms/src/mul.o
+calc_algo/src/mod_op.o: calc_algo/src/mod_op.c.o
+.PHONY : calc_algo/src/mod_op.o
 
 # target to build an object file
-calculation_algorithms/src/mul.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mul.c.o
-.PHONY : calculation_algorithms/src/mul.c.o
+calc_algo/src/mod_op.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod_op.c.o
+.PHONY : calc_algo/src/mod_op.c.o
 
-calculation_algorithms/src/mul.i: calculation_algorithms/src/mul.c.i
-.PHONY : calculation_algorithms/src/mul.i
+calc_algo/src/mod_op.i: calc_algo/src/mod_op.c.i
+.PHONY : calc_algo/src/mod_op.i
 
 # target to preprocess a source file
-calculation_algorithms/src/mul.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mul.c.i
-.PHONY : calculation_algorithms/src/mul.c.i
+calc_algo/src/mod_op.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod_op.c.i
+.PHONY : calc_algo/src/mod_op.c.i
 
-calculation_algorithms/src/mul.s: calculation_algorithms/src/mul.c.s
-.PHONY : calculation_algorithms/src/mul.s
+calc_algo/src/mod_op.s: calc_algo/src/mod_op.c.s
+.PHONY : calc_algo/src/mod_op.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/mul.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/mul.c.s
-.PHONY : calculation_algorithms/src/mul.c.s
+calc_algo/src/mod_op.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mod_op.c.s
+.PHONY : calc_algo/src/mod_op.c.s
 
-calculation_algorithms/src/num_theory.o: calculation_algorithms/src/num_theory.c.o
-.PHONY : calculation_algorithms/src/num_theory.o
+calc_algo/src/mul.o: calc_algo/src/mul.c.o
+.PHONY : calc_algo/src/mul.o
 
 # target to build an object file
-calculation_algorithms/src/num_theory.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/num_theory.c.o
-.PHONY : calculation_algorithms/src/num_theory.c.o
+calc_algo/src/mul.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mul.c.o
+.PHONY : calc_algo/src/mul.c.o
 
-calculation_algorithms/src/num_theory.i: calculation_algorithms/src/num_theory.c.i
-.PHONY : calculation_algorithms/src/num_theory.i
+calc_algo/src/mul.i: calc_algo/src/mul.c.i
+.PHONY : calc_algo/src/mul.i
 
 # target to preprocess a source file
-calculation_algorithms/src/num_theory.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/num_theory.c.i
-.PHONY : calculation_algorithms/src/num_theory.c.i
+calc_algo/src/mul.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mul.c.i
+.PHONY : calc_algo/src/mul.c.i
 
-calculation_algorithms/src/num_theory.s: calculation_algorithms/src/num_theory.c.s
-.PHONY : calculation_algorithms/src/num_theory.s
+calc_algo/src/mul.s: calc_algo/src/mul.c.s
+.PHONY : calc_algo/src/mul.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/num_theory.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/num_theory.c.s
-.PHONY : calculation_algorithms/src/num_theory.c.s
+calc_algo/src/mul.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/mul.c.s
+.PHONY : calc_algo/src/mul.c.s
 
-calculation_algorithms/src/pow_root.o: calculation_algorithms/src/pow_root.c.o
-.PHONY : calculation_algorithms/src/pow_root.o
+calc_algo/src/num_theory.o: calc_algo/src/num_theory.c.o
+.PHONY : calc_algo/src/num_theory.o
 
 # target to build an object file
-calculation_algorithms/src/pow_root.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/pow_root.c.o
-.PHONY : calculation_algorithms/src/pow_root.c.o
+calc_algo/src/num_theory.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/num_theory.c.o
+.PHONY : calc_algo/src/num_theory.c.o
 
-calculation_algorithms/src/pow_root.i: calculation_algorithms/src/pow_root.c.i
-.PHONY : calculation_algorithms/src/pow_root.i
+calc_algo/src/num_theory.i: calc_algo/src/num_theory.c.i
+.PHONY : calc_algo/src/num_theory.i
 
 # target to preprocess a source file
-calculation_algorithms/src/pow_root.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/pow_root.c.i
-.PHONY : calculation_algorithms/src/pow_root.c.i
+calc_algo/src/num_theory.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/num_theory.c.i
+.PHONY : calc_algo/src/num_theory.c.i
 
-calculation_algorithms/src/pow_root.s: calculation_algorithms/src/pow_root.c.s
-.PHONY : calculation_algorithms/src/pow_root.s
+calc_algo/src/num_theory.s: calc_algo/src/num_theory.c.s
+.PHONY : calc_algo/src/num_theory.s
 
 # target to generate assembly for a file
-calculation_algorithms/src/pow_root.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calculation_algorithms/src/pow_root.c.s
-.PHONY : calculation_algorithms/src/pow_root.c.s
+calc_algo/src/num_theory.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/num_theory.c.s
+.PHONY : calc_algo/src/num_theory.c.s
+
+calc_algo/src/pow_root.o: calc_algo/src/pow_root.c.o
+.PHONY : calc_algo/src/pow_root.o
+
+# target to build an object file
+calc_algo/src/pow_root.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/pow_root.c.o
+.PHONY : calc_algo/src/pow_root.c.o
+
+calc_algo/src/pow_root.i: calc_algo/src/pow_root.c.i
+.PHONY : calc_algo/src/pow_root.i
+
+# target to preprocess a source file
+calc_algo/src/pow_root.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/pow_root.c.i
+.PHONY : calc_algo/src/pow_root.c.i
+
+calc_algo/src/pow_root.s: calc_algo/src/pow_root.c.s
+.PHONY : calc_algo/src/pow_root.s
+
+# target to generate assembly for a file
+calc_algo/src/pow_root.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/calc_algo/src/pow_root.c.s
+.PHONY : calc_algo/src/pow_root.c.s
 
 internal_utils/bigNum_utils.o: internal_utils/bigNum_utils.c.o
 .PHONY : internal_utils/bigNum_utils.o
@@ -456,24 +480,27 @@ help:
 	@echo "... big_numbers/bigInt_io.o"
 	@echo "... big_numbers/bigInt_io.i"
 	@echo "... big_numbers/bigInt_io.s"
-	@echo "... calculation_algorithms/src/div.o"
-	@echo "... calculation_algorithms/src/div.i"
-	@echo "... calculation_algorithms/src/div.s"
-	@echo "... calculation_algorithms/src/mod.o"
-	@echo "... calculation_algorithms/src/mod.i"
-	@echo "... calculation_algorithms/src/mod.s"
-	@echo "... calculation_algorithms/src/mod_op.o"
-	@echo "... calculation_algorithms/src/mod_op.i"
-	@echo "... calculation_algorithms/src/mod_op.s"
-	@echo "... calculation_algorithms/src/mul.o"
-	@echo "... calculation_algorithms/src/mul.i"
-	@echo "... calculation_algorithms/src/mul.s"
-	@echo "... calculation_algorithms/src/num_theory.o"
-	@echo "... calculation_algorithms/src/num_theory.i"
-	@echo "... calculation_algorithms/src/num_theory.s"
-	@echo "... calculation_algorithms/src/pow_root.o"
-	@echo "... calculation_algorithms/src/pow_root.i"
-	@echo "... calculation_algorithms/src/pow_root.s"
+	@echo "... calc_algo/src/add_sub.o"
+	@echo "... calc_algo/src/add_sub.i"
+	@echo "... calc_algo/src/add_sub.s"
+	@echo "... calc_algo/src/div.o"
+	@echo "... calc_algo/src/div.i"
+	@echo "... calc_algo/src/div.s"
+	@echo "... calc_algo/src/mod.o"
+	@echo "... calc_algo/src/mod.i"
+	@echo "... calc_algo/src/mod.s"
+	@echo "... calc_algo/src/mod_op.o"
+	@echo "... calc_algo/src/mod_op.i"
+	@echo "... calc_algo/src/mod_op.s"
+	@echo "... calc_algo/src/mul.o"
+	@echo "... calc_algo/src/mul.i"
+	@echo "... calc_algo/src/mul.s"
+	@echo "... calc_algo/src/num_theory.o"
+	@echo "... calc_algo/src/num_theory.i"
+	@echo "... calc_algo/src/num_theory.s"
+	@echo "... calc_algo/src/pow_root.o"
+	@echo "... calc_algo/src/pow_root.i"
+	@echo "... calc_algo/src/pow_root.s"
 	@echo "... internal_utils/bigNum_utils.o"
 	@echo "... internal_utils/bigNum_utils.i"
 	@echo "... internal_utils/bigNum_utils.s"

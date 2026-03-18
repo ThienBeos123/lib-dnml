@@ -6,20 +6,20 @@
 //*          CORRECT SIZE WITH CORRECT ALIGNMENT PADDINGS TAKEN INTO ACCOUNT
 
 
-static size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size) {}
-static size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
+size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size) {}
+size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
     size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
     return raw_size + alignof(max_align_t);
 }
-static size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}
+size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size) {
     if      (b_size < BIGINT_SHORT) return __BIGINT_SHORTDIV_WS__(a_size, b_size);
     else if (b_size < BIGINT_KNUTH) return __BIGINT_KNUTH_WS__(a_size, b_size);
     else __BIGINT_NEWTON_WS__(a_size, b_size);
 } 
 
-static void __BIGINT_SHORT_DIVISION__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx short_ctx) {}
-static void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx knuth_ctx) {
+void __BIGINT_SHORT_DIVISION__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx short_ctx) {}
+void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx knuth_ctx) {
     // Setup
     uint8_t shift = __CLZ_UI64__(b->limbs[b->n - 1]);
     size_t m = a->n, n = b->n, knuth_mark = scratch_mark(&knuth_ctx); 
@@ -156,7 +156,7 @@ static void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, b
     if (quot->n == 0) quot->sign = 1;       /**/     if (rem->n == 0) rem->sign = 1;
     scratch_reset(&knuth_ctx, knuth_mark); // Free all temporaries
 }
-static void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx newton_ctx) {}
+void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx newton_ctx) {}
 void __BIGINT_DIVMOD_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx div_ctx) {
     if      (b->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, b, quot, rem, div_ctx);
     else if (b->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, b, quot, rem, div_ctx);

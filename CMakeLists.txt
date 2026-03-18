@@ -12,7 +12,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
 include_directories(${CMAKE_SOURCE_DIR}/system)
 include_directories(${CMAKE_SOURCE_DIR}/sconfigs)
 include_directories(${CMAKE_SOURCE_DIR}/intrinsics)
-include_directories(${CMAKE_SOURCE_DIR}/calculation_algorithms/header)
+include_directories(${CMAKE_SOURCE_DIR}/calc_algo/header)
 include_directories(${CMAKE_SOURCE_DIR}/internal_utils)
 include_directories(${CMAKE_SOURCE_DIR}/big_numbers)
 
@@ -26,12 +26,13 @@ add_executable(main
     internal_utils/misc_utils.c
     internal_utils/str_parse.c
     intrinsics/limb_math.c
-    calculation_algorithms/src/mul.c
-    calculation_algorithms/src/div.c
-    calculation_algorithms/src/mod.c
-    calculation_algorithms/src/mod_op.c
-    calculation_algorithms/src/num_theory.c
-    calculation_algorithms/src/pow_root.c
+    calc_algo/src/add_sub.c
+    calc_algo/src/mul.c
+    calc_algo/src/div.c
+    calc_algo/src/mod.c
+    calc_algo/src/mod_op.c
+    calc_algo/src/num_theory.c
+    calc_algo/src/pow_root.c
 )
 
 target_compile_options(main PRIVATE -Wno-unused-function)
