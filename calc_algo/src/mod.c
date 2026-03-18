@@ -105,5 +105,5 @@ void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigI
     if (n->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, n, &tmp_quot, rem, mod_ctx);
     else if (n->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, n, &tmp_quot, rem, mod_ctx);
     else if (n->n < BIGINT_BARETT) __BIGINT_BARETT__(a, n, rem, mod_ctx);
-    else __BIGINT_NEWTON_RECIPROCAL__(a, n, &tmp_quot, rem, mod_ctx);
+    else __BIGINT_NEWTON__(a, n, &tmp_quot, rem, mod_ctx);
 }

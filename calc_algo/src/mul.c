@@ -160,10 +160,10 @@ static void __BIGINT_TOOM_3__(const bigInt *m, const bigInt *n, bigInt *res, cal
     BIGINT_TEMP(r_neg1, (k << 1) + 9,           toom_ctx); // 2k + 2 (original) --> 2k + 7 (interpolation - r2)
     BIGINT_TEMP(r_neg2, (k << 1) + 10,          toom_ctx); // 2k + 4 (original) --> 2k + 7 (interpolation - r3)
     BIGINT_TEMP(rinf,    m2size + n2size + 4,   toom_ctx); // 2k (original) ---> 2k + 4 (bit-shifts accounted)
-    __BIGINT_TOOM__(&m0, &n0, &r0, toom_ctx); __BIGINT_TOOM__(&p1, &q1, &r1, toom_ctx);
-    __BIGINT_TOOM__(&p_neg1, &q_neg1, &r_neg1, toom_ctx);
-    __BIGINT_TOOM__(&p_neg2, &q_neg2, &r_neg2, toom_ctx);
-    __BIGINT_TOOM__(&m2, &n2, &rinf, toom_ctx);
+    __BIGINT_TOOM_3__(&m0, &n0, &r0, toom_ctx); __BIGINT_TOOM_3__(&p1, &q1, &r1, toom_ctx);
+    __BIGINT_TOOM_3__(&p_neg1, &q_neg1, &r_neg1, toom_ctx);
+    __BIGINT_TOOM_3__(&p_neg2, &q_neg2, &r_neg2, toom_ctx);
+    __BIGINT_TOOM_3__(&m2, &n2, &rinf, toom_ctx);
 
 
     //* ------------- 3. INTERPOLATION & RECOMPOSITION ---------------- *//
