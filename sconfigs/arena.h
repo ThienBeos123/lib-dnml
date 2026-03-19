@@ -56,6 +56,15 @@ static inline void *arena_alloc(dnml_arena *a, size_t space) {
     a->offset = new_offset;
     return ptr;
 }
+static inline void *arena_galloc(dnml_arena *a, size_t space) {
+    size_t aligned_offset = align_forward(a->offset, alignof(max_align_t));
+    size_t new_offset = aligned_offset + space;
+
+    if (new_offset > a->cap) arena_grow(a, new_offset);
+    void *ptr = a->base + aligned_offset;
+    a->offset = new_offset;
+    return ptr;
+}
 static inline size_t arena_mark(dnml_arena *a) { return a->offset; }
 static inline void arena_reset(dnml_arena *a, size_t mark) { if (mark <= a->offset) a->offset = mark; }
 
