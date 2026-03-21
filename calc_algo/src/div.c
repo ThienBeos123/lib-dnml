@@ -5,7 +5,7 @@
 //*       +) THE WORKSPACE SIZE FUNCTION DOES NOT COMPUTE EXACTLY THE 
 //*          CORRECT SIZE WITH CORRECT ALIGNMENT PADDINGS TAKEN INTO ACCOUNT
 
-
+/* ------ WORKSPACE FUNCTIONS ------ */
 size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size) { return 0; }
 size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
     size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
@@ -19,6 +19,18 @@ size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size) {
     else __BIGINT_NEWTON_WS__(a_size, b_size);
 } 
 
+
+/* ------ MAIN ALGORITHMS HELPERS ------ */
+static inline void ___DASI_BURK_3BY2(
+    const bigInt *a3, const bigInt *a2, const bigInt *a1, 
+    const bigInt *b2, const bigInt *b1,
+    bigInt *q, bigInt *r1, bigInt *r2, calc_ctx burk_helper_ctx
+) {
+
+}
+
+
+/* ------ ALGORITHMS FUNCTIONS ------ */
 void __BIGINT_SHORT_DIVISION__(const bigInt *a, uint64_t b, bigInt *quot, bigInt *rem) {
     uint64_t remainder = 0;
     for (size_t i = a->n - 1; i >= 0; --i) {
@@ -166,7 +178,39 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
     if (quot->n == 0) quot->sign = 1;       /**/     if (rem->n == 0) rem->sign = 1;
     scratch_reset(&knuth_ctx, knuth_mark); // Free all temporaries
 }
-void __BIGINT_BURNIKEL__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx burk_ctx) {}
+void __BIGINT_BURNIKEL__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx burk_ctx) {
+    if (a->n <= (BIGINT_SHORT << 1) && b->n <= BIGINT_SHORT) {
+        __BIGINT_SHORT_DIVISION__(a, b, quot, rem);
+    } //* -------- 1. SPLIT ---------- *//
+    size_t k = (size_t)(b->n >> 1) + 1;
+    /* Dividend - A - QUARTERS */
+    bigInt a1 = {.limbs = a->limbs,             .sign = 1,  /**/    .n = k,        .cap = k};
+    bigInt a2 = {.limbs = a->limbs + k,         .sign = 1,  /**/    .n = k,        .cap = k};
+    bigInt a3 = {.limbs = a->limbs + (k << 1),  .sign = 1,  /**/    .n = k,        .cap = k};
+    bigInt a4 = {.limbs = a->limbs + 3*k,       .sign = 1,  /**/    .n = a->n - k, .cap = a->n - k};
+    /* Divisors - B - HALVES */
+    bigInt b1 = {.limbs = b->limbs,     .sign = 1,  /**/    .n = k,        .cap = k};
+    bigInt b2 = {.limbs = b->limbs + k, .sign = 1,  /**/    .n = b->n - k, .cap = b->n - k};
+
+    //* --------- 2. ACTUAL OPERATION --------- *//
+    size_t burk_mark = scratch_mark(&burk_ctx);
+    BIGINT_TEMP(q1, (k << 1) * BYTES_IN_UINT64_T, burk_ctx);
+    BIGINT_TEMP(q2,  k       * BYTES_IN_UINT64_T, burk_ctx);
+    BIGINT_TEMP(r1, (k << 1) * BYTES_IN_UINT64_T, burk_ctx);
+    BIGINT_TEMP(r2,  k       * BYTES_IN_UINT64_T, burk_ctx);
+    ___DASI_BURK_3BY2(
+        &a4, &a3, &a2,  // Dividends
+        &b2, &b1,       // Divisors
+        &q1, &r1, &r2,  /* Quotient + Remainders */ burk_ctx
+    ); 
+    ___DASI_BURK_3BY2(
+        &r1, &r2, &a1,  // Dividends
+        &b2, &b1,       // Divisors
+        &q2, &r1, &r2,  /* Quotient + Remainders*/ burk_ctx
+    ); __BIGINT_INTERNAL_LLSHIFT__(&q1, 1); __BIGINT_INTERNAL_LLSHIFT__(&r1, 1);
+    __BIGINT_ADD_WC__(quot, &q1, &q2); __BIGINT_ADD_WC__(rem, &r1, &r2);
+    scratch_reset(&burk_ctx, burk_mark);
+}
 void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx newton_ctx) {}
 void __BIGINT_DIVMOD_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx div_ctx) {
     if      (b->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, b->limbs[0], quot, rem);
