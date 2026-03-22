@@ -11,7 +11,22 @@ size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
     size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
     return raw_size + alignof(max_align_t);
 }
-size_t __BIGINT_BURNIKEL_WS__(size_t a_size, size_t b_size) {}
+size_t __BIGINT_BURNIKEL_WS__(size_t a_size, size_t b_size) {
+    size_t k = (size_t)(b_size >> 1) + 1;
+    // BURNIKEL FUNCTION
+    size_t q1_q2_size = (k << 2); // 2k + 2k
+    size_t rsize = k << 1; // 2k
+    // 3-BY-2 HELPER
+    size_t csize = k << 1; // 2k
+    size_t iq_size = k << 1; // 2k
+    size_t dsize = k << 1 + k; // 3k
+    size_t raw = 3*(q1_q2_size + rsize + csize + iq_size + dsize) * BYTES_IN_UINT64_T;
+    uint16_t recursion_depth = 0;
+    while (a_size > BIGINT_SHORT && b_size > BIGINT_SHORT) {
+        a_size >>= 1; b_size >> 1; ++recursion_depth;
+    } return raw + (recursion_depth * alignof(max_align_t)) + (a_size * BYTES_IN_UINT64_T);
+    // a_size has been updated/halved from recursion.
+}
 size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}
 size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size) {
     if      (b_size < BIGINT_SHORT) return __BIGINT_SHORTDIV_WS__(a_size, b_size);
@@ -27,7 +42,7 @@ static inline void ___DASI_BURK_3BY2(
     bigInt *q, bigInt *r, calc_ctx burk_helper_ctx
 ) {
     size_t burk_helper_mark = scratch_mark(&burk_helper_ctx);
-    BIGINT_TEMP(c, max(b1->n, a1->n) + 1, burk_helper_ctx);
+    BIGINT_TEMP(c, B->n, burk_helper_ctx);
     BIGINT_TEMP(iq, a1->n + a2->n, burk_helper_ctx);
     __BIGINT_BURNIKEL__(a1, a2, b1, &q, &c, burk_helper_ctx);
     BIGINT_TEMP(d, (iq.n + b2->n), burk_helper_ctx);
@@ -217,7 +232,7 @@ void __BIGINT_BURNIKEL__(
     size_t burk_mark = scratch_mark(&burk_ctx);
     BIGINT_TEMP(q1, (k << 1), burk_ctx);
     BIGINT_TEMP(q2, (k << 1), burk_ctx);
-    BIGINT_TEMP(r, k + 1, burk_ctx);
+    BIGINT_TEMP(r,  (k << 1), burk_ctx);
     ___DASI_BURK_3BY2(
         &a1, &a2, &a3,  // Dividends
         &b1, &b2, b,    // Divisors
