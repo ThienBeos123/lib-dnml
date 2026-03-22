@@ -23,18 +23,20 @@ extern "C" {
 #include "div.h"
 #include "mul.h"
 
-/* --------------------------------------------------- BIGNUMS --------------------------------------------------- */
-void __BIGINT_BINARY_EXP__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_SLIDING_WINDOW_EXP__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_NEWTON_RAPHSON_SQRT__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, const bigInt *b);
+
+/* ----------------- WORKSPACE ----------------- */
+size_t __BIGINT_BINEXP_WS__(size_t base_size, size_t pow_size);
+size_t __BIGINT_SLIDIN_WS__(size_t base_size, size_t pow_size);
+size_t __BIGINT_NEWTSQRT_WS__(size_t a_size, size_t root_size);
+size_t __BIGINT_NEWT_NROOT_WS__(size_t a_size, size_t root_size);
 
 
-/* ------------------------------------------------- DYNAMICNUMS ------------------------------------------------- */
+/* ----------------- ALGORITHMS ----------------- */
+void __BIGINT_BINARY_EXP__(bigInt *res, const bigInt *base, const bigInt *power);
+void __BIGINT_SLIDING_WINDOW_EXP__(bigInt *res, const bigInt *base, const bigInt *power);
+void __BIGINT_NEWTON_SQRT__(bigInt *res, const bigInt *a, const bigInt *root);
+void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, const bigInt *root);
 
-
-
-/* ------------------------------------------------- STATICNUMS -------------------------------------------------- */
 
 
 #ifdef __cplusplus
