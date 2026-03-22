@@ -19,6 +19,7 @@ extern "C" {
 #include "../../big_numbers/bigNums.h"
 
 #include "add_sub.h"
+#include "mul.h"
 
 
 
@@ -30,6 +31,10 @@ size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size);
 
 void __BIGINT_SHORT_DIVISION__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx short_ctx);
 void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx knuth_ctx);
+void __BIGINT_BURNIKEL__(
+    const bigInt *AH, const bigInt *AL, 
+    const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx burk_ctx
+);
 void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx newton_ctx);
 void __BIGINT_DIVMOD_DISPATCH__(
     const bigInt *a, const bigInt *b, 

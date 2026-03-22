@@ -141,19 +141,22 @@ void __BIGINT_INTERNAL_ADD_UI64__(bigInt *x, uint64_t val) {
                  x->limbs[x->n++] = carry; }
 }
 void __BIGINT_INTERNAL_MUL_UI64__(bigInt *x, uint64_t val) {
-    if (val == 0) { __BIGINT_INTERNAL_ZSET__(x); return; } // x * 0 = 0 ---> Reset back to 0
-    if (val == 1) { return; } // x * 1 = x ----> Stays the same, no operation ---> Sames time and space
-    __BIGINT_INTERNAL_ENSCAP__(x, x->n + 1);
-    uint64_t carry = 0;
-    for (size_t i = 0; i < x->n; ++i) {
-        uint64_t low, high;
-        low = __MUL_UI64__(x->limbs[i], val, &high);
-        uint64_t sum = x->limbs[i] + low + carry;
-        carry = high + (sum < low) + (sum < carry);
-        x->limbs[i] = sum;
+    if (val == 0) __BIGINT_INTERNAL_ZSET__(x);
+    if (val == 1);
+    if (val == 2) __BIGINT_INTERNAL_LSHIFT__(x, 1);
+    else if (!(val & 1)) __BIGINT_INTERNAL_LSHIFT__(x, __CTZ_UI64__(val));
+    else { uint64_t carry = 0;
+        for (size_t i = 0; i < x->n; ++i) {
+            uint64_t low, high;
+            low = __MUL_UI64__(x->limbs[i], val, &high);
+            uint64_t sum = x->limbs[i] + low + carry;
+            carry = high + (sum < low) + (sum < carry);
+            x->limbs[i] = sum;
+        } if (carry) { 
+            x->limbs[x->n] = carry; 
+            x->n           += 1; 
+        }
     }
-    if (carry) { x->limbs[x->n] = carry; 
-                 x->n           += 1; }
 }
 void __BIGINT_DIV3__(bigInt *a) {
     uint64_t carry = 0, borrow, q, t;
@@ -168,7 +171,11 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
     if (val == 1) return 0;
     else if (val == 2) {
         uint64_t remainder = (x->limbs[0] & 1);
-        __BIGINT_INTERNAL_RSHIFT__(x, 1);
+        __BIGINT_INTERNAL_LSHIFT__(x, 1);
+        return remainder;
+    } else if (!(val & 1)) { uint8_t n = __CTZ_UI64__(val);
+        uint64_t remainder = (x->limbs[0] & ((1ULL << n) - 1));
+        __BIGINT_INTERNAL_RSHIFT__(x, n);
         return remainder;
     } else {
         uint64_t remainder = 0;
