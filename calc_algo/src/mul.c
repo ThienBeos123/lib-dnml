@@ -12,8 +12,11 @@ static size_t __BIGINT_KARATSUBA_WS__(size_t x_size, size_t y_size) {
     size_t z0_size = x0_range + y0_range;
     size_t z1_size = max(x1_range + y0_range, x0_range + y1_range) + m + 1;
     size_t z2_size = max(max(z1_size, x1_range + y1_range + 2*m), x0_range + y0_range) + 1;
-
-    return 3*(tmp1_size + tmp2_size + z0_size + z1_size + z2_size) * BYTES_IN_UINT64_T;
+    size_t raw = 3*(tmp1_size + tmp2_size + z0_size + z1_size + z2_size) * BYTES_IN_UINT64_T;
+    uint16_t recursion_depth = 0;
+    while (x_size > BIGINT_SCHOOLBOOK && y_size > BIGINT_SCHOOLBOOK) {
+        x_size >>= 1; y_size >> 1; ++recursion_depth;
+    } return raw + (recursion_depth * alignof(max_align_t));
 }
 static size_t __BIGINT_TOOM_3_WS__(size_t m_size, size_t n_size) {
     size_t k = (size_t)(max(m_size, n_size) / 3) + 1;
@@ -21,7 +24,11 @@ static size_t __BIGINT_TOOM_3_WS__(size_t m_size, size_t n_size) {
     size_t total_points_q = (k << 2 + 6);
     size_t total_points_r = ((k << 3) + (k << 1) + 32);
     size_t res_alias = (k << 1) + 14;
-    return (3 * (total_points_p + total_points_p + total_points_r + res_alias) >> 1) * BYTES_IN_UINT64_T;
+    size_t raw = (3*(total_points_p + total_points_p + total_points_r + res_alias) >> 1) * BYTES_IN_UINT64_T;
+    uint16_t recursion_depth = 0;
+    while (m_size > BIGINT_SCHOOLBOOK && n_size > BIGINT_SCHOOLBOOK) {
+        m_size /= 3; n_size /= 3; ++recursion_depth;
+    } return raw + (recursion_depth * alignof(max_align_t));
 }
 static size_t __BIGINT_TOOM_4_WS__(size_t m_size, size_t n_size) {}
 static size_t __BIGINT_TOOM_5_WS__(size_t m_size, size_t n_size) {}
@@ -146,7 +153,7 @@ static void __BIGINT_TOOM_3__(const bigInt *m, const bigInt *n, bigInt *res, cal
     __BIGINT_ADD_WC__(&p_outer, &m0, &m2);              __BIGINT_ADD_WC__(&q_outer, &m0, &n2);
     __BIGINT_ADD_WC__(&p1, &p_outer, &m1);              __BIGINT_ADD_WC__(&q1, &q_outer, &n1);
     __BIGINT_SUB_SAW__(&p_neg1, &p_outer, &m1);         __BIGINT_SUB_SAW__(&q_neg1, &q_outer, &n1);
-    __BIGINT_ADD_SAW__(&p_neg2, &p_neg1, &m2);          __BIGINT_ADD_SAW__(&q_neg1, &q_neg2, &n2);
+    __BIGINT_ADD_SAW__(&p_neg2, &p_neg1, &m2);          __BIGINT_ADD_SAW__(&q_neg2, &q_neg1, &n2);
     __BIGINT_INTERNAL_LSHIFT__(&p_neg2, 1);             __BIGINT_INTERNAL_LSHIFT__(&q_neg2, 1);
     __BIGINT_SUB_SAW__(&p_neg2, &p_neg2, &m0);          __BIGINT_SUB_SAW__(&q_neg2, &q_neg2, &n0);
     /* ------------ POINT-WISE MULTIPLICATION ------------
