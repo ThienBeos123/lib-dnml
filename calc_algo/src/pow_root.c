@@ -2,8 +2,12 @@
 
 
 /* ----------------- WORKSPACE ----------------- */
-size_t __BIGINT_BINEXP_WS__(size_t base_size, size_t pow_size) {}
-size_t __BIGINT_SLIDIN_WS__(size_t base_size, size_t pow_size) {}
+size_t __BIGINT_BINEXP_WS__(size_t base_size, size_t pow) {
+    size_t raw = base_size * pow;
+    size_t fcall_size = __BIGINT_MUL_WS__((raw >> 1), (raw >> 1));
+    return raw + fcall_size + (2 * alignof(max_align_t));
+}
+size_t __BIGINT_SLIDIN_WS__(size_t base_size, size_t pow) {}
 size_t __BIGINT_NEWTSQRT_WS__(size_t a_size, size_t root_size) {}
 size_t __BIGINT_NEWT_NROOT_WS__(size_t a_size, size_t root_size) {}
 
