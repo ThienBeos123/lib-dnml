@@ -170,6 +170,8 @@ void __BIGINT_MODMUL_DISPATCH__(
         bigInt tmp = {.limbs = tmp_limbs, .sign = 1,          /**/    .n = 0, .cap = modulus->n + 1};
         r.limbs[modulus->n] = 1; __BIGINT_MOD_DISPATCH__(&r, modulus, &r_mod_n, &tmp, modmul_ctx);
         __BIGINT_MUL_DISPATCH__(&r_mod_n, &r_mod_n, &tmp, modmul_ctx); modmul_dispatch_ctx.r2 = &tmp;
+        __BIGINT_MOD_DISPATCH__(&tmp, modulus, &tmp, &r, modmul_ctx);
+        modmul_dispatch_ctx.r2 = &tmp;
         __BIGINT_MONTMUL__(a, b, modmul_dispatch_ctx, res, modmul_ctx);
         scratch_reset(&modmul_ctx, modmul_dispatch_mark);
     }
