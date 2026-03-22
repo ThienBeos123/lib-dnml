@@ -19,6 +19,7 @@ extern "C" {
 #include "../../big_numbers/bigNums.h"
 
 #include "add_sub.h"
+#include "mul.h"
 
 
 

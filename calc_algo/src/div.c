@@ -22,11 +22,25 @@ size_t __BIGINT_DIVMOD_WS__(size_t a_size, size_t b_size) {
 
 /* ------ MAIN ALGORITHMS HELPERS ------ */
 static inline void ___DASI_BURK_3BY2(
-    const bigInt *a3, const bigInt *a2, const bigInt *a1, 
-    const bigInt *b2, const bigInt *b1,
-    bigInt *q, bigInt *r1, bigInt *r2, calc_ctx burk_helper_ctx
+    const bigInt *a1, const bigInt *a2, const bigInt *a3, 
+    const bigInt *b1, const bigInt *b2, const bigInt *B,
+    bigInt *q, bigInt *r, calc_ctx burk_helper_ctx
 ) {
-
+    size_t burk_helper_mark = scratch_mark(&burk_helper_ctx);
+    BIGINT_TEMP(c, max(b1->n, a1->n) + 1, burk_helper_ctx);
+    BIGINT_TEMP(iq, a1->n + a2->n, burk_helper_ctx);
+    __BIGINT_BURNIKEL__(a1, a2, b1, &q, &c, burk_helper_ctx);
+    BIGINT_TEMP(d, (iq.n + b2->n), burk_helper_ctx);
+    uint64_t a[1] = {1}; bigInt one = {.limbs = a, .sign = 1, .n = 1, .cap = 1};
+    __BIGINT_MUL_DISPATCH__(&iq, b2, &d, burk_helper_ctx);
+    __BIGINT_ADD_WC__(&c, &c, a3);
+    while (__BIGINT_INTERNAL_COMP__(&c, &d) == -1) {
+        __BIGINT_SUB_WB__(&iq, &iq, &one);
+        __BIGINT_ADD_WC__(&c, &c, B);
+    } __BIGINT_SUB_WB__(&c, &c, &d);
+    __BIGINT_INTERNAL_COPY__(q, &iq);
+    __BIGINT_INTERNAL_COPY__(r, &c);
+    scratch_reset(&burk_helper_ctx, burk_helper_mark);
 }
 
 
@@ -178,37 +192,50 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
     if (quot->n == 0) quot->sign = 1;       /**/     if (rem->n == 0) rem->sign = 1;
     scratch_reset(&knuth_ctx, knuth_mark); // Free all temporaries
 }
-void __BIGINT_BURNIKEL__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx burk_ctx) {
-    if (a->n <= (BIGINT_SHORT << 1) && b->n <= BIGINT_SHORT) {
-        __BIGINT_SHORT_DIVISION__(a, b, quot, rem);
+void __BIGINT_BURNIKEL__(
+    const bigInt *AH, const bigInt *AL, 
+    const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx burk_ctx
+) {
+    if (AH->n + AL->n <= (BIGINT_SHORT << 1) && b->n <= BIGINT_SHORT) {
+        size_t base_mark = scratch_mark(&burk_ctx);
+        BIGINT_TEMP(a, AH->n + AL->n, burk_ctx);
+        memcpy(a.limbs, AL->limbs, AL->n * BYTES_IN_UINT64_T);
+        memcpy(a.limbs + AH->n, AH->limbs, AH->n * BYTES_IN_UINT64_T);
+        __BIGINT_SHORT_DIVISION__(&a, b, quot, rem); scratch_reset(&burk_ctx, base_mark);
     } //* -------- 1. SPLIT ---------- *//
     size_t k = (size_t)(b->n >> 1) + 1;
     /* Dividend - A - QUARTERS */
-    bigInt a1 = {.limbs = a->limbs,             .sign = 1,  /**/    .n = k,        .cap = k};
-    bigInt a2 = {.limbs = a->limbs + k,         .sign = 1,  /**/    .n = k,        .cap = k};
-    bigInt a3 = {.limbs = a->limbs + (k << 1),  .sign = 1,  /**/    .n = k,        .cap = k};
-    bigInt a4 = {.limbs = a->limbs + 3*k,       .sign = 1,  /**/    .n = a->n - k, .cap = a->n - k};
+    bigInt a4 = {.limbs = AL->limbs,        .sign = 1,  /**/    .n = k,         .cap = k};
+    bigInt a3 = {.limbs = AL->limbs + k,    .sign = 1,  /**/    .n = AL->n - k, .cap = AL->n - k};
+    bigInt a2 = {.limbs = AH->limbs,        .sign = 1,  /**/    .n = k,         .cap = k};
+    bigInt a1 = {.limbs = AH->limbs + k,    .sign = 1,  /**/    .n = AH->n - k, .cap = AH->n - k};
     /* Divisors - B - HALVES */
-    bigInt b1 = {.limbs = b->limbs,     .sign = 1,  /**/    .n = k,        .cap = k};
-    bigInt b2 = {.limbs = b->limbs + k, .sign = 1,  /**/    .n = b->n - k, .cap = b->n - k};
+    bigInt b2 = {.limbs = b->limbs,     .sign = 1,  /**/    .n = k,        .cap = k};
+    bigInt b1 = {.limbs = b->limbs + k, .sign = 1,  /**/    .n = b->n - k, .cap = b->n - k};
 
     //* --------- 2. ACTUAL OPERATION --------- *//
     size_t burk_mark = scratch_mark(&burk_ctx);
-    BIGINT_TEMP(q1, (k << 1) * BYTES_IN_UINT64_T, burk_ctx);
-    BIGINT_TEMP(q2,  k       * BYTES_IN_UINT64_T, burk_ctx);
-    BIGINT_TEMP(r1, (k << 1) * BYTES_IN_UINT64_T, burk_ctx);
-    BIGINT_TEMP(r2,  k       * BYTES_IN_UINT64_T, burk_ctx);
+    BIGINT_TEMP(q1, (k << 1), burk_ctx);
+    BIGINT_TEMP(q2, (k << 1), burk_ctx);
+    BIGINT_TEMP(r, k + 1, burk_ctx);
     ___DASI_BURK_3BY2(
-        &a4, &a3, &a2,  // Dividends
-        &b2, &b1,       // Divisors
-        &q1, &r1, &r2,  /* Quotient + Remainders */ burk_ctx
-    ); 
+        &a1, &a2, &a3,  // Dividends
+        &b1, &b2, b,    // Divisors
+        &q1, &r,  /* Quotient + Remainders */ burk_ctx
+    );
+    bigInt r1 = {.limbs = r.limbs,      .sign = 1, .n = k,       .cap = k};
+    bigInt r2 = {.limbs = r.limbs + k,  .sign = 1, .n = r.n - k, .cap = r.n - k};
     ___DASI_BURK_3BY2(
-        &r1, &r2, &a1,  // Dividends
-        &b2, &b1,       // Divisors
-        &q2, &r1, &r2,  /* Quotient + Remainders*/ burk_ctx
-    ); __BIGINT_INTERNAL_LLSHIFT__(&q1, 1); __BIGINT_INTERNAL_LLSHIFT__(&r1, 1);
-    __BIGINT_ADD_WC__(quot, &q1, &q2); __BIGINT_ADD_WC__(rem, &r1, &r2);
+        &r1, &r2, &a4,  // Dividends
+        &b1, &b2, b,    // Divisors
+        &q2, &r,  /* Quotient + Remainders*/ burk_ctx
+    );
+
+    //* ---------- 3. RECOMPOSITION ---------- *//
+    memcpy(quot->limbs, q2.limbs, q2.cap * BYTES_IN_UINT64_T);
+    memcpy(quot->limbs + q2.cap, q1.limbs, q1.cap * BYTES_IN_UINT64_T);
+    quot->n = 2*k; __BIGINT_INTERNAL_TRIM_LZ__(quot);
+    __BIGINT_INTERNAL_COPY__(rem, &r);
     scratch_reset(&burk_ctx, burk_mark);
 }
 void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx newton_ctx) {}
