@@ -257,6 +257,12 @@ void __BIGINT_NEWTON__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *r
 void __BIGINT_DIVMOD_DISPATCH__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *rem, calc_ctx div_ctx) {
     if      (b->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, b->limbs[0], quot, rem);
     else if (b->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, b, quot, rem, div_ctx);
-    else __BIGINT_NEWTON__(a, b, quot, rem, div_ctx);
+    else if (b->n < BIGINT_BURNIKEL) {
+        size_t k = (size_t)(b->n >> 1) + 1;
+        bigInt AL = {.limbs = a->limbs, .sign = a->sign, .n = max(a->n, 2*k), .cap = max(a->n, 2*k)};
+        bigInt AH = {.limbs = a->limbs + max(a->n, 2*k), .sign = a->sign, 
+                     .n = (a->n < 2*k) ? 0 : 2*k - a->n, .cap = (a->n < 2*k) ? 0 : 2*k - a->n};
+        __BIGINT_BURNIKEL__(&AH, &AL, b, quot, rem, div_ctx);
+    } else __BIGINT_NEWTON__(a, b, quot, rem, div_ctx);
 }
 
