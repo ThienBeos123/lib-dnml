@@ -105,9 +105,18 @@ size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base) {
 
     size_t total_digits = (size_t)(first_few_bits / bits_per_digit);
     size_t last_limb = x->limbs[x->n - 1];
-    while (last_limb > 0) {
-        ++total_digits;
-        last_limb /= 10;
+    if (base == 2) total_digits += BIGINT_LIMBS_BITS - __CLZ_UI64__(last_limb);
+    else if (!(base & 1)) { 
+        uint8_t shift = __CTZ_UI64__(base);
+        while (last_limb) {
+            ++total_digits;
+            last_limb >>= shift;
+        }
+    } else {
+        while (last_limb) {
+            ++total_digits;
+            last_limb /= base;
+        }
     } return total_digits;
 }
 size_t __BIGINT_LIMBS_NEEDED__(size_t bits) { 

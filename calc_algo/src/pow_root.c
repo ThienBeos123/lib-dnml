@@ -8,7 +8,7 @@
 size_t __BIGINT_BINEXP_WS__(size_t base_size, size_t pow) {
     size_t raw = base_size * pow;
     size_t fcall_size = __BIGINT_MUL_WS__((raw - base_size), (raw - base_size));
-    return raw + fcall_size + (2 * alignof(max_align_t));
+    return raw + fcall_size;
 }
 size_t __BIGINT_2K_ARY_WS__(size_t base_size, size_t pow, uint8_t ksize) {
     // RAW OBJECTS
@@ -44,8 +44,12 @@ size_t __BIGINT_SLIDIN_WS__(size_t base_size, size_t pow, uint8_t ksize) {
                                   max(main_loop_even, main_loop_odd)));
     return raw_outside + table_pows + max_fcall;
 }
-size_t __BIGINT_NEWTSQRT_WS__(size_t a_size, size_t root_size) {}
-size_t __BIGINT_NEWT_NROOT_WS__(size_t a_size, size_t root_size) {}
+size_t __BIGINT_HERON_WS__(size_t a_size) {
+    size_t raw_size = a_size << 2;
+    size_t fcall = __BIGINT_DIVMOD_WS__(a_size, a_size);
+    return raw_size + fcall;
+}
+size_t __BIGINT_NEWTON_NROOT_WS__(size_t a_size, size_t root_size) {}
 
 
 
@@ -137,6 +141,18 @@ void __BIGINT_SLIDING__(bigInt *res, const bigInt *base, uint64_t power, uint8_t
     scratch_reset(&slide_ctx, slidin_mark);
 
 }
-void __BIGINT_MONT_LADDER__(bigInt *res, const bigInt *base, uint64_t power, calc_ctx ladder_ctx) {}
-void __BIGINT_NEWTON_SQRT__(bigInt *res, const bigInt *a, const bigInt *root) {}
+void __BIGINT_HERON__(bigInt *res, const bigInt *a, calc_ctx heron_ctx) {
+    uint64_t guess_bits =  (__BIGINT_COUNTDB__(a, 2) + 1) >> 1;
+    size_t heron_mark = scratch_mark(&heron_ctx);
+    BIGINT_TEMP(guess, a->n, heron_ctx); BIGINT_TEMP(a_guess, a->n, heron_ctx);
+    guess.limbs[0] = guess_bits; guess.n = 1; guess.sign = 1;
+    BIGINT_TEMP(tmp, a->n, heron_ctx); BIGINT_TEMP(next, a->n, heron_ctx);
+    while (true) {
+        __BIGINT_DIVMOD_DISPATCH__(a, &guess, &a_guess, &tmp, heron_ctx);
+        __BIGINT_ADD_WC__(&next, &guess, &a_guess);
+        int8_t comp_res = __BIGINT_INTERNAL_COMP__(&next, &guess);
+        if (!comp_res || comp_res == 1) break;
+        __BIGINT_INTERNAL_COPY__(&guess, &next);
+    } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&heron_ctx, heron_mark);
+}
 void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, const bigInt *root) {}
