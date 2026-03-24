@@ -144,23 +144,74 @@ static void __BIGINT_SLIDING__(bigInt *res, const bigInt *base, uint64_t power, 
 
 }
 static void __BIGINT_HERON__(bigInt *res, const bigInt *a, calc_ctx heron_ctx) {
-    uint64_t guess_bits =  (__BIGINT_COUNTDB__(a, 2) + 1) >> 1;
+    uint64_t guess_bits = (__BIGINT_COUNTDB__(a, 2) + 1) >> 1;
     size_t heron_mark = scratch_mark(&heron_ctx);
-    BIGINT_TEMP(guess, a->n, heron_ctx); BIGINT_TEMP(a_guess, a->n, heron_ctx);
-    guess.limbs[0] = guess_bits; guess.n = 1; guess.sign = 1;
-    BIGINT_TEMP(next, a->n, heron_ctx);
+    BIGINT_TEMP(guess, a->n, heron_ctx); 
+    BIGINT_TEMP(ratio, a->n, heron_ctx);
+    BIGINT_TEMP(next, a->n + 1, heron_ctx);
+    guess.limbs[(guess_bits << 6)] = 1ULL << (guess_bits % 64); 
+    guess.n = (guess_bits << 6) + 1;
     while (true) {
         // next in DIVMOD_DISPATCH acts as a temporary buffer
-        __BIGINT_DIVMOD_DISPATCH__(a, &guess, &a_guess, &next, heron_ctx);
-        __BIGINT_ADD_WC__(&next, &guess, &a_guess);
+        __BIGINT_DIVMOD_DISPATCH__(a, &guess, &ratio, &next, heron_ctx);
+        __BIGINT_ADD_WC__(&next, &guess, &ratio);
         __BIGINT_INTERNAL_RSHIFT__(&next, 1);
         int8_t comp_res = __BIGINT_INTERNAL_COMP__(&next, &guess);
         if (!comp_res || comp_res == 1) break;
-        __BIGINT_INTERNAL_COPY__(&guess, &next);
+        __BIGINT_INTERNAL_SWAP__(&guess, &next);
     } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&heron_ctx, heron_mark);
 }
-static void __BIGINT_NEWTON_CBRT__(bigInt *res, const bigInt *a, calc_ctx cbrt_ctx) {}
-static uint64_t __BIGINT_NAIVE_NROOT__(uint64_t a, uint64_t root) {}
+static void __BIGINT_NEWTON_CBRT__(bigInt *res, const bigInt *a, calc_ctx cbrt_ctx) {
+    uint64_t guess_bits = (__BIGINT_COUNTDB__(a, 2) + 2) / 3;
+    size_t cbrt_mark = scratch_mark(&cbrt_ctx);
+    BIGINT_TEMP(guess,  (a->n + 1) << 1,  cbrt_ctx); 
+    BIGINT_TEMP(ratio,   a->n + 1,        cbrt_ctx);
+    BIGINT_TEMP(next,   (a->n + 1) << 1,  cbrt_ctx);
+    BIGINT_TEMP(tmp,    (a->n + 1) << 1,  cbrt_ctx);
+    guess.limbs[(guess_bits << 6)] = 1ULL << (guess_bits % 64); 
+    guess.n = (guess_bits << 6) + 1;
+    while (true) {
+        __BIGINT_MUL_DISPATCH__(&guess, &guess, &next, cbrt_ctx);
+        __BIGINT_DIVMOD_DISPATCH__(a, &next, &ratio, &tmp, cbrt_ctx);
+        __BIGINT_INTERNAL_COPY__(&next, &guess);
+        __BIGINT_INTERNAL_LSHIFT__(&next, 1);
+        __BIGINT_ADD_WC__(&next, &next, &ratio);
+        __BIGINT_DIV3__(&next);
+        int8_t comp_res = __BIGINT_INTERNAL_COMP__(&next, &guess);
+        if (!comp_res || comp_res == 1) break;
+        __BIGINT_INTERNAL_SWAP__(&guess, &next);
+    } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&cbrt_ctx, cbrt_mark);
+}
+static uint64_t __UI64_NROOT__(uint64_t a, uint64_t root) {
+    if (__IS_2POW__(root)) {
+        uint8_t shift = __CTZ_UI64__(root);
+        uint64_t guess = ((BITS_IN_UINT64_T - __CLZ_UI64__(a)) + root - 1) >> shift;
+        guess = 1ULL << guess; uint64_t xpow = pow(guess, (root - 1)), 
+        ratio = 0, next = 0;
+        while (true) {
+            ratio = a / xpow;
+            next = guess * (root - 1);
+            next += ratio; next >>= shift;
+            if (next >= guess) break;
+            guess = next;
+            xpow = pow(guess, (root - 1));
+        } return guess;
+    } else {
+        uint64_t guess = ((BITS_IN_UINT64_T - __CLZ_UI64__(a)) + root - 1) / root;
+        guess = 1ULL << guess; uint64_t xpow = pow(guess, (root - 1)),
+        ratio = 0, next = 0;
+        while (true) {
+            ratio = a / xpow;
+            if (__IS_2POW__(root - 1)) {
+                next = guess >> __CTZ_UI64__(root - 1);
+            } else next = guess * (root - 1);
+            next = ratio; next /= root;
+            if (next >= guess) break;
+            guess = next;
+            xpow = pow(guess, (root - 1));
+        } return guess;
+    }
+}
 static void __BIGINT_NEWTON_2NROOT__(bigInt *res, const bigInt *a, uint64_t root, calc_ctx _2nroot_ctx) {
     //! WARNING ! WARNING ! WARNING ! WARNING !
     //  THIS FUNCTION EXPECTS THE ROOT TO A POWER OF 2
@@ -168,8 +219,10 @@ static void __BIGINT_NEWTON_2NROOT__(bigInt *res, const bigInt *a, uint64_t root
     uint8_t shift = __CTZ_UI64__(root);
     uint64_t guess_bits = (__BIGINT_COUNTDB__(a, 2) + root - 1) >> shift;
     size_t _2nroot_mark = scratch_mark(&_2nroot_ctx);
-    BIGINT_TEMP(guess, a->n, _2nroot_ctx); BIGINT_TEMP(ratio, a->n, _2nroot_ctx);
-    guess.limbs[0] = guess_bits; guess.n = 1; guess.sign = 1;
+    BIGINT_TEMP(guess, a->n * (root - 1), _2nroot_ctx); 
+    BIGINT_TEMP(ratio, a->n, _2nroot_ctx);
+    guess.limbs[(guess_bits << 6)] = 1ULL << (guess_bits % 64); 
+    guess.n = (guess_bits << 6) + 1;
     BIGINT_TEMP(next, a->n * (root - 1), _2nroot_ctx); 
     BIGINT_TEMP(xpow, a->n * (root - 1), _2nroot_ctx);
     __BIGINT_EXP_DISPATCH__(&xpow, &guess, (root - 1), _2nroot_ctx);
@@ -182,15 +235,17 @@ static void __BIGINT_NEWTON_2NROOT__(bigInt *res, const bigInt *a, uint64_t root
         __BIGINT_INTERNAL_RSHIFT__(&next, shift);
         int8_t comp_res = __BIGINT_INTERNAL_COMP__(&next, &guess);
         if (!comp_res || comp_res == 1) break;
-        __BIGINT_INTERNAL_COPY__(&guess, &next);
+        __BIGINT_INTERNAL_SWAP__(&guess, &next);
         __BIGINT_EXP_DISPATCH__(&xpow, &guess, (root - 1), _2nroot_ctx);
     } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&_2nroot_ctx, _2nroot_mark);
 }
 static void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, uint64_t root, calc_ctx nroot_ctx) {
     uint64_t guess_bits = (__BIGINT_COUNTDB__(a, 2) + root - 1) / root;
-    size_t _2nroot_mark = scratch_mark(&nroot_ctx);
-    BIGINT_TEMP(guess, a->n, nroot_ctx); BIGINT_TEMP(ratio, a->n, nroot_ctx);
-    guess.limbs[0] = guess_bits; guess.n = 1; guess.sign = 1;
+    size_t nroot_mark = scratch_mark(&nroot_ctx);
+    BIGINT_TEMP(guess, a->n * (root - 1), nroot_ctx); 
+    BIGINT_TEMP(ratio, a->n, nroot_ctx);
+    guess.limbs[(guess_bits << 6)] = 1ULL << (guess_bits % 64); 
+    guess.n = (guess_bits << 6) + 1;
     BIGINT_TEMP(next, a->n * (root - 1), nroot_ctx); 
     BIGINT_TEMP(xpow, a->n * (root - 1), nroot_ctx);
     __BIGINT_EXP_DISPATCH__(&xpow, &guess, (root - 1), nroot_ctx);
@@ -198,7 +253,9 @@ static void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, uint64_t root,
         // next in DIVMOD_DISPATCH acts as a temporary buffer;
         __BIGINT_DIVMOD_DISPATCH__(a, &xpow, &ratio, &next, nroot_ctx);
         __BIGINT_INTERNAL_COPY__(&next, &guess);
-        __BIGINT_INTERNAL_MUL_UI64__(&next, (root - 1));
+        if (__IS_2POW__(root - 1)) {
+            __BIGINT_INTERNAL_LSHIFT__(&next, __CTZ_UI64__(root - 1));
+        } else __BIGINT_INTERNAL_MUL_UI64__(&next, (root - 1));
         __BIGINT_ADD_WC__(&next, &next, &ratio);
         // AT ANY POINT IN TIME, The actual size of "next" when used and calculate normally, 
         // disregarding its usage as a temporary buffer, its maximum size is always a->n
@@ -206,9 +263,9 @@ static void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, uint64_t root,
         __BIGINT_SHORT_DIVISION__(&next, root, &next, &ratio);
         int8_t comp_res = __BIGINT_INTERNAL_COMP__(&next, &guess);
         if (!comp_res || comp_res == 1) break;
-        __BIGINT_INTERNAL_COPY__(&guess, &next);
+        __BIGINT_INTERNAL_SWAP__(&guess, &next);
         __BIGINT_EXP_DISPATCH__(&xpow, &guess, (root - 1), nroot_ctx);
-    } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&nroot_ctx, _2nroot_mark);
+    } __BIGINT_INTERNAL_COPY__(res, &guess); scratch_reset(&nroot_ctx, nroot_mark);
 }
 
 
@@ -249,7 +306,7 @@ void __BIGINT_NROOT_DISPATCH__(bigInt *res, const bigInt *a, uint64_t root, calc
     if (a->n <= BIGINT_NAIVE) {
         if (root == 2) res->limbs[0] = (uint64_t)(sqrt(a->limbs[0]));
         else if (root = 3) res->limbs[0] = (uint64_t)(cbrt(a->limbs[0]));
-        else res->limbs[0] = __BIGINT_NAIVE_NROOT__(a->limbs[0], root);
+        else res->limbs[0] = __UI64_NROOT__(a->limbs[0], root);
         res->n = 1;
     } else {
         if (root == 2) __BIGINT_HERON__(res, a, nroot_ctx);

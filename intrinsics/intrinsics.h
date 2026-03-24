@@ -109,13 +109,7 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
         return res;
     #endif
 }
-static inline uint64_t __POW_UI64__(uint64_t base, uint64_t pow) {
-    uint64_t res = 1;
-    while (pow) {
-        if (pow & 1) res = base * res;
-        base *= base; pow >>= 1;
-    } return res;
-}
+
 
 //* ----------------------------------- *//
 //*    SINGLE-LIMB MODULAR ARITHMETIC   *//
