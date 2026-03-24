@@ -85,15 +85,9 @@ inline void __BIGINT_INTERNAL_ZSET__(bigInt *x) {
     x->n    = 0;
     x->sign = 1;
 }
-inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y, calc_ctx swap_ctx) {
-    size_t tmp_mark = scratch_mark(&swap_ctx);
-    limb_t *tmp_buf = scratch_alloc(&swap_ctx, y->n * BYTES_IN_UINT64_T);
-    memcpy(tmp_buf, y->limbs, y->n * BYTES_IN_UINT64_T);
-    memcpy(y->limbs, x->limbs, x->n * BYTES_IN_UINT64_T);
-    memcpy(x->limbs, tmp_buf, y->n * BYTES_IN_UINT64_T);
-    scratch_reset(&swap_ctx, tmp_mark); tmp_buf = NULL;
+inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y) {
+    bigInt tmp = *x; /* -----> */ *x = *y; /* -----> */ *y = tmp;
 }
-size_t __BIGINT_ISWAP_WS__(size_t y_size) { return y_size * BYTES_IN_UINT64_T; }
 size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base) {
     size_t first_few_bits = (x->n - 1) * BIGINT_LIMBS_BITS;
     size_t bits_per_digit;
@@ -105,9 +99,18 @@ size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base) {
 
     size_t total_digits = (size_t)(first_few_bits / bits_per_digit);
     size_t last_limb = x->limbs[x->n - 1];
-    while (last_limb > 0) {
-        ++total_digits;
-        last_limb /= 10;
+    if (base == 2) total_digits += BIGINT_LIMBS_BITS - __CLZ_UI64__(last_limb);
+    else if (!(base & 1)) { 
+        uint8_t shift = __CTZ_UI64__(base);
+        while (last_limb) {
+            ++total_digits;
+            last_limb >>= shift;
+        }
+    } else {
+        while (last_limb) {
+            ++total_digits;
+            last_limb /= base;
+        }
     } return total_digits;
 }
 size_t __BIGINT_LIMBS_NEEDED__(size_t bits) { 

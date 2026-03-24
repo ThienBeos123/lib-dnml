@@ -155,6 +155,7 @@ static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod
 //* --------------------------- *//
 //*      GENERAL UTILITIES      *//
 //* --------------------------- *//
+static inline uint8_t __IS_2POW__(uint64_t x) { return (x) && !(x & (x - 1)); }
 static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
     #if x == 0
         return 64;
