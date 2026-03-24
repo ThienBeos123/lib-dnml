@@ -49,7 +49,7 @@ static size_t __BIGINT_HERON_WS__(size_t a_size) {
     size_t fcall = __BIGINT_DIVMOD_WS__(a_size, a_size);
     return raw_size + fcall;
 }
-static size_t __BIGINT_CBRT_WS__(size_t a_size) {
+static size_t __BIGINT_NEWTON_CBRT_WS__(size_t a_size) {
     size_t raw_size = 7 * (a_size + 1);
     size_t fcall = max(
         __BIGINT_MUL_WS__(a_size + 1, a_size + 1),
@@ -299,11 +299,15 @@ size_t __BIGINT_SQRT_WS__(size_t a_size) {
     if (a_size <= BIGINT_NAIVE) return 0;
     else return __BIGINT_HERON_WS__(a_size);
 }
+size_t __BIGINT_CBRT_WS__(size_t a_size) {
+    if (a_size <= BIGINT_NAIVE) return 0;
+    else return __BIGINT_NEWTON_CBRT_WS__(a_size);
+}
 size_t __BIGINT_NROOT_WS__(size_t a_size, uint64_t root) {
     if (a_size <= BIGINT_NAIVE) return 0;
     else {
         if (root == 2) return __BIGINT_HERON_WS__(a_size);
-        else if (root == 3) return __BIGINT_CBRT_WS__(a_size);
+        else if (root == 3) return __BIGINT_NEWTON_CBRT_WS__(a_size);
         else if (__IS_2POW__(root)) __BIGINT_NEWTON_2NROOT_WS__(a_size, root);
         else __BIGINT_NEWTON_NROOT_WS__(a_size, root);
     }
@@ -319,6 +323,12 @@ void __BIGINT_SQRT_DISPATCH__(bigInt *res, const bigInt *a, calc_ctx sqrt_ctx) {
         res->limbs[0] = (uint64_t)(sqrt(a->limbs[0]));
         res->n = 1;
     } else __BIGINT_HERON__(res, a, sqrt_ctx);
+}
+void __BIGINT_CBRT_DISPATCH__(bigInt *res, const bigInt *a, calc_ctx cbrt_ctx) {
+    if (a->n <= BIGINT_NAIVE) {
+        res->limbs[0] = (uint64_t)(cbrt(a->limbs[0]));
+        res->n = 1;
+    } else __BIGINT_NEWTON_CBRT__(res, a, cbrt_ctx);
 }
 void __BIGINT_NROOT_DISPATCH__(bigInt *res, const bigInt *a, uint64_t root, calc_ctx nroot_ctx) {
     if (a->n <= BIGINT_NAIVE) {

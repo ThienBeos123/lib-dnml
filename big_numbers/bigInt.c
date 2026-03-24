@@ -1524,6 +1524,57 @@ static void __BIGINT_MAGNITUDED_MODDIV__(bigInt *res, const bigInt *a, const big
 static void __BIGINT_MAGNITUDED_MODEXP__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
 static void __BIGINT_MAGNITUDED_MODSQR__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
 static void __BIGINT_MAGNITUDED_MODINV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod) {}
+/* ----------------- MAGNITUDED ALGEBRAIC OPERATIONS ------------------ */
+static void __BIGINT_MAGSQR__(bigInt *res, const bigInt *base) {
+    dnml_arena *_DASI_MAGSQR_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGSQR_ARENA, __BIGINT_MUL_WS__(base->n, base->n));
+    calc_ctx magsqr_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_MAGSQR_ARENA
+    }; __BIGINT_MUL_DISPATCH__(base, base, res, magsqr_ctx);
+}
+static void __BIGINT_MAGPOW__(bigInt *res, const bigInt *base, uint64_t pow) {
+    dnml_arena *_DASI_MAGPOW_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGPOW_ARENA, __BIGINT_EXP_WS__(base->n, pow));
+    calc_ctx magpow_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_MAGPOW_ARENA
+    }; __BIGINT_EXP_DISPATCH__(res, base, pow, magpow_ctx);
+}
+static void __BIGINT_MAGSQRT__(bigInt *res, const bigInt *a) {
+    dnml_arena *_DASI_MAGSQRT_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGSQRT_ARENA, __BIGINT_SQRT_WS__(a->n));
+    calc_ctx magsqrt_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_MAGSQRT_ARENA
+    }; __BIGINT_SQRT_DISPATCH__(res, a, magsqrt_ctx);
+}
+static void __BIGINT_MAGCBRT__(bigInt *res, const bigInt *a) {
+    dnml_arena *_DASI_MAGCBRT_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAGCBRT_ARENA, __BIGINT_CBRT_WS__(a->n));
+    calc_ctx magcbrt_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_MAGCBRT_ARENA
+    }; __BIGINT_CBRT_DISPATCH__(res, a, magcbrt_ctx);
+}
+static void __BIGINT_MAG_NROOT__(bigInt *res, const bigInt *a, uint64_t root) {
+    dnml_arena *_DASI_MAG_NROOT_ARENA = _USE_LOW_ARENA();
+    arena_grow(_DASI_MAG_NROOT_ARENA, __BIGINT_NROOT_WS__(a->n, root));
+    calc_ctx mag_nroot_ctx = {
+        .alloc  = arena_alloc_adapter,
+        .mark   = arena_mark_adapter,
+        .reset  = arena_reset_adapter,
+        .state  = _DASI_MAG_NROOT_ARENA
+    }; __BIGINT_NROOT_DISPATCH__(res, a, root, mag_nroot_ctx);
+}
 
 
 
