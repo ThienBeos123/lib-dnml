@@ -45,13 +45,31 @@ static size_t __BIGINT_SLIDIN_WS__(size_t base_size, uint64_t pow, uint8_t ksize
     return raw_outside + table_pows + max_fcall;
 }
 static size_t __BIGINT_HERON_WS__(size_t a_size) {
-    size_t raw_size = a_size << 2;
+    size_t raw_size = 3 * a_size + 1;
     size_t fcall = __BIGINT_DIVMOD_WS__(a_size, a_size);
     return raw_size + fcall;
 }
-static size_t __BIGINT_CBRT_WS__(size_t a_size) {}
-static size_t __BIGINT_NEWTON_2NROOT_WS__(size_t a_size, uint64_t root) {}
-static size_t __BIGINT_NEWTON_NROOT_WS__(size_t a_size, uint64_t root) {}
+static size_t __BIGINT_CBRT_WS__(size_t a_size) {
+    size_t raw_size = 7 * (a_size + 1);
+    size_t fcall = max(
+        __BIGINT_MUL_WS__(a_size + 1, a_size + 1),
+        __BIGINT_DIVMOD_WS__(a_size, (a_size + 1) << 1)
+    ); return raw_size + fcall;
+}
+static size_t __BIGINT_NEWTON_2NROOT_WS__(size_t a_size, uint64_t root) {
+    size_t raw_size = 3 * (a_size * (root - 1));
+    size_t fcall = max(
+        __BIGINT_EXP_WS__(a_size, root - 1),
+        __BIGINT_DIVMOD_WS__(a_size, a_size * (root - 1))
+    ); return raw_size + a_size + fcall;
+}
+static size_t __BIGINT_NEWTON_NROOT_WS__(size_t a_size, uint64_t root) {
+    size_t raw_size = 3 * (a_size * (root - 1));
+    size_t fcall = max(
+        __BIGINT_EXP_WS__(a_size, root - 1),
+        __BIGINT_DIVMOD_WS__(a_size, a_size * (root - 1))
+    ); return raw_size + a_size + fcall;
+}
 
 
 
@@ -213,9 +231,9 @@ static uint64_t __UI64_NROOT__(uint64_t a, uint64_t root) {
     }
 }
 static void __BIGINT_NEWTON_2NROOT__(bigInt *res, const bigInt *a, uint64_t root, calc_ctx _2nroot_ctx) {
-    //! WARNING ! WARNING ! WARNING ! WARNING !
-    //  THIS FUNCTION EXPECTS THE ROOT TO A POWER OF 2
-    //! WARNING ! WARNING ! WARNING ! WARNING !
+    // ! WARNING ! WARNING ! WARNING ! WARNING !
+    //   THIS FUNCTION EXPECTS THE ROOT TO A POWER OF 2
+    // ! WARNING ! WARNING ! WARNING ! WARNING !
     uint8_t shift = __CTZ_UI64__(root);
     uint64_t guess_bits = (__BIGINT_COUNTDB__(a, 2) + root - 1) >> shift;
     size_t _2nroot_mark = scratch_mark(&_2nroot_ctx);
