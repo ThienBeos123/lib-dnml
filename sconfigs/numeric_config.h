@@ -38,6 +38,17 @@ typedef enum {
     BIGINT_NEWTON,                     // n >= 512     DIV + MOD
 } DIV_THRESHOLDS;
 
+/* Power, Roots, & Miscallenous Algebraic Operations */
+typedef enum {
+    /* Power / Exponentiation */
+    BIGINT_BINARY       = 8,
+    BIGINT_FIXED        = 32,
+    BIGINT_SLIDING,
+    /* Square root / Nth Root */
+    BIGINT_NAIVE            = 1,
+    BIGINT_NEWTON_RAPHSON,
+};
+
 typedef enum {
     /* GCD - Greatest Common Divisor */
     BIGINT_EUCLID           = 1,
