@@ -2327,8 +2327,10 @@ bigInt __BIGINT_MODINV__(const bigInt x, const bigInt modulus) {}
 /* -------------- MUTATIVE ALGEBRAIC -------------- */
 void __BIGINT_MUT_SQR__(bigInt *x) {                            //? ARENA REFACTORED
     assert(__BIGINT_PVALIDATE__(x));
-    if (x->n = 1) {
-        if (x->limbs[0] <= ((1ULL << 32) - 1)) x->limbs[0] *= x->limbs[0];
+    if (x->n == 0);
+    else if (x->n = 1) {
+        if (x->limbs[0] == 1);
+        else if (x->limbs[0] <= ((1ULL << 32) - 1)) x->limbs[0] *= x->limbs[0];
         else { __BIGINT_RESERVE__(x, 2);
             x->limbs[0] = __MUL_UI64__(
                 x->limbs[0], x->limbs[0], 
@@ -2354,10 +2356,10 @@ void __BIGINT_MUT_POW__(bigInt *x, uint64_t exp) {              //? ARENA REFACT
     else if (exp == 2) __BIGINT_MUT_SQR__(x);
     else if (x->n == 1 && x->limbs[0] == 1) x->sign = (!(exp & 1)) ? 1 : x->sign; 
     else if (x->n == 1 && __SAFE_EXP__(x->limbs[0], exp)) {
-        x->limbs[0] = pow(
+        x->limbs[0] = (uint64_t)(pow(
             (double)x->limbs[0], 
             (double)exp
-        ); x->sign = (!(exp & 1)) ? 1 : x->sign;
+        )); x->sign = (!(exp & 1)) ? 1 : x->sign;
     } else { dnml_arena *_DASI_MUTPOW_ARENA = _USE_ARENA();
         size_t mutpow_mark = arena_mark(_DASI_MUTPOW_ARENA);
         limb_t *tmp_limbs = arena_alloc(_DASI_MUTPOW_ARENA, x->n * exp);
@@ -2393,8 +2395,8 @@ void __BIGINT_MUT_CBRT__(bigInt *x) {                           //? ARENA REFACT
 }
 dnml_status __BIGINT_MUT_NROOT__(bigInt *x, uint64_t root) {    //? ARENA REFACTORED
     assert(__BIGINT_PVALIDATE__(x));
-    if (!root) return BIGINT_ERR_DOMAIN;
-    if (!(root & 1) && x->sign == -1) return BIGINT_ERR_INVAL;
+    if (!root) return BIGINT_ERR_INVAL;
+    if (!(root & 1) && x->sign == -1) return BIGINT_ERR_DOMAIN;
     if (x->n == 0); else if (x->n == 1 && x->limbs[0] == 1);
     else { dnml_arena *_DASI_MUTNRT_ARENA = _USE_ARENA();
         size_t mutnrt_mark = arena_mark(_DASI_MUTNRT_ARENA);
@@ -2406,11 +2408,74 @@ dnml_status __BIGINT_MUT_NROOT__(bigInt *x, uint64_t root) {    //? ARENA REFACT
     }
 }
 /* -------------- FUNCTIONAL ALGEBRAIC -------------- */
-bigInt __BIGINT_SQR__(const bigInt x) {}
-bigInt __BIGINT_POW__(const bigInt x, uint64_t exp) {}
-bigInt __BIGINT_SQRT__(const bigInt x, dnml_status *err) {}
-bigInt __BIGINT_CBRT__(const bigInt x) {}
-bigInt __BIGINT_NROOT__(const bigInt x, uint64_t root, dnml_status *err) {}
+bigInt __BIGINT_SQR__(const bigInt x) {                                     //? ARENA REFACTORED
+    assert(__BIGINT_VALIDATE__(x));
+    bigInt res; if (x.n == 0) __BIGINT_EMPTY_INIT__(&res);
+    else if (x.n == 1) {
+        if (x.limbs[0] == 1) __BIGINT_UI64_INIT__(&res, 1);
+        else if (x.limbs[0] <= ((1ULL << 32) - 1)) {
+            __BIGINT_UI64_INIT__(&res, x.limbs[0] * x.limbs[0]);
+        } else { 
+            __BIGINT_LIMBS_INIT__(&res, 2);
+            res.limbs[0] = __MUL_UI64__(
+                x.limbs[0], x.limbs[0],
+                res.limbs[1]
+            ); res.n = 2;
+        } res.sign = 1;
+    } else { 
+        __BIGINT_LIMBS_INIT__(&res, x.n * 2);
+        __BIGINT_MAGSQR__(&res, &x); res.sign = 1;
+    } return res;
+}
+bigInt __BIGINT_POW__(const bigInt x, uint64_t exp) {                       //? ARENA REFACTORED
+    assert(__BIGINT_VALIDATE__(x));
+    if (exp == 2) return __BIGINT_SQR__(x);
+    bigInt res; if (!exp) __BIGINT_UI64_INIT__(&res, 1);
+    else if (!x.n) __BIGINT_EMPTY_INIT__(&res);
+    else if (x.n == 1 && x.limbs[0] == 1) {
+        __BIGINT_I64_INIT__(&res, 1 * (!(exp & 1) ? 1 : x.sign));
+    } else if (x.n == 1 && __SAFE_EXP__(x.limbs[0], exp)) {
+        uint64_t exp_res = (uint64_t)(pow(
+            (double)x.limbs[0], 
+            (double)exp
+        )); __BIGINT_UI64_INIT__(&res, exp_res);
+        res.sign = (!(exp & 1)) ? 1 : x.sign;
+    } else if (exp == 1) __BIGINT_STANDARD_INIT__(&res, x);
+    else { __BIGINT_LIMBS_INIT__(&res, x.n * exp);
+        __BIGINT_MAGPOW__(&res, &x, pow);
+        res.sign = (!(exp & 1)) ? 1 : x.sign;
+    } return res;
+}
+bigInt __BIGINT_SQRT__(const bigInt x, dnml_status *err) {                  //? ARENA REFACTORED
+    assert(__BIGINT_VALIDATE__(x) && err);
+    if (x.sign == -1) { *err = BIGINT_ERR_DOMAIN; return __BIGINT_ERROR_VALUE__(); }
+    bigInt res; if (!x.n) __BIGINT_EMPTY_INIT__(&res);
+    else if (x.n == 1 && x.limbs[0] == 1) __BIGINT_UI64_INIT__(&res, 1);
+    else { __BIGINT_LIMBS_INIT__(&res, (x.n >> 1));
+        __BIGINT_MAGSQR__(&res, &x); res.sign = 1;
+    } return res;
+}
+bigInt __BIGINT_CBRT__(const bigInt x) {                                    //? ARENA REFACTORED
+    assert(__BIGINT_VALIDATE__(x));
+    bigInt res; if (!x.n) __BIGINT_EMPTY_INIT__(&res);
+    else if (x.n == 1 && x.limbs[0] == 1) __BIGINT_I64_INIT__(&res, (1 * x.sign));
+    else { __BIGINT_LIMBS_INIT__(&res, x.n / 3);
+        __BIGINT_MAGCBRT__(&res, &x); res.sign = x.sign;
+    } return res;
+}
+bigInt __BIGINT_NROOT__(const bigInt x, uint64_t root, dnml_status *err) {  //? ARENA REFACTORED
+    assert(__BIGINT_VALIDATE__(x) && err);
+    if (!root) { *err = BIGINT_ERR_INVAL; return __BIGINT_ERROR_VALUE__(); }
+    else if (!(root & 1) && x.sign == -1) { *err = BIGINT_ERR_DOMAIN; return __BIGINT_ERROR_VALUE__(); }
+    bigInt res; if (!x.n) __BIGINT_EMPTY_INIT__(&res);
+    else if (x.n == 1 && x.limbs[0] == 1) { 
+        __BIGINT_UI64_INIT__(&res, 1); 
+        res.sign = (!(root & 1)) ? 1 : x.sign; 
+    } else { size_t alloc_size = (__IS_2POW__(root)) ? (x.n >> __CTZ_UI64__(root)) : (x.n / root);
+        __BIGINT_LIMBS_INIT__(&res, alloc_size); __BIGINT_MAG_NROOT__(&res, &x, root); 
+        res.sign = (!(root & 1)) ? 1 : x.sign;
+    } return res;
+}
 
 
 
