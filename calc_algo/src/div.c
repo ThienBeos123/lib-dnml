@@ -63,7 +63,7 @@ static inline void ___DASI_BURK_3BY2(
 void __BIGINT_SHORT_DIVISION__(const bigInt *a, uint64_t b, bigInt *quot, bigInt *rem) {
     uint64_t remainder = 0;
     for (size_t i = a->n - 1; i >= 0; --i) {
-    __DIV_HELPER_UI64__(remainder, a->limbs[i], b, quot->limbs[i], &remainder);
+    __DIV_HELPER_UI64__(remainder, a->limbs[i], b, &quot->limbs[i], &remainder);
     } __BIGINT_INTERNAL_TRIM_LZ__(rem);
     if (quot->n == 0) quot->sign = 1;
     rem->limbs[0] = remainder;
@@ -216,7 +216,7 @@ void __BIGINT_BURNIKEL__(
         BIGINT_TEMP(a, AH->n + AL->n, burk_ctx);
         memcpy(a.limbs, AL->limbs, AL->n * BYTES_IN_UINT64_T);
         memcpy(a.limbs + AH->n, AH->limbs, AH->n * BYTES_IN_UINT64_T);
-        __BIGINT_SHORT_DIVISION__(&a, b, quot, rem); scratch_reset(&burk_ctx, base_mark);
+        __BIGINT_SHORT_DIVISION__(&a, b->limbs[0], quot, rem); scratch_reset(&burk_ctx, base_mark);
     } //* -------- 1. SPLIT ---------- *//
     size_t k = (size_t)(b->n >> 1) + 1;
     /* Dividend - A - QUARTERS */

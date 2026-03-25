@@ -2334,7 +2334,7 @@ void __BIGINT_MUT_SQR__(bigInt *x) {                            //? ARENA REFACT
         else { __BIGINT_RESERVE__(x, 2);
             x->limbs[0] = __MUL_UI64__(
                 x->limbs[0], x->limbs[0], 
-                x->limbs[1]
+                &x->limbs[1]
             ); x->n = 2;
         } x->sign = 1;
     } else {
@@ -2419,7 +2419,7 @@ bigInt __BIGINT_SQR__(const bigInt x) {                                     //? 
             __BIGINT_LIMBS_INIT__(&res, 2);
             res.limbs[0] = __MUL_UI64__(
                 x.limbs[0], x.limbs[0],
-                res.limbs[1]
+                &res.limbs[1]
             ); res.n = 2;
         } res.sign = 1;
     } else { 
@@ -2442,7 +2442,7 @@ bigInt __BIGINT_POW__(const bigInt x, uint64_t exp) {                       //? 
         res.sign = (!(exp & 1)) ? 1 : x.sign;
     } else if (exp == 1) __BIGINT_STANDARD_INIT__(&res, x);
     else { __BIGINT_LIMBS_INIT__(&res, x.n * exp);
-        __BIGINT_MAGPOW__(&res, &x, pow);
+        __BIGINT_MAGPOW__(&res, &x, exp);
         res.sign = (!(exp & 1)) ? 1 : x.sign;
     } return res;
 }
