@@ -1471,7 +1471,7 @@ static void __BIGINT_MAGNITUDED_GCD__(bigInt *res, const bigInt *a, const bigInt
         .state = _DASI_MAGGCD_ARENA
     }; __BIGINT_GCD_DISPATCH__(res, a, b, _maggcd_ctx);
 }
-static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b) { //? ARENA REFACTORED
+static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b) {
     dnml_arena *_DASI_MAGLCM_ARENA = _USE_ARENA();
     dnml_arena *_DASI_MAGLCM_LARENA = _USE_LOW_ARENA();
     arena_grow(_DASI_MAGLCM_LARENA, __BIGINT_GCD_WS__(a->n, b->n));
@@ -1501,7 +1501,7 @@ static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, ui
         );
     } *res = curr_rem;
 }
-static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {         //!
+static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus) {
     dnml_arena *_DASI_MAGEMOD_ARENA = _USE_ARENA();
     dnml_arena *_DASI_MAGEMOD_ALGRENA = _USE_LOW_ARENA();
     arena_grow(_DASI_MAGEMOD_ALGRENA, __BIGINT_MOD_WS__(a->n, modulus->n));
@@ -1511,7 +1511,7 @@ static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const big
         .reset = arena_reset_adapter,
         .state = _DASI_MAGEMOD_ALGRENA
     }; size_t tmp_mark = arena_mark(_DASI_MAGEMOD_ARENA);
-    limb_t *tmp_limbs = arena_alloc(_DASI_MAGEMOD_ARENA, a->n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = arena_alloc(_DASI_MAGEMOD_ARENA, a->n);
     bigInt tmp_quot = { .limbs = tmp_limbs, /**/ .n = 0, /**/ .cap = a->n, /**/ .sign = 1 };
     __BIGINT_MOD_DISPATCH__(a, modulus, res, &tmp_quot, magemod_ctx);
     arena_reset(_DASI_MAGEMOD_ARENA, tmp_mark); tmp_limbs == NULL;
@@ -1591,7 +1591,7 @@ void __BIGINT_MUT_MUL_UI64__(bigInt *x, uint64_t val) {
     else { __BIGINT_RESERVE__(x, x->n + 1); // Prevents memory leaks early from __MUT_COPY__
         dnml_arena *_DASI_MUL_UI64_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_MUL_UI64_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_UI64_ARENA, BYTES_IN_UINT64_T * (x->n + 1));
+        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_UI64_ARENA, x->n + 1);
         bigInt __TEMP_PROD__ = {
             .limbs  = tmp_limbs, /**/ .cap    = x->n + 1,
             .n      = 0,         /**/ .sign   = 1
@@ -1609,8 +1609,8 @@ dnml_status __BIGINT_MUT_DIV_UI64__(bigInt *x, uint64_t val) {
     else if (x->n == 1 && x->limbs[0] == 1) __BIGINT_RESET__(x);
     else { dnml_arena *_DASI_DIV_UI64_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_DIV_UI64_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_DIV_UI64_ARENA, BYTES_IN_UINT64_T * x->n);
-        bigInt temp_quot = { 
+        limb_t *tmp_limbs = arena_alloc(_DASI_DIV_UI64_ARENA, x->n);
+        bigInt temp_quot = {
             .limbs = tmp_limbs, /**/ .cap = x->n, 
             .n = 0,             /**/ .sign = 1 
         }; uint64_t temp_rem;
@@ -1632,7 +1632,7 @@ dnml_status __BIGINT_MUT_MOD_UI64__(bigInt *x, uint64_t val) {
         else if (!comp_res) __BIGINT_RESET__(x);
         else { dnml_arena *_DASI_MOD_UI64_ARENA = _USE_ARENA();
             size_t tmp_mark = arena_mark(_DASI_MOD_UI64_ARENA);
-            limb_t *tmp_limbs = arena_alloc(_DASI_MOD_UI64_ARENA, BYTES_IN_UINT64_T * x->n);
+            limb_t *tmp_limbs = arena_alloc(_DASI_MOD_UI64_ARENA, x->n);
             bigInt temp_quot = {
                 .limbs = tmp_limbs, /**/ .cap   = x->n,
                 .n     = 0,         /**/ .sign  = 1
@@ -1654,7 +1654,7 @@ void __BIGINT_MUT_MUL_I64__(bigInt *x, int64_t val) {
     else { __BIGINT_RESERVE__(x, x->n + 1); // Prevents memory leak early from __MUT_COPY__
         dnml_arena *_DASI_MUL_I64_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_MUL_I64_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_I64_ARENA, BYTES_IN_UINT64_T * (x->n + 1));
+        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_I64_ARENA,  x->n + 1);
         bigInt __TEMP_PROD__ = {
             .limbs  = tmp_limbs,    /**/ .cap    = x->n + 1,
             .n      = 0,            /**/ .sign   = 1
@@ -1673,7 +1673,7 @@ dnml_status __BIGINT_MUT_DIV_I64__(bigInt *x, int64_t val) {
     else if (x->n == 1 && x->limbs[0] == 1) __BIGINT_RESET__(x);
     else { dnml_arena *_DASI_DIV_I64_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_DIV_I64_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_DIV_I64_ARENA, BYTES_IN_UINT64_T * x->n);
+        limb_t *tmp_limbs = arena_alloc(_DASI_DIV_I64_ARENA,  x->n);
         bigInt temp_quot = {
             .limbs  = tmp_limbs,    /**/ .cap    = x->n,
             .n      = 0,            /**/ .sign   = 1
@@ -1696,7 +1696,7 @@ dnml_status __BIGINT_MUT_MOD_I64__(bigInt *x, int64_t val) {
         else if (!comp_res) __BIGINT_RESET__(x);
         else { dnml_arena *_DASI_MOD_I64_ARENA = _USE_ARENA();
             size_t tmp_mark = arena_mark(_DASI_MOD_I64_ARENA);
-            limb_t *tmp_limbs = arena_alloc(_DASI_MOD_I64_ARENA, BYTES_IN_UINT64_T * x->n);
+            limb_t *tmp_limbs = arena_alloc(_DASI_MOD_I64_ARENA, x->n);
             bigInt temp_quot = {
                 .limbs  = tmp_limbs,    /**/ .cap    = x->n,
                 .n      = 0,            /**/ .sign   = 1
@@ -1719,7 +1719,7 @@ void __BIGINT_MUT_ADD__(bigInt *x, const bigInt y) {
         __BIGINT_RESERVE__(x, max(x->n, y.n) + 1); // Prevents memory leaked from OOM early
         dnml_arena *_DASI_ADD_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_ADD_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_ADD_ARENA, BYTES_IN_UINT64_T * (max(x->n, y.n) + 1));
+        limb_t *tmp_limbs = arena_alloc(_DASI_ADD_ARENA,  max(x->n, y.n) + 1);
         bigInt temp_sum = {
             .limbs = tmp_limbs, /**/ .cap   = max(x->n, y.n) + 1,
             .n     = 0,         /**/ .sign  = 1
@@ -1732,7 +1732,7 @@ void __BIGINT_MUT_ADD__(bigInt *x, const bigInt y) {
         if (!comp_res) __BIGINT_RESET__(x);
         else { dnml_arena *_DASI_ADD_ARENA = _USE_ARENA();
             size_t tmp_mark = arena_mark(_DASI_ADD_ARENA);
-            limb_t *tmp_limbs = arena_alloc(_DASI_ADD_ARENA, BYTES_IN_UINT64_T * x->n);
+            limb_t *tmp_limbs = arena_alloc(_DASI_ADD_ARENA,  x->n);
             bigInt temp_sum = {
                 .limbs = tmp_limbs, /**/ .cap   = x->n,
                 .n     = 0,         /**/ .sign  = 1
@@ -1755,7 +1755,7 @@ void __BIGINT_MUT_SUB__(bigInt *x, const bigInt y) {
         if (!comp_res) __BIGINT_RESET__(x);
         else { dnml_arena *_DASI_SUB_ARENA = _USE_ARENA();
             size_t tmp_mark = arena_mark(_DASI_SUB_ARENA);
-            limb_t *tmp_limbs = arena_alloc(_DASI_SUB_ARENA, BYTES_IN_UINT64_T * x->n);
+            limb_t *tmp_limbs = arena_alloc(_DASI_SUB_ARENA,  x->n);
             bigInt temp_diff = {
                 .limbs = tmp_limbs, /**/ .cap   = x->n,
                 .n     = 0,         /**/ .sign  = 1
@@ -1767,7 +1767,7 @@ void __BIGINT_MUT_SUB__(bigInt *x, const bigInt y) {
         }
     } else { dnml_arena *_DASI_SUB_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_SUB_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_SUB_ARENA, BYTES_IN_UINT64_T * (max(x->n, y.n) + 1));
+        limb_t *tmp_limbs = arena_alloc(_DASI_SUB_ARENA, max(x->n, y.n) + 1);
         bigInt temp_diff = {
             .limbs = tmp_limbs, /**/ .cap   = max(x->n, y.n) + 1,
             .n     = 0,         /**/ .sign  = 1
@@ -1786,7 +1786,7 @@ void __BIGINT_MUT_MUL__(bigInt *x, const bigInt y) {
     else if (x->n == 1 && x->limbs[0] == 1) __BIGINT_MUT_COPY__(x, y);
     else { dnml_arena *_DASI_MUL_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_MUL_ARENA);
-        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_ARENA, BYTES_IN_UINT64_T * (x->n * y.n));
+        limb_t *tmp_limbs = arena_alloc(_DASI_MUL_ARENA,  x->n * y.n);
         bigInt __TEMP_PROD__ = {
             .limbs = tmp_limbs, /**/ .cap   = x->n * y.n,
             .n     = 0,         /**/ .sign  = 1
@@ -1806,10 +1806,10 @@ dnml_status __BIGINT_MUT_DIV__(bigInt *x, const bigInt y) {
     else if (x->n == 1 && x->limbs[0] == 1) __BIGINT_RESET__(x);
     else { dnml_arena *_DASI_DIV_ARENA = _USE_ARENA();
         size_t mutdiv_mark = arena_mark(_DASI_DIV_ARENA);
-        limb_t *quot_limbs = arena_alloc(_DASI_DIV_ARENA, BYTES_IN_UINT64_T * x->n);
-        limb_t *rem_limbs = arena_alloc(_DASI_DIV_ARENA, BYTES_IN_UINT64_T * y.n);
-        bigInt temp_quot = {.limbs = quot_limbs, .sign = 1,     /**/    .cap = x->n, .n = 0,}; 
-        bigInt temp_rem = {.limbs = rem_limbs, .sign = 1,       /**/    .cap = y.n, .n = 0,};
+        limb_t *quot_limbs = arena_alloc(_DASI_DIV_ARENA, x->n);
+        limb_t *rem_limbs = arena_alloc(_DASI_DIV_ARENA, y.n);
+        bigInt temp_quot = {.limbs = quot_limbs, .sign = 1,     /**/    .cap = x->n, .n = 0}; 
+        bigInt temp_rem = {.limbs = rem_limbs, .sign = 1,       /**/    .cap = y.n,  .n = 0};
         __BIGINT_MAGNITUDED_DIVMOD__(&temp_quot, &temp_rem, x, &y); temp_quot.sign = x->sign * y.sign;
         __BIGINT_NORMALIZE__(&temp_quot); __BIGINT_MUT_COPY__(x, temp_quot);
         arena_reset(_DASI_DIV_ARENA, mutdiv_mark); _DASI_DIV_ARENA = NULL;
@@ -1829,10 +1829,10 @@ dnml_status __BIGINT_MUT_MOD__(bigInt *x, const bigInt y) {
         else { dnml_arena *_DASI_MOD_ARENA = _USE_ARENA();
             // Always at the start, no need to find the aligned offset
             size_t mutmod_mark = arena_mark(_DASI_MOD_ARENA);
-            limb_t *quot_limbs = arena_alloc(_DASI_MOD_ARENA, BYTES_IN_UINT64_T * x->n);
-            limb_t *rem_limbs = arena_alloc(_DASI_MOD_ARENA, BYTES_IN_UINT64_T * y.n);
+            limb_t *quot_limbs = arena_alloc(_DASI_MOD_ARENA, x->n);
+            limb_t *rem_limbs = arena_alloc(_DASI_MOD_ARENA, y.n);
             bigInt temp_quot = {.limbs = quot_limbs, .sign = 1,     /**/    .cap = x->n, .n = 0}; 
-            bigInt temp_rem = {.limbs = rem_limbs, .sign = 1,       /**/    .cap = y.n, .n = 0};
+            bigInt temp_rem = {.limbs = rem_limbs, .sign = 1,       /**/    .cap = y.n,  .n = 0};
             __BIGINT_MAGNITUDED_DIVMOD__(&temp_quot, &temp_rem, x, &y);
             temp_rem.sign = x->sign; __BIGINT_MUT_COPY__(x, temp_rem);
             arena_reset(_DASI_MOD_ARENA, mutmod_mark); _DASI_MOD_ARENA = NULL;
