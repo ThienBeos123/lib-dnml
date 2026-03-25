@@ -102,7 +102,7 @@ void __BIGINT_MONT_REDC__(bigInt *t, mont_ctx mredc_ctx, bigInt *rem, calc_ctx r
     __BIGINT_INTERNAL_COPY__(rem, t);
 }
 void __BIGINT_MOD_DISPATCH__(const bigInt *a, const bigInt *n, bigInt *rem, bigInt *tmp_quot, calc_ctx mod_ctx) {
-    if (n->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, n, &tmp_quot, rem, mod_ctx);
+    if (n->n < BIGINT_SHORT) __BIGINT_SHORT_DIVISION__(a, n->limbs[0], &tmp_quot, rem);
     else if (n->n < BIGINT_KNUTH) __BIGINT_KNUTH_D__(a, n, &tmp_quot, rem, mod_ctx);
     else if (n->n < BIGINT_BARETT) __BIGINT_BARETT__(a, n, rem, mod_ctx);
     else __BIGINT_NEWTON__(a, n, &tmp_quot, rem, mod_ctx);

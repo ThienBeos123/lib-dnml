@@ -15,6 +15,7 @@ extern "C" {
 #include "../../sconfigs/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
+#include "../../intrinsics/intrinutil.h"
 #include "../../intrinsics/limb_math.h"
 #include "../../internal_utils/util.h"
 #include "../../big_numbers/bigNums.h"
@@ -23,18 +24,21 @@ extern "C" {
 #include "div.h"
 #include "mul.h"
 
-/* --------------------------------------------------- BIGNUMS --------------------------------------------------- */
-void __BIGINT_BINARY_EXP__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_SLIDING_WINDOW_EXP__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_NEWTON_RAPHSON_SQRT__(bigInt *res, const bigInt *a, const bigInt *b);
-void __BIGINT_NEWTON_NROOT__(bigInt *res, const bigInt *a, const bigInt *b);
 
-
-/* ------------------------------------------------- DYNAMICNUMS ------------------------------------------------- */
+/* ----------------- WORKSPACE ----------------- */
+size_t __BIGINT_EXP_WS__(size_t base_size, uint64_t pow);
+size_t __BIGINT_SQRT_WS__(size_t a_size);
+size_t __BIGINT_CBRT_WS__(size_t a_size);
+size_t __BIGINT_NROOT_WS__(size_t a_size, uint64_t root);
 
 
 
-/* ------------------------------------------------- STATICNUMS -------------------------------------------------- */
+/* ----------------- ALGORITHMS ----------------- */
+void __BIGINT_EXP_DISPATCH__(bigInt *res, const bigInt *base, uint64_t power, calc_ctx exp_ctx);
+void __BIGINT_SQRT_DISPATCH__(bigInt *res, const bigInt *a, calc_ctx sqrt_ctx);
+void __BIGINT_CBRT_DISPATCH__(bigInt *res, const bigInt *a, calc_ctx cbrt_ctx);
+void __BIGINT_NROOT_DISPATCH__(bigInt *res, const bigInt *a, uint64_t root, calc_ctx nroot_ctx);
+
 
 
 #ifdef __cplusplus

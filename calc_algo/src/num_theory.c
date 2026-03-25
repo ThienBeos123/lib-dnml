@@ -8,9 +8,7 @@ static const uint32_t dmr_bases[7] = {
 
 //* ======== GCD - WORKSPACE RETURNER ======== */
 static size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { 
-    return ((u_size + v_size) * BYTES_IN_UINT64_T)
-          + __BIGINT_ISWAP_WS__(max(u_size, v_size));
-          + alignof(max_align_t); 
+    return ((u_size + v_size) * BYTES_IN_UINT64_T) + alignof(max_align_t); 
 }
 static size_t __BIGINT_LEHMER_WS__(size_t u_size, size_t v_size) {}
 static size_t __BIGINT_HALF_WS__(size_t u_size, size_t v_size) {}
@@ -53,7 +51,7 @@ static void __BIGINT_STEIN__(bigInt *res, const bigInt *u, const bigInt *v, calc
     // Procedure
     int8_t comp_res = __BIGINT_INTERNAL_COMP__(&u_copy, &v_copy);
     while (comp_res) {
-        if (comp_res == -1) __BIGINT_INTERNAL_SWAP__(&u_copy, &v_copy, stein_ctx);
+        if (comp_res == -1) __BIGINT_INTERNAL_SWAP__(&u_copy, &v_copy);
         // Identity #4: gcd(u, v) = gcd(u, v - u)
         //  WHEN: +) u & v is ODD
         //        +) u <= v
