@@ -7,10 +7,7 @@
 
 /* ------ WORKSPACE FUNCTIONS ------ */
 size_t __BIGINT_SHORTDIV_WS__(size_t a_size, size_t b_size) { return 0; }
-size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) {
-    size_t raw_size = (a_size + 1 + b_size) * BYTES_IN_UINT64_T;
-    return raw_size + alignof(max_align_t);
-}
+size_t __BIGINT_KNUTH_WS__(size_t a_size, size_t b_size) { return a_size + 1 + b_size; }
 size_t __BIGINT_BURNIKEL_WS__(size_t a_size, size_t b_size) {
     size_t k = (size_t)(b_size >> 1) + 1;
     // BURNIKEL FUNCTION
@@ -20,11 +17,7 @@ size_t __BIGINT_BURNIKEL_WS__(size_t a_size, size_t b_size) {
     size_t csize = k << 1; // 2k
     size_t iq_size = k << 1; // 2k
     size_t dsize = k << 1 + k; // 3k
-    size_t raw = 3*(q1_q2_size + rsize + csize + iq_size + dsize) * BYTES_IN_UINT64_T;
-    uint16_t recursion_depth = 0;
-    while (a_size > BIGINT_SHORT && b_size > BIGINT_SHORT) {
-        a_size >>= 1; b_size >> 1; ++recursion_depth;
-    } return raw + (recursion_depth * alignof(max_align_t)) + (a_size * BYTES_IN_UINT64_T);
+    return 3*(q1_q2_size + rsize + csize + iq_size + dsize) + a_size;
     // a_size has been updated/halved from recursion.
 }
 size_t __BIGINT_NEWTON_WS__(size_t a_size, size_t b_size) {}

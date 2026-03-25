@@ -4,22 +4,22 @@
 //* ----- WORKSPACE FUNCTIONS ---- *//
 //* ------------------------------ *//
 size_t __BIGINT_CMODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
-    size_t raw_size = (2*(a_size + b_size)) * BYTES_IN_UINT64_T;
+    size_t raw_size = (a_size + b_size) << 1;
     size_t fcall_size = max(
         __BIGINT_MUL_WS__(a_size, b_size),
         __BIGINT_MOD_WS__((a_size + b_size), mod_size)
-    ); return raw_size + fcall_size + (2*alignof(max_align_t));
+    ); return raw_size + fcall_size;
 }
 size_t __BIGINT_MONTMUL_WS__(size_t a_size, size_t b_size, mont_ctx ctx) {
-    size_t raw_size = (2*ctx.k + 1) * BYTES_IN_UINT64_T;
+    size_t raw_size = 2*ctx.k + 1;
     size_t mul_size = __BIGINT_MUL_WS__(a_size, b_size);
-    return raw_size + mul_size + alignof(max_align_t); // Align for the MUL stackframe
+    return raw_size + mul_size;
 }
 static size_t __BIGINT_BIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
-    size_t raw_size = (base_size + 2*mod_size + pow_size) * BYTES_IN_UINT64_T;
+    size_t raw_size = base_size + 2*mod_size + pow_size;
     size_t fcall_size = max(__BIGINT_MOD_WS__(base_size, mod_size), 
                             __BIGINT_CMODMUL_WS__(mod_size, mod_size, mod_size));
-    return raw_size + fcall_size + (4*alignof(max_align_t));
+    return raw_size + fcall_size;
 }
 static size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_t pow_size) {
     // Binary ModExp's objects
@@ -31,14 +31,12 @@ static size_t __BIGINT_MBIN_MODEXP_WS__(size_t base_size, size_t mod_size, size_
                            max(__BIGINT_MUL_WS__(rmodn_size, rmodn_size),
                                max(__BIGINT_MOD_WS__(max_tsize, mod_size),
                                    __BIGINT_MOD_WS__(max_tsize, mod_size))));
-    return ((rsize_tmpsize + rmodn_size 
-          + ressize_basesize + + tmpexp_size 
-          + max_frame) * BYTES_IN_UINT64_T) + (6 * alignof(max_align_t));
+    return rsize_tmpsize + rmodn_size + ressize_basesize + tmpexp_size + max_frame;
 }
 size_t __BIGINT_MODMUL_WS__(size_t a_size, size_t b_size, size_t mod_size) {
     if (mod_size <= BIGINT_CLASSICAL) return __BIGINT_CMODMUL_WS__(a_size, b_size, mod_size);
     else { size_t montmul_internal = __BIGINT_MONTMUL_WS__(a_size, b_size, (mont_ctx){.k = mod_size});
-        size_t setup_size = (4*mod_size + 1) * BYTES_IN_UINT64_T;
+        size_t setup_size = 4*mod_size + 1;
         size_t setup_fcall = max(
             __BIGINT_MOD_WS__(mod_size + 1, mod_size), 
             __BIGINT_MUL_WS__(mod_size, mod_size)

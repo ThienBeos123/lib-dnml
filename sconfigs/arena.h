@@ -8,7 +8,7 @@
 
 //* ============= Declarations =============
 typedef struct {
-    uint8_t *base;
+    uint64_t *base;
     size_t  cap;
     size_t  offset;
 } dnml_arena;
@@ -35,33 +35,27 @@ static inline void arena_destruct(dnml_arena *a) {
     a->cap      = 0;
     a->offset   = 0;
 }
-static inline size_t align_forward(size_t x, size_t align) { return (x + (align - 1)) & ~(align - 1); }
 static inline size_t arena_grow(dnml_arena *a, size_t min_cap) {
     if (a->cap >= min_cap) return a->cap;
     size_t new_cap = (a->cap) ? a->cap : 1;
     while (new_cap < min_cap) new_cap *= 2;
-    
-    uint8_t *buf = realloc(a->base, new_cap);
+    uint64_t *buf = realloc(a->base, new_cap);
     if (!buf) abort();
     a->base     = buf;
     a->cap      = new_cap;
     return new_cap;
 }
 static inline void *arena_alloc(dnml_arena *a, size_t space) {
-    size_t aligned_offset = align_forward(a->offset, alignof(max_align_t));
-    size_t new_offset = aligned_offset + space;
-
+    size_t new_offset = a->offset + space;
     if (new_offset > a->cap) return NULL; // Swiftly prevents further operation through segfault.
-    void *ptr = a->base + aligned_offset;
+    void *ptr = a->base + new_offset;
     a->offset = new_offset;
     return ptr;
 }
 static inline void *arena_galloc(dnml_arena *a, size_t space) {
-    size_t aligned_offset = align_forward(a->offset, alignof(max_align_t));
-    size_t new_offset = aligned_offset + space;
-
+    size_t new_offset = a->offset + space;
     if (new_offset > a->cap) arena_grow(a, new_offset);
-    void *ptr = a->base + aligned_offset;
+    void *ptr = a->base + new_offset;
     a->offset = new_offset;
     return ptr;
 }

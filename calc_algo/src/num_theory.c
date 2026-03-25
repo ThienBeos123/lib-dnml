@@ -7,9 +7,7 @@ static const uint32_t dmr_bases[7] = {
 };
 
 //* ======== GCD - WORKSPACE RETURNER ======== */
-static size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { 
-    return ((u_size + v_size) * BYTES_IN_UINT64_T) + alignof(max_align_t); 
-}
+static size_t __BIGINT_STEIN_WS__(size_t u_size, size_t v_size) { return u_size + v_size; }
 static size_t __BIGINT_LEHMER_WS__(size_t u_size, size_t v_size) {}
 static size_t __BIGINT_HALF_WS__(size_t u_size, size_t v_size) {}
 size_t __BIGINT_GCD_WS__(size_t u_size, size_t v_size) {
@@ -83,11 +81,11 @@ void __BIGINT_GCD_DISPATCH__(bigInt *res, const bigInt *u, const bigInt *v, calc
 static size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
     // Main, raw Miller-Rabin size
     // Obj_count also accounts for the function call workspace
-    size_t obj_count = 4, additional_size = 0;
+    size_t additional_size = 0;
     size_t mrabin_setup_size = 2*n_size;
     size_t x_size = n_size, max_fcall;
     // Branching of Algorithm Dispatch (MODMULs)
-    if (likely(n_size > BIGINT_CLASSICAL)) { obj_count += 3;
+    if (likely(n_size > BIGINT_CLASSICAL)) {
         size_t rlimbs_size = 2*n_size;
         size_t rmodn_size = n_size;
         size_t tmp_size = 2*n_size;
@@ -101,14 +99,12 @@ static size_t __BIGINT_MRABIN_WS__(size_t n_size, size_t base_size) {
             __BIGINT_MONTMUL_WS__(n_size, n_size, (mont_ctx){.k = n_size})
         ); size_t inner_montmuls = __BIGINT_MONTMUL_WS__(n_size, n_size, (mont_ctx){.k = n_size});
         max_fcall = max(zdomain_funcs, max(outer_montmuls, inner_montmuls));
-        obj_count += 3; // 3 more objects from Montgomery Domain setup
     } else max_fcall = max(
         __BIGINT_CMODMUL_WS__(x_size, x_size, n_size), 
         __BIGINT_CMODMUL_WS__(n_size, n_size, n_size)
     );
     max_fcall = max(max_fcall, __BIGINT_MODEXP_WS__(base_size, n_size, n_size));
-    return ((mrabin_setup_size + x_size + additional_size) * BYTES_IN_UINT64_T)
-           + max_fcall + ((obj_count - 1) * alignof(max_align_t));
+    return mrabin_setup_size + x_size + additional_size + max_fcall;
 }
 static size_t __BIGINT_BPSW_WS__(size_t n_size) {}
 size_t __BIGINT_ECPP_WS__(size_t n_size) {}
