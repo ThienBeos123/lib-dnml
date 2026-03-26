@@ -1,10 +1,11 @@
+#ifndef ____DNML_VANILLC_ARITH_H
+#define ____DNML_VANILLC_ARITH_H
+
 #include <stdint.h>
-
-
-
+#include "../../system/compiler.h"
 
 // 64 bit Addition with Carry-over
-uint64_t _intrin_add64_carry(uint64_t a, uint64_t b, uint64_t *carry) {
+static inline uint64_t _cintrin_add64c(uint64_t a, uint64_t b, uint64_t *carry) {
     uint64_t sum = a + b;
     uint8_t ab_carry = (sum < a);
     a = sum + *carry;
@@ -12,10 +13,8 @@ uint64_t _intrin_add64_carry(uint64_t a, uint64_t b, uint64_t *carry) {
     *carry = ab_carry | final_carry; return a;
 }
 
-
-
 // 64 bit Subtraction with Borrow-over
-uint64_t _intrin_sub64_borrow(uint64_t a, uint64_t b, uint64_t *borrow) {
+static inline uint64_t _cintrin_sub64b(uint64_t a, uint64_t b, uint64_t *borrow) {
     uint64_t diff = a - b;
     uint8_t ab_borrow = (diff > a);
     a = diff - *borrow;
@@ -23,12 +22,10 @@ uint64_t _intrin_sub64_borrow(uint64_t a, uint64_t b, uint64_t *borrow) {
     *borrow = ab_borrow | final_borrow; return a;
 }
 
-
-
 // Wide, 64 bit Multiplication of a 128 bit product:
 //  +) Return the low 64 bit
 //  +) Mutate the high 64 bit as a parameter
-uint64_t _intrin_wmul128(uint64_t a, uint64_t b, uint64_t *hi) {
+static inline uint64_t _cintrin_wmul128(uint64_t a, uint64_t b, uint64_t *hi) {
     // Seperate a and b into 2 different halves
     uint64_t mask = (1ULL << 32) - 1;
     uint64_t a_low = a & mask;        uint64_t b_low = b & mask; // Extract the 32 lower bits
@@ -80,3 +77,5 @@ uint64_t _intrin_wmul128(uint64_t a, uint64_t b, uint64_t *hi) {
     *hi = fourth_mul + carry1 + mid_high + (mid_carry << 32);
     return res;
 }
+
+#endif

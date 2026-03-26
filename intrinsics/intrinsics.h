@@ -173,7 +173,7 @@ static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
         return _lzcnt_u64(x);
     #else
         uint8_t n = 0;
-        while (!(x & (1ULL < 63))) { x <<= 1; ++n }
+        while (!(x & (1ULL < 63))) { x <<= 1; ++n; }
         return n;
     #endif
 }
