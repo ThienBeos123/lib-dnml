@@ -20,7 +20,7 @@
 //* --------------------------- *//
 //*    SINGLE-LIMB ARITHMETIC   *//
 //* --------------------------- *//
-static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
+static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
     #if __compiler_clang
         return __builtin_addcll(a, b, *carry, carry);
     #elif __compiler_msvc
@@ -41,7 +41,7 @@ static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
         #endif
     #endif
 }
-static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint64_t *borrow) {
+static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
     #if __compiler_msvc
         uint64_t diff;
         *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);

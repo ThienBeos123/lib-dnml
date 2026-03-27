@@ -5,7 +5,7 @@
 #include "../../system/compiler.h"
 
 // 64 bit Addition with Carry-over
-static inline uint64_t _cintrin_add64c(uint64_t a, uint64_t b, uint64_t *carry) {
+static inline uint64_t _cintrin_add64c(uint64_t a, uint64_t b, uint8_t *carry) {
     uint64_t sum = a + b;
     uint8_t ab_carry = (sum < a);
     a = sum + *carry;
@@ -14,7 +14,7 @@ static inline uint64_t _cintrin_add64c(uint64_t a, uint64_t b, uint64_t *carry) 
 }
 
 // 64 bit Subtraction with Borrow-over
-static inline uint64_t _cintrin_sub64b(uint64_t a, uint64_t b, uint64_t *borrow) {
+static inline uint64_t _cintrin_sub64b(uint64_t a, uint64_t b, uint8_t *borrow) {
     uint64_t diff = a - b;
     uint8_t ab_borrow = (diff > a);
     a = diff - *borrow;
