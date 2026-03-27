@@ -3,12 +3,14 @@
 
 .section    __TEXT,__text,regular,pure_instructions
 .global     _arm64_add64c
-.type       _arm64_add64cc, @function
 .global     _arm64_sub64b
+.global     _arm64_wmul128
+.type       _arm64_add64cc, @function
 .type       _arm64_sub64b, @function
+.type       _arm64_wmul128, @function
 .align      2
 
-/*
+/* ------- 64 BIT ADDITION WITH CARRY -------
 *   +) uint64_t _arm64_add64c(uint64_t a, uint64_t b, uint8_t *carry) 
 *   +) Functionality:
 *       -----> Sum (mod 2^64): return a + b + *carry
@@ -34,7 +36,9 @@ _arm64_add64c:
     str x3, [x2]
     ret
 
-/*
+
+
+/* ------- 64 BIT SUBTRACTION WITH BORROW -------
 *   +) uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow) 
 *   +) Functionality:
 *       -----> Difference (mod 2^64): return a - b - *borrow
@@ -50,13 +54,38 @@ _arm64_sub64b:
     *       x0: RETURNED AS UINT64_T / 64 BIT
     */
     ldr x3, [x2] // Load *carry into register x3
-    subs xzr, xzr, x0 // Sets the C flag to 0 (BORROW) if borrow = 1
+    subs xzr, xzr, x0 // Sets the C flag to 0 (BORROW) if b  = 1
 
     // 1. Subtract a = a - b - carry
     // ---------> x0 = x0 - x1 - C_flag
     sbcs    x0, x0, x1
     sbc x3, #1, xzr
     str x3, [x2]
+    ret
+
+
+
+/* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
+*   +) uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
+*   +) Functionality:
+*       -----> Product (128 BIT): a * b
+*       -----------> lo (64 bit): RETURNED
+*       -----------> hi (64 bit): MUTATED
+*/
+_arm64_wmul128:
+    /*
+    *   Function parameter lists:
+    *       x0: uint64_t a ----> (64 BIT)
+    *       x1: uint64_t b ----> (64 BIT)
+    *       x2: uint64_t *hi --> (64 BIT)
+    *   Function returns:
+    *       x0: lo (64 BIT - RETURNED)
+    *       x2: hi (64 BIT - MUTATED)
+    */
+    mov x3, x0 // Move the value of x0 (a) into x3 as a temporary
+    madd    x0, x3, x1, xzr // x0 = (x0/x3 * x1) mod(2^64);       (GET LOW 64 BIT)
+    umulh   x4, x3, x1      // x4 = (__int128)(x0/x3 * x1) >> 64; (GET HIGH 64 BIT)
+    str x4, [x2] // *x2 = x4; ----> Mutate *hi with the value in x4
     ret
 
 #endif
