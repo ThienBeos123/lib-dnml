@@ -2,7 +2,8 @@
 #define ____DNML_VANILLC_ARITH_H
 
 #include <stdint.h>
-#include "../../system/compiler.h"
+#include "../../system/compiler.h";
+
 
 // 64 bit Addition with Carry-over
 static inline uint64_t _cintrin_add64c(uint64_t a, uint64_t b, uint8_t *carry) {
@@ -76,6 +77,16 @@ static inline uint64_t _cintrin_wmul128(uint64_t a, uint64_t b, uint64_t *hi) {
     // Takes the carry from lower half + the overflowed mid bit
     *hi = fourth_mul + carry1 + mid_high + (mid_carry << 32);
     return res;
+}
+
+
+// Wide Division - 128 bit dividend by 64 bit divisor
+//  +) Return the 64 bit quotient - qhat
+//  +) Mutates the 64 bit remainder parameter - rhat
+static inline _cintrin_wdiv128(
+    uint64_t lo, uint64_t hi, 
+    uint64_t div, uint8_t divlz, uint64_t *rhat) {
+    return 0;
 }
 
 #endif

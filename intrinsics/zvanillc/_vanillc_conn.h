@@ -4,7 +4,7 @@
 
 #include "_vanillc_arith.h"
 #include "_vanillc_marith.h"
-#include "_vanillc_utils.h"
+#include "_vanillc_bitops.h"
 
 
 

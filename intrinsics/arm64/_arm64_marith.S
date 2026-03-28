@@ -56,15 +56,8 @@ _arm64_modinv64:
     mov x4, #2
     msub    x4, x0, x3, x4
     mul x3, x3, x4
+
     mov x0, x3
-    ret
-
-
-_arm64_modmul64:
-    ret
-
-
-_arm64_modexp64:
     ret
 
 #endif

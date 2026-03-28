@@ -56,7 +56,7 @@ static inline void ___DASI_BURK_3BY2(
 void __BIGINT_SHORT_DIVISION__(const bigInt *a, uint64_t b, bigInt *quot, bigInt *rem) {
     uint64_t remainder = 0;
     for (size_t i = a->n - 1; i >= 0; --i) {
-    __DIV_HELPER_UI64__(remainder, a->limbs[i], b, &quot->limbs[i], &remainder);
+    quot->limbs[i] = __DIV_HELPER_UI64__(remainder, a->limbs[i], b, &remainder);
     } __BIGINT_INTERNAL_TRIM_LZ__(rem);
     if (quot->n == 0) quot->sign = 1;
     rem->limbs[0] = remainder;
@@ -109,7 +109,7 @@ void __BIGINT_KNUTH_D__(const bigInt *a, const bigInt *b, bigInt *quot, bigInt *
         uint64_t b1 = b_copy.limbs[n - 1]; //                       1st highest limb of b
         uint64_t b0 = (n >= 2) ? b_copy.limbs[n - 2] : 0; //        2nd highest limb of b (used to validate quotient estimation - DETECT OVERESTIMATION)
         uint64_t qhat, rhat;
-        __DIV_HELPER_UI64__(a2, a1, b1, &qhat, &rhat);
+        qhat = __DIV_HELPER_UI64__(a2, a1, b1, &rhat);
         // Validating quotient estimation (Prevent overestimation before multi-limb subtraction (expensive & risky))
         if (qhat == UINT64_MAX) --qhat; // Check if estimates quotient is too large
         while (qhat * b0 > ((uint128)rhat << BITS_IN_UINT64_T) + a0) {

@@ -61,13 +61,13 @@ static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
     #endif
 }
 static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
-    #if __HAS_int128__
+    #if __HAS_int128__ // GCC & Clang
         uint128 res = ((uint128)a) * ((uint128)b);
         *hi = (uint64_t)(res >> BITS_IN_UINT64_T);
         return (uint64_t)res;
-    #elif __compiler_msvc
+    #elif __compiler_msvc // MSVC
         return _umul128(a, b, hi);
-    #else
+    #else // ANY OTHER COMPILERS
         #if __ARCH_X86_64__
             return _x86_wmul128(a, b, carry);
         #elif __ARCH_ARM64__
@@ -77,7 +77,30 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
         #endif
     #endif
 }
-
+static inline uint64_t __DIV_HELPER_UI64__(
+    uint64_t lo, uint64_t hi, uint64_t div, 
+    uint64_t *rhat
+) {
+    #if __ARCH_X86_64__ // X86_64 - NATIVE WDIV
+        return _x86_wdiv128(lo, hi, div, rhat);
+    #elif __HAS_int128__ // (ARM64 / RISC-V / unknown_arch) + (GCC / Clang)
+        uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
+        *rhat = (uint64_t)(dividend % div);
+        return (uint64_t)(dividend / div);
+    #elif __compiler_msvc // (ARM64 / RISC-V / unknown_arch) + MSVC
+        return _udiv128(hi, lo, div, rhat);
+    #else // (ARM64 / RISC-V / unknown_arch) + unknown_compiler
+        uint8_t divlz = 0;
+        #if __ARCH_ARM64__
+            divclz = _arm64_clz64(div);
+        #elif __ARCH_RISCV_64__
+            divclz = _riscv_clz64(div);
+        #else
+            divclz = _cintrin_clz64(div);
+        #endif
+        return _cintrin_wdiv128(lo, hi, div, divclz, rhat);
+    #endif
+}
 
 //* ----------------------------------- *//
 //*    SINGLE-LIMB MODULAR ARITHMETIC   *//
@@ -92,22 +115,35 @@ static inline uint64_t __MODINV_UI64__(uint64_t x) {
     #endif
 }
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
-    #if __ARCH_X86_64__
-        return _x86_modmul64(a, b, mod);
-    #elif __ARCH_ARM64__
-        return _arm64_modmul64(a, b, mod);
+    uint64_t hi, lo;
+    lo = __MUL_UI64__(a, b, &hi);
+    #if __HAS_int128__
+        return (uint64_t)(((unsigned __int128)hi << 64 | lo) % mod);
     #else
-        return _cintrin_modmul64(a, b, mod);
+        if (hi == 0) return lo % mod;
+        uint64_t rem = hi % mod;
+        for (uinit8_t i = 63; i >= 0; --i) {
+            rem = (rem >= mod - rem) ?
+                    rem - (mod - rem) :
+                    rem + rem;
+            if ((lo >> i) & 1) {
+                ++rem;
+                if (rem >= mod) rem -= mod;
+            }
+        }
     #endif
 }
 static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod) {
-    #if __ARCH_X86_64__
-        return _x86_modexp64(base, exp, mod);
-    #elif __ARCH_ARM64__
-        return _arm64_modexp64(base, mod, exp);
-    #else
-        return _cintrin_modexp64(base, exp, mod);
-    #endif
+    if (mod == 1) return 0;
+    if (exp == 0) return 1;
+    if (exp == 1) return base;
+    base %= mod;
+    uint64_t res = 1;
+    while (exp > 0) {
+        if (exp & 1) res = _cintrin_modmul64(res, base, mod);
+        base = _cintrin_modmul64(base, base, mod);
+        exp >>= 1;
+    } return res;
 }
 
 

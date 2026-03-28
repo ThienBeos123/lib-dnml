@@ -11,7 +11,6 @@
 #include "../../sconfigs/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
-#include "../../intrinsics/limb_math.h"
 #include "../../internal_utils/util.h"
 #include "../../big_numbers/bigNums.h"
 
