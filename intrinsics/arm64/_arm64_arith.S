@@ -11,20 +11,16 @@
 .align      2
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
-*   +) uint64_t _arm64_add64c(uint64_t a, uint64_t b, uint8_t *carry) 
-*   +) Functionality:
-*       -----> Sum (mod 2^64): return a + b + *carry
-*       -----> Carry: (sum > 2^64 - 1) ? (1) : (0)
+* uint64_t _arm64_add64c(uint64_t a, uint64_t b, uint8_t *carry)
+* arg: 
+*   x0: uint64_t a       (64 BIT)
+*   x1: uint64_t b       (64 BIT)
+*   x2: uint8_t *carry   (8  BIT)
+* ret: 
+*   x0: (a + b + *carry) mod(2^64)
+*   x2: boolean - 1/0
 */
 _arm64_add64c:
-    /*
-    *   Function parameter lists:
-    *       x0: uint64_t a ----> (64 BIT)
-    *       x1: uint64_t b ----> (64 BIT)
-    *       x2: uint8_t *carry -> (8 BIT)
-    *   Function returns:
-    *       x0: RETURNED AS UINT64_T / 64 BIT
-    */
     ldr x3, [x2] // Load *carry into register x3
     cmp x3, #1   // Sets the C flag to 1 (NO-BORROW) if carry = 1
 
@@ -39,20 +35,16 @@ _arm64_add64c:
 
 
 /* ------- 64 BIT SUBTRACTION WITH BORROW -------
-*   +) uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow) 
-*   +) Functionality:
-*       -----> Difference (mod 2^64): return a - b - *borrow
-*       -----> Borrow: (diff < 0) ? (1) : (0)
+* uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow)
+* arg: 
+*   x0: uint64_t a       (64 BIT)
+*   x1: uint64_t b       (64 BIT)
+*   x2: uint8_t *borrow  (8  BIT)
+* ret: 
+*   x0: (a - b - *borrow) mod(2^64)
+*   x2: boolean - 1/0
 */
 _arm64_sub64b:
-    /*
-    *   Function parameter lists:
-    *       x0: uint64_t a ----> (64 BIT)
-    *       x1: uint64_t b ----> (64 BIT)
-    *       x2: uint8_t *borrow -> (8 BIT)
-    *   Function returns:
-    *       x0: RETURNED AS UINT64_T / 64 BIT
-    */
     ldr x3, [x2] // Load *carry into register x3
     subs xzr, xzr, x0 // Sets the C flag to 0 (BORROW) if b  = 1
 
@@ -66,22 +58,16 @@ _arm64_sub64b:
 
 
 /* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
-*   +) uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
-*   +) Functionality:
-*       -----> Product (128 BIT): a * b
-*       -----------> lo (64 bit): RETURNED
-*       -----------> hi (64 bit): MUTATED
+* uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
+* arg:
+*   x0: uint64_t a ----> (64 BIT)
+*   x1: uint64_t b ----> (64 BIT)
+*   x2: uint64_t *hi --> (64 BIT)
+* ret:
+*   x0 - lo: (a * b) mod(2^64)
+*   x2 - hi: (a * b) >> 64;
 */
 _arm64_wmul128:
-    /*
-    *   Function parameter lists:
-    *       x0: uint64_t a ----> (64 BIT)
-    *       x1: uint64_t b ----> (64 BIT)
-    *       x2: uint64_t *hi --> (64 BIT)
-    *   Function returns:
-    *       x0: lo (64 BIT - RETURNED)
-    *       x2: hi (64 BIT - MUTATED)
-    */
     mov x3, x0 // Move the value of x0 (a) into x3 as a temporary
     madd    x0, x3, x1, xzr // x0 = (x0/x3 * x1) mod(2^64);       (GET LOW 64 BIT)
     umulh   x4, x3, x1      // x4 = (__int128)(x0/x3 * x1) >> 64; (GET HIGH 64 BIT)

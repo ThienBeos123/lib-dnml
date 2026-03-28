@@ -3,7 +3,7 @@
 
 
 #include "_vanillc_arith.h"
-#include "_vanillc_modop.h"
+#include "_vanillc_marith.h"
 #include "_vanillc_utils.h"
 
 

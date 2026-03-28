@@ -84,29 +84,29 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
 //* ----------------------------------- *//
 static inline uint64_t __MODINV_UI64__(uint64_t x) {
     #if __ARCH_X86_64__
-        return _x86_modinv64(a, b, carry);
+        return _x86_modinv64(x);
     #elif __ARCH_ARM64__
-        // return _arm64_modinv64(a, b, carry);
+        return _arm64_modinv64(x);
     #else
-        return _cintrin_modinv64(a, b, carry);
+        return _cintrin_modinv64(x);
     #endif
 }
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
     #if __ARCH_X86_64__
-        return _x86_modmul64(a, b, carry);
+        return _x86_modmul64(a, b, mod);
     #elif __ARCH_ARM64__
-        // return _arm64_modmul64(a, b, carry);
+        return _arm64_modmul64(a, b, mod);
     #else
-        return _cintrin_modmul64(a, b, carry);
+        return _cintrin_modmul64(a, b, mod);
     #endif
 }
 static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod) {
     #if __ARCH_X86_64__
-        return _x86_modexp64(a, b, carry);
+        return _x86_modexp64(base, exp, mod);
     #elif __ARCH_ARM64__
-        // return _arm64_modexp64(a, b, carry);
+        return _arm64_modexp64(base, mod, exp);
     #else
-        return _cintrin_modexp64(a, b, carry);
+        return _cintrin_modexp64(base, exp, mod);
     #endif
 }
 
