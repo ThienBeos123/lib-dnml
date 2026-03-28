@@ -23,11 +23,7 @@ inv8_lookup:
 
 .section    __TEXT,__text,regular,pure_instructions
 .global     _arm64_modinv64
-.global     _arm64_modmul64
-.global     _arm64_modexp64
 .type       _arm64_modinv64, @function
-.type       _arm64_modmul64, @function
-.type       _arm64_modexp64, @function
 .align      2
 
 

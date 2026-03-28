@@ -5,11 +5,9 @@
 .global     _arm64_add64c
 .global     _arm64_sub64b
 .global     _arm64_wmul128
-.global     _arm64_wdiv128
 .type       _arm64_add64cc, @function
 .type       _arm64_sub64b, @function
 .type       _arm64_wmul128, @function
-.type       _arm64_wdiv128, @function
 .align      2
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
@@ -74,21 +72,6 @@ _arm64_wmul128:
     madd    x0, x3, x1, xzr // x0 = (x0/x3 * x1) mod(2^64);       (GET LOW 64 BIT)
     umulh   x4, x3, x1      // x4 = (__int128)(x0/x3 * x1) >> 64; (GET HIGH 64 BIT)
     str x4, [x2] // *x2 = x4; ----> Mutate *hi with the value in x4
-    ret
-
-
-/* ------- 128 BIT WIDE DIVISION --> 64 BIT QUOTIENT -------
-* uint64_t _arm64_wdiv128(uint64_t lo, uint64_t hi, uint64_t div, uint64_t *rhat) 
-* arg:
-*   x0: uint64_t lo ----> (64 BIT)
-*   x1: uint64_t hi ----> (64 BIT)
-*   x2: uint64_t div ---> (64 BIT)
-*   x3: uint64_t *rhat -> (64 BIT)
-* ret:
-*   x0 - qhat: a / b
-*   x2 - rhat: a % b
-*/
-_arm64_wdiv128:
     ret
 
 #endif

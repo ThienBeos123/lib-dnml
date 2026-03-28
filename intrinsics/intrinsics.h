@@ -168,11 +168,11 @@ static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
         return _lzcnt_u64(x);
     #else
         #if __ARCH_X86_64__
-            return _x86_clz64(a, b, carry);
+            return _x86_clz64(x);
         #elif __ARCH_ARM64__
-            // return _arm64_clz64(a, b, carry);
+            return _arm64_clz64(x);
         #else
-            return _cintrin_clz64(a, b, carry);
+            return _cintrin_clz64(x);
         #endif
     #endif
 }
@@ -187,11 +187,11 @@ static inline uint8_t __CTZ_UI64__(uint64_t x) {        // COUNT TRAILING ZEROS
         return tzcnt_u64(x);
     #else
         #if __ARCH_X86_64__
-            return _x86_ctz64(a, b, carry);
+            return _x86_ctz64(x);
         #elif __ARCH_ARM64__
-            // return _arm64_ctz64(a, b, carry);
+            return _arm64_ctz64(x);
         #else
-            return _cintrin_ctz64(a, b, carry);
+            return _cintrin_ctz64(x);
         #endif
     #endif
 }
@@ -202,11 +202,11 @@ static inline uint64_t __BSWAP_UI64__(uint64_t x) {     // BYTESWAP
         return _byteswap_uint64(x);
     #else
         #if __ARCH_X86_64__
-            return _x86_bswap64(a, b, carry);
+            return _x86_bswap64(x);
         #elif __ARCH_ARM64__
-            // return _arm64_bswap64(a, b, carry);
+            return _arm64_bswap64(x);
         #else
-            return _cintrin_bswap64(a, b, carry);
+            return _cintrin_bswap64(x);
         #endif
     #endif
 }
