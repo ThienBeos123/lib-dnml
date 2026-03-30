@@ -3,12 +3,17 @@
 #if __ABI_X64_SYSV__
 
 
-.section	    __TEXT,__text,regular,pure_instructions
+asm_text_section
 .intel_syntax   noprefix
 .globl	        _x86sv_add64c
 .globl          _x86sv_sub64b
 .globl          _x86sv_wmul128
 .globl          _x86sv_wdiv128
+
+.type	        _x86sv_add64c, %function
+.type           _x86sv_sub64b, %function
+.type           _x86sv_wmul128, %function
+.type           _x86sv_wdiv128, %function
 .p2align	    4, 0x90
 
 

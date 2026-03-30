@@ -2,8 +2,8 @@
 #if __ARCH_ARM64__
 
 
-.section    __TEXT,__text,regular,pure_instructions
-.align      2
+asm_text_section
+.p2align      2
 
 
 

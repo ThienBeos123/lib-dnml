@@ -1,7 +1,9 @@
 #ifndef ____DNML_AARCH64_CONN
 #define ____DNML_AARCH64_CONN
+#if __ARCH_ARM64__
 
 
+#include "../__asm_macros.h"
 #include "../../system/arch.h"
 #include "../../system/compiler.h"
 
@@ -20,5 +22,5 @@ extern uint64_t _arm64_bswap64(uint64_t x);
 #endif
 
 
-
+#endif
 #endif

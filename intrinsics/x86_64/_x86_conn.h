@@ -2,6 +2,8 @@
 #define ____DNML_X86_CONN
 #if __ARCH_X86_64__
 
+
+#include "../__asm_macros.h"
 #include "../../system/compiler.h"
 #include "../../system/arch.h"
 

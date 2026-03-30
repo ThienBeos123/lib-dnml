@@ -22,9 +22,10 @@ inv8_lookup:
     .byte 0x21, 0xCB, 0xED, 0xD7, 0x59, 0xC3, 0xE5, 0x0F
     .byte 0x11, 0x3B, 0x5D, 0xC7, 0x49, 0x33, 0x55, 0xFF
 
-.section	    __TEXT,__text,regular,pure_instructions
+asm_text_section
 .intel_syntax   noprefix
 .globl	        _x86sv_modinv64
+.type           _x86sv_modinv64, %function
 .p2align	    4, 0x90
 
 

@@ -2,13 +2,13 @@
 #if __ARCH_ARM64__
 
 
-.section    __TEXT,__text,regular,pure_instructions
+asm_text_section
 .global     _arm64_clz64
 .global     _arm64_ctz64
 .global     _arm64_bswap64
-.type       _arm64_clz64, @function
-.type       _arm64_ctz64, @function
-.type       _arm64_bswap64, @function
+.type       _arm64_clz64, %function
+.type       _arm64_ctz64, %function
+.type       _arm64_bswap64, %function
 .align      2
 
 /* ------- COUNT LEADING ZERO 64 BIT -------

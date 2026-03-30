@@ -1,13 +1,14 @@
 #include "_arm64_conn.h"
 #if __ARCH_ARM64__
 
-.section    __TEXT,__text,regular,pure_instructions
-.global     _arm64_add64c
-.global     _arm64_sub64b
-.global     _arm64_wmul128
-.type       _arm64_add64cc, @function
-.type       _arm64_sub64b, @function
-.type       _arm64_wmul128, @function
+asm_text_section
+,globl     _arm64_add64c
+.globl     _arm64_sub64b
+.globl     _arm64_wmul128
+
+.type       _arm64_add64cc, %function
+.type       _arm64_sub64b, %function
+.type       _arm64_wmul128, %function
 .align      2
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
