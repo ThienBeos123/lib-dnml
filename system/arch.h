@@ -8,18 +8,18 @@
     #define __ARCH_X86_64__ 0
 #endif
 
-/* Detecting ARM64 Architecture */
+/* Detecting AARCH64 / ARM64 Architecture */
 #if defined(__aarch64__) || defined(_M_ARM64)
     #define __ARCH_ARM64__ 1
 #else
     #define __ARCH_ARM64__ 0
 #endif
 
-/* Detecting RISC-V64 Architecture */
-#if defined(__riscv)
-    #define __ARCH_RISCV_64__ 1
+/* Detecting RISC-V64 / RVI64  Architecture */
+#if defined(__riscv) && (__riscv_xlen == 64)
+    #define __ARCH_RVI64__ 1
 #else
-    #define __ARCH_RISCV_64__ 0
+    #define __ARCH_RVI64__ 0
 #endif
 
 /* Endian Detection */

@@ -10,6 +10,7 @@
 
 #include "arm64/_arm64_conn.h"
 #include "x86_64/_x86_conn.h"
+#include "risc-v64/_rvi64_conn.h"
 #include "zvanillc/_vanillc_conn.h"
 
 
