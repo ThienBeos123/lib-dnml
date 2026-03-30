@@ -21,7 +21,7 @@ _arm64_clz64:
     ret
 
 
-/* ------- COUNT LEADING ZERO 64 BIT -------
+/* ------- COUNT TRAILING ZERO 64 BIT -------
 * uint8_t _arm64_ctz64(uint64_t x)
 * arg: x0: uint64_t x --> (64 BIT)
 * ret: x0: ctz(x) ------> (8  BIT)
@@ -31,7 +31,7 @@ _arm64_ctz64:
     ret
 
 
-/* ------- COUNT LEADING ZERO 64 BIT -------
+/* ------- BYTE SWAP 64 BIT -------
 * uint8_t _arm64_bswap64(uint64_t x)
 * arg: x0: uint64_t x ----> (64 BIT)
 * ret: x0: bswap(x) ------> (8  BIT)
