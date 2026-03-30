@@ -46,7 +46,10 @@ _arm64_add64c:
 */
 _arm64_sub64b:
     ldr x3, [x2] // Load *carry into register x3
-    subs xzr, xzr, x0 // Sets the C flag to 0 (BORROW) if b  = 1
+    // - Sets the C flag inversely relative to x3
+    // +) x3 = 1 (BORROW) --> 0 - 1 = -1 (UNDERFLOWS) ---> C_flag = 0
+    // +) x3 = 0 (NO BORROW) -> 0 - 0 = 0 (NORMAL) ------> C_flag = 1
+    subs xzr, xzr, x3
 
     // 1. Subtract a = a - b - carry
     // ---------> x0 = x0 - x1 - C_flag
