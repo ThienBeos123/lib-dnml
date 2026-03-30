@@ -4,15 +4,15 @@
 
 .section	    __TEXT,__text,regular,pure_instructions
 .intel_syntax   noprefix
-.globl	        _x86_add64c
-.globl          _x86_sub64b
-.globl          _x86_wmul128
-.globl          _x86_wdiv128
+.globl	        _x86sv_add64c
+.globl          _x86sv_sub64b
+.globl          _x86sv_wmul128
+.globl          _x86sv_wdiv128
 .p2align	    4, 0x90
 
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
-* uint64_t _x86_add64c(uint64_t a, uint64_t b, uint8_t *carry)
+* uint64_t _x86sv_add64c(uint64_t a, uint64_t b, uint8_t *carry)
 * arg: 
 *   rdi: uint64_t a       (64 BIT)
 *   rsi: uint64_t b       (64 BIT)
@@ -21,7 +21,7 @@
 *   rax: (a + b + *carry) mod(2^64)
 *   rdx: boolean - 1/0
 */
-_x86_add64c:
+_x86sv_add64c:
     mov rax, qword ptr [rdx] # Load *carry into rax
     add rax, -1 # rax + UINT64_MAX:
     # +) If rax = 1 ---> UINT64_MAX + 1 overflows --> C flag set (carry)
@@ -40,7 +40,7 @@ _x86_add64c:
 
 
 /* ------- 64 BIT SUBTRACTION WITH BORROW -------
-* uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow)
+* uint64_t _x86sv_sub64b(uint64_t a, uint64_t b, uint8_t *borrow)
 * arg: 
 *   rdi: uint64_t a       (64 BIT)
 *   rsi: uint64_t b       (64 BIT)
@@ -49,7 +49,7 @@ _x86_add64c:
 *   rax: (a - b - *borrow) mod(2^64)
 *   rdx: boolean - 1/0
 */
-_x86_sub64b:
+_x86sv_sub64b:
     mov rax, qword ptr [rdx] # Load *borrow into rax
     bt  rax, 0 # Copies rax_bits[0] into C_flag
     # Subtract a = a - b - *borrow
@@ -65,7 +65,7 @@ _x86_sub64b:
     ret
 
 /* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
-* uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
+* uint64_t _x86sv_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
 * arg:
 *   rdi: uint64_t a ----> (64 BIT)
 *   rsi: uint64_t b ----> (64 BIT)
@@ -74,7 +74,7 @@ _x86_sub64b:
 *   rax - lo: (a * b) mod(2^64)
 *   rdx - hi: (a * b) >> 64;
 */
-_x86_wmul128:
+_x86sv_wmul128:
     mov rax, rdi # rax = rdi/a
     mov rcx, rdx # rcx = rdx (the pointer adress)
     mul rsi # rax * rsi --> stored in [rdx:rax]
@@ -84,7 +84,7 @@ _x86_wmul128:
 
 
 /* ------- 64 BIT WIDE DIVISION OF 128 BIT DIVIDEND -------
-* uint64_t _arm64_wmul128(
+* uint64_t _x86sv_wdiv128(
 *    uint64_t lo, uint64_t hi, 
 *    uint64_t div, uint64_t *rem
 * ) 
@@ -99,7 +99,7 @@ _x86_wmul128:
 * pre-conditions:
 *   hi/rsi < div
 */
-_x86_wdiv128:
+_x86sv_wdiv128:
     mov r9, rdx # r9 = div
     mov rdx, rsi # rdx = hi
     mov rax, rdi # rax = lo

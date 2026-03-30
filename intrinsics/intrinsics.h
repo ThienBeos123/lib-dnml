@@ -82,15 +82,30 @@ static inline uint64_t __DIV_HELPER_UI64__(
     uint64_t lo, uint64_t hi, uint64_t div, 
     uint64_t *rhat
 ) {
-    #if __ARCH_X86_64__ // X86_64 - NATIVE WDIV
-        return _x86_wdiv128(lo, hi, div, rhat);
-    #elif __HAS_int128__ // (ARM64 / RISC-V / unknown_arch) + (GCC / Clang)
+    // x86_64 / AMD64
+    #if __ARCH_X86_64__
+        // Native x86_64 - System-V/Win64 ABI
+        #if (__ABI_X64_SYSV__) || (__ABI_X64_WIN64__)
+            return _x86sv_wdiv128(lo, hi, div, rhat);
+        #elif __HAS_int128__ // GCC / Clang
+            uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
+            *rhat = (uint64_t)(dividend % div);
+            return (uint64_t)(dividend / div);
+        #elif __compiler_msvc // MSVC
+            return _udiv128(hi, lo, div, rhat);
+        #else // unknown_compiler
+            uint8_t divlz = _x86_clz64(div);
+            return _cintrin_wdiv128(lo, hi, div, rhat);
+        #endif
+
+    // ARM64 / RISC-V / unknown_arch
+    #elif __HAS_int128__ // GCC / Clang
         uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
         *rhat = (uint64_t)(dividend % div);
         return (uint64_t)(dividend / div);
-    #elif __compiler_msvc // (ARM64 / RISC-V / unknown_arch) + MSVC
+    #elif __compiler_msvc // MSVC
         return _udiv128(hi, lo, div, rhat);
-    #else // (ARM64 / RISC-V / unknown_arch) + unknown_compiler
+    #else // unknown_compiler
         uint8_t divlz = 0;
         #if __ARCH_ARM64__
             divclz = _arm64_clz64(div);
