@@ -1,5 +1,6 @@
 #include "_x86_conn.h"
 #if __ARCH_X86_64__
+#if __ABI_X64_SYSV__
 
 
 .section	    __TEXT,__text,regular,pure_instructions
@@ -109,5 +110,5 @@ _x86sv_wdiv128:
     mov [r8], rdx
     ret
 
-
+#endif
 #endif

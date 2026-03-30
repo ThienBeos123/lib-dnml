@@ -19,6 +19,8 @@ extern uint64_t _x86sv_wdiv128(
 #define _x86_wmul128    _x86sv_wmul128
 #define _x86_wdiv128    _x86sv_wdiv128
 // _x86_sysv_marith.S
+extern uint64_t _x86sv_modinv64(uint64_t x);
+#define _x86_modinv64   _x86sv_modinv64
 // _x86_sys_valg.S
 // _x86_sysv_bitops.S
 #elif __ABI_X64_WIN64__

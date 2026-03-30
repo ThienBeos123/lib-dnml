@@ -33,6 +33,7 @@ static inline uint64_t _cintrin_modinv64(uint64_t x) {
     res *= 2 - x * res;
     res *= 2 - x * res;
     res *= 2 - x * res;
+    return res;
 }
 
 
