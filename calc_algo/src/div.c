@@ -55,8 +55,8 @@ static inline void ___DASI_BURK_3BY2(
 /* ------ ALGORITHMS FUNCTIONS ------ */
 void __BIGINT_SHORT_DIVISION__(const bigInt *a, uint64_t b, bigInt *quot, bigInt *rem) {
     uint64_t remainder = 0;
-    for (size_t i = a->n - 1; i >= 0; --i) {
-    quot->limbs[i] = __DIV_HELPER_UI64__(remainder, a->limbs[i], b, &remainder);
+    for (size_t i = a->n; i > 0; --i) {
+    quot->limbs[i - 1] = __DIV_HELPER_UI64__(remainder, a->limbs[i - 1], b, &remainder);
     } __BIGINT_INTERNAL_TRIM_LZ__(rem);
     if (quot->n == 0) quot->sign = 1;
     rem->limbs[0] = remainder;

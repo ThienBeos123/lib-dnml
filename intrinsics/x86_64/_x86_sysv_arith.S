@@ -64,12 +64,49 @@ _x86_sub64b:
     mov rax, rdi # return rdi
     ret
 
-
+/* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
+* uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
+* arg:
+*   rdi: uint64_t a ----> (64 BIT)
+*   rsi: uint64_t b ----> (64 BIT)
+*   rdx: uint64_t *hi --> (64 BIT)
+* ret:
+*   rax - lo: (a * b) mod(2^64)
+*   rdx - hi: (a * b) >> 64;
+*/
 _x86_wmul128:
+    mov rax, rdi # rax = rdi/a
+    mov rcx, rdx # rcx = rdx (the pointer adress)
+    mul rsi # rax * rsi --> stored in [rdx:rax]
+    mov [rcx], rdx # *rcx = rdx (the high 64 bit)
+    mov rdx, rcx # rdx = rcx (return the original adress to rdx)
     ret
 
 
+/* ------- 64 BIT WIDE DIVISION OF 128 BIT DIVIDEND -------
+* uint64_t _arm64_wmul128(
+*    uint64_t lo, uint64_t hi, 
+*    uint64_t div, uint64_t *rem
+* ) 
+* arg:
+*   rdi: uint64_t lo ----> (64 BIT)
+*   rsi: uint64_t hi ----> (64 BIT)
+*   rdx: uint64_t div ---> (64 BIT)
+*   r8:  uint64_t *rem --> (64 BIT)
+* ret:
+*   rax - quot: (lo
+*   r8  - rem: (a * b) >> 64;
+* pre-conditions:
+*   hi/rsi < div
+*/
 _x86_wdiv128:
+    mov r9, rdx # r9 = div
+    mov rdx, rsi # rdx = hi
+    mov rax, rdi # rax = lo
+    div r9 # [rdx:rax] / r9
+    # rax = quot
+    # rdx = rem
+    mov [r8], rdx
     ret
 
 

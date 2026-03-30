@@ -72,7 +72,7 @@ _arm64_sub64b:
 */
 _arm64_wmul128:
     mov x3, x0 // Move the value of x0 (a) into x3 as a temporary
-    madd    x0, x3, x1, xzr // x0 = (x0/x3 * x1) mod(2^64);       (GET LOW 64 BIT)
+    mul x0, x3, x1 // x0 = (x3 * x1) mod(2^64); (GET LOW 64 BIT)
     umulh   x4, x3, x1      // x4 = (__int128)(x0/x3 * x1) >> 64; (GET HIGH 64 BIT)
     str x4, [x2] // *x2 = x4; ----> Mutate *hi with the value in x4
     ret
