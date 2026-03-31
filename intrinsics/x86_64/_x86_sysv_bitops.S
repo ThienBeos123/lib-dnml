@@ -17,11 +17,11 @@ asm_text_section
 
 /* ------- COUNT LEADING ZERO 64 BIT -------
 * uint8_t _x86sv_clz64(uint64_t x)
-* arg: rax: uint64_t x --> (64 BIT)
+* arg: rdi: uint64_t x --> (64 BIT)
 * ret: rax: clz(x) ------> (8  BIT)
 */
 _x86sv_clz64:
-    lzcnt rax, rax
+    lzcnt rax, rdi
     ret
 
 
@@ -31,17 +31,18 @@ _x86sv_clz64:
 * ret: rax: ctz(x) ------> (8  BIT)
 */
 _x86sv_ctz64:
-    tzcnt rax, rax
+    tzcnt rax, rdi
     ret
 
 
 /* ------- BYTE SWAP 64 BIT -------
 * uint8_t _x86sv_bswap64(uint64_t x)
-* arg: rax: uint64_t x ----> (64 BIT)
+* arg: rdi: uint64_t x ----> (64 BIT)
 * ret: rax: bswap(x) ------> (8  BIT)
 */
 _x86sv_bswap64:
-    bswap rax
+    bswap   rdi
+    mov rax, rdi
     ret
 
 

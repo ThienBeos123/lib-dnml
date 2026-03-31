@@ -99,10 +99,10 @@ _x86sv_wmul128:
 *   rdi: uint64_t lo ----> (64 BIT)
 *   rsi: uint64_t hi ----> (64 BIT)
 *   rdx: uint64_t div ---> (64 BIT)
-*   r8:  uint64_t *rem --> (64 BIT)
+*   rcx: uint64_t *rem --> (64 BIT)
 * ret:
 *   rax - quot: (lo
-*   r8  - rem: (a * b) >> 64;
+*   rcx - rem: (a * b) >> 64;
 * pre-conditions:
 *   hi/rsi < div
 */
@@ -113,7 +113,7 @@ _x86sv_wdiv128:
     div r9 # [rdx:rax] / r9
     # rax = quot
     # rdx = rem
-    mov [r8], rdx
+    mov [rcx], rdx
     ret
 
 #endif
