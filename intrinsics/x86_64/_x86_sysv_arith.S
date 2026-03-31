@@ -70,6 +70,7 @@ _x86sv_sub64b:
     mov rax, rdi # return rdi
     ret
 
+
 /* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
 * uint64_t _x86sv_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
 * arg:
