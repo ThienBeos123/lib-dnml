@@ -49,6 +49,8 @@ extern uint64_t _x86w64_wdiv128(
 #define _x86_wmul128    _x86w64_wmul128
 #define _x86_wdiv128    _x86w64_wdiv128
 // _x86_win64_marith.S
+extern uint64_t _x86w64_modinv64(uint64_t x);
+#define _x86_modinv64   _x86w64_modinv64
 // _x86_win64_alg.S
 // _x86_win64_bitops.S
 extern uint64_t _x86w64_clz64(uint64_t x);
