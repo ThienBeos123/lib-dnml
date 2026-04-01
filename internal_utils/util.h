@@ -14,7 +14,6 @@ extern "C" {
 
 #include "../big_numbers/bigNums.h"
 #include "../intrinsics/intrinsics.h"
-#include "../intrinsics/limb_math.h"
 
 #include "../system/compiler.h"
 #include "../sconfigs/numeric_config.h"

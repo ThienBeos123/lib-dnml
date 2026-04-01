@@ -183,7 +183,7 @@ uint64_t __BIGINT_INTERNAL_DIVMOD_UI64__(bigInt *x, uint64_t val) {
     } else {
         uint64_t remainder = 0;
         for (size_t i = x->n - 1; i >= 0; --i) {
-        __DIV_HELPER_UI64__(remainder, x->limbs[i], val, &x->limbs[i], &remainder);
+        x->limbs[i] = __DIV_HELPER_UI64__(remainder, x->limbs[i], val, &remainder);
         } __BIGINT_INTERNAL_TRIM_LZ__(x);
         if (x->n == 0) x->sign = 1;
         return remainder;
