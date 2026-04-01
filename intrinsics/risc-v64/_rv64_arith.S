@@ -9,13 +9,15 @@ asm_text_section
 .attribute  stack_align, 16
 .align      1
 
-.globl      _arm64_add64c
-.globl      _arm64_sub64b
-.globl      _arm64_wmul128
+.globl      _rv64_add64c
+.globl      _rv64_sub64b
+.globl      _rv64_wmul128
+.globl      _rv64_wdiv128
 
-.type       _arm64_add64cc, @function
-.type       _arm64_sub64b, @function
-.type       _arm64_wmul128, @function
+.type       _rv64_add64c, @function
+.type       _rv64_sub64b, @function
+.type       _rv64_wmul128, @function
+.type       _rv64_wdiv128, @function
 
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
@@ -28,7 +30,7 @@ asm_text_section
 *   a0: (a + b + *carry) mod(2^64)
 *   a2: boolean - 1/0
 */
-_arm64_add64c:
+_rv64_add64c:
     ld t0, 0(a2) # Load *carry into t0
     add a4, a0, a1 # sum = a + b
     sltu t1, a4, a0 # ab_carry = (sum < a);
@@ -45,7 +47,7 @@ _arm64_add64c:
 
 
 /* ------- 64 BIT SUBTRACTION WITH BORROW -------
-* uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow)
+* uint64_t _rv64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow)
 * arg: 
 *   a0: uint64_t a       (64 BIT)
 *   a1: uint64_t b       (64 BIT)
@@ -54,7 +56,7 @@ _arm64_add64c:
 *   a0: (a - b - *borrow) mod(2^64)
 *   a2: boolean - 1/0
 */
-_arm64_sub64b:
+_rv64_sub64b:
     ld t0, 0(a2) # Load *carry into t0
     sub a4, a0, a1 # diff = a - b
     sltu t1, a4, a0 # ab_borrow = (diff < a);
@@ -75,7 +77,7 @@ _arm64_sub64b:
 
 
 /* ------- 64 BIT WIDE MULTIPLICATION --> 128 BIT PRODUCT -------
-* uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
+* uint64_t _rv64_wmul128(uint64_t a, uint64_t b, uint64_t *hi) 
 * arg:
 *   a0: uint64_t a ----> (64 BIT)
 *   a1: uint64_t b ----> (64 BIT)
@@ -84,11 +86,13 @@ _arm64_sub64b:
 *   a0 - lo: (a * b) mod(2^64)
 *   a2 - hi: (a * b) >> 64;
 */
-_arm64_wmul128:
+_rv64_wmul128:
+    mv t0, a0 # t0 = a0/a
+    mul a0, t0, a1 # a0 = (a * b) mod(2^64)
+    mulhu   t1, t0, a1 # t1 = (__int128)(a * b) >> 64
+    sd t1, 0(a2) # *a2 = t1
+    # The return value - low bits is already in a0
     ret
-
-
-
 
 
 #endif

@@ -22,58 +22,71 @@
 //*    SINGLE-LIMB ARITHMETIC   *//
 //* --------------------------- *//
 static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
-    #if __compiler_clang
+    #if __compiler_clang // Clang --> Always used
         return __builtin_addcll(a, b, *carry, carry);
-    #elif __compiler_msvc
-        uint64_t sum;
-        *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
-        return sum;
-    #elif __compiler_gcc
+    #elif __compiler_gcc // GCC --> Always used
         uint64_t sum;
         *carry = __builtin_uaddll_overflow(a, b, &sum);
         return sum;
     #else
-        #if __ARCH_X86_64__
-            return _x86_add64c(a, b, carry);
-        #elif __ARCH_ARM64__
-            return _arm64_add64c(a, b, carry);
-        #else
+        #if __ARCH_X86_64__ || __ARCH_ARM64__
+            #if __compiler_msvc // MSVC --> Only on x86_64
+                uint64_t sum;
+                *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
+                return sum;
+            #elif __ARCH_X86_64__ // Hand-written x86_64
+                return _x86_add64c(a, b, carry);
+            #elif __ARCH_ARM64__ // Hand-written ARM64
+                return _arm64_add64c(a, b, carry);
+            #endif
+        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
+            return _rv64_add64c(a, b, carry);
+        #else // unknown_compiler + unknown_architecture
             return _cintrin_add64c(a, b, carry);
         #endif
     #endif
 }
 static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
-    #if __compiler_msvc
-        uint64_t diff;
-        *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
-        return diff;
-    #elif (__compiler_gcc || __compiler_clang)
+    #if (__compiler_gcc || __compiler_clang) 
+        // Clang / GCC --> Always used
         uint64_t diff;
         *borrow =  __builtin_sub_overflow(a, b, &diff);
         return diff;
     #else
-        #if __ARCH_X86_64__
-            return _x86_sub64b(a, b, carry);
-        #elif __ARCH_ARM64__
-            return _arm64_sub64b(a, b, carry);
-        #else
-            return _cintrin_sub64b(a, b, carry);
+        #if __ARCH_X86_64__ || __ARCH_ARM64__
+            #if __compiler_msvc // MSVC --> Only on x86_64
+                uint64_t diff;
+                *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
+                return diff;
+            #elif __ARCH_X86_64__ // Hand-written x86_64
+                return _x86_sub64b(a, b, borrow);
+            #elif __ARCH_ARM64__ // Hand-written ARM64
+                return _arm64_sub64b(a, b, borrow);
+            #endif
+        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
+            return _rv64_sub64b(a, b, borrow);
+        #else // unknown_compiler + unknown_architecture
+            return _cintrin_sub64b(a, b, borrow);
         #endif
     #endif
 }
 static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
-    #if __HAS_int128__ // GCC & Clang
+    #if __HAS_int128__ // GCC / Clang --> ALWAYS USED
         uint128 res = ((uint128)a) * ((uint128)b);
         *hi = (uint64_t)(res >> BITS_IN_UINT64_T);
         return (uint64_t)res;
-    #elif __compiler_msvc // MSVC
-        return _umul128(a, b, hi);
-    #else // ANY OTHER COMPILERS
-        #if __ARCH_X86_64__
-            return _x86_wmul128(a, b, carry);
-        #elif __ARCH_ARM64__
-            return _arm64_wmul128(a, b, carry);
-        #else
+    #else
+        #if __ARCH_X86_64__ || __ARCH_ARM64__
+            #if __compiler_msvc // MSVC - Only on x86/ARM64
+                return _umul128(a, b, hi);
+            #elif __ARCH_X86_64__ // Hand-written x86_64 code
+                return _x86_wmul128(a, b, carry);
+            #elif __ARCH_ARM64__ // Hand-written ARM64 code
+                return _arm64_wmul128(a, b, carry);
+            #endif
+        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
+            return _rv64_wmul128(a, b, hi);
+        #else // unknown_compiler + unknown_arch
             return _cintrin_wmul128(a, b, carry);
         #endif
     #endif
@@ -110,7 +123,7 @@ static inline uint64_t __DIV_HELPER_UI64__(
         #if __ARCH_ARM64__
             divclz = _arm64_clz64(div);
         #elif __ARCH_RISCV_64__
-            divclz = _riscv_clz64(div);
+            divclz = _rv64_clz64(div);
         #else
             divclz = _cintrin_clz64(div);
         #endif
