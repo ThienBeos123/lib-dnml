@@ -22,7 +22,7 @@ inv8_lookup:
     .byte 0x11, 0x3B, 0x5D, 0xC7, 0x49, 0x33, 0x55, 0xFF
 
 asm_text_section
-.global     _arm64_modinv64
+.globl     _arm64_modinv64
 .type       _arm64_modinv64, %function
 .align      2
 

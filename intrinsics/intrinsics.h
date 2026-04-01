@@ -10,7 +10,7 @@
 
 #include "arm64/_arm64_conn.h"
 #include "x86_64/_x86_conn.h"
-#include "risc-v64/_rvi64_conn.h"
+#include "risc-v64/_rv64_conn.h"
 #include "zvanillc/_vanillc_conn.h"
 
 
@@ -84,7 +84,7 @@ static inline uint64_t __DIV_HELPER_UI64__(
 ) {
     // x86_64 / AMD64
     #if __ARCH_X86_64__
-        // Native x86_64 - System-V/Win64 ABI
+        // Native x86_64 - System-V / Win64 + VectorCall ABI
         #if (__ABI_X64_SYSV__) || (__ABI_X64_WIN64__)
             return _x86sv_wdiv128(lo, hi, div, rhat);
         #elif __HAS_int128__ // GCC / Clang

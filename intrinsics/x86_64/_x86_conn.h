@@ -68,6 +68,10 @@ extern uint64_t _x86w64_bswap64(uint64_t x);
 #define _x86_sub64b     _cintrin_sub64b
 #define _x86_wmul128    _cintrin_wmul128
 #define _x86_wmul128    _cintrin_wdiv128
+#define _x86_modinv64   _cintrin_modinv64
+#define _x86_clz64      _cintrin_clz64
+#define _x86_ctz64      _cintrin_ctz64
+#define _x86_bswap64    _cintrin_bswap64
 #endif
 
 #endif

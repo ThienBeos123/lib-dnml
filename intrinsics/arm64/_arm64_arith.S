@@ -2,7 +2,7 @@
 #if __ARCH_ARM64__
 
 asm_text_section
-,globl     _arm64_add64c
+.globl     _arm64_add64c
 .globl     _arm64_sub64b
 .globl     _arm64_wmul128
 

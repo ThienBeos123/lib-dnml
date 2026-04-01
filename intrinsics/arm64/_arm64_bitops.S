@@ -3,9 +3,9 @@
 
 
 asm_text_section
-.global     _arm64_clz64
-.global     _arm64_ctz64
-.global     _arm64_bswap64
+.globl     _arm64_clz64
+.globl     _arm64_ctz64
+.globl     _arm64_bswap64
 .type       _arm64_clz64, %function
 .type       _arm64_ctz64, %function
 .type       _arm64_bswap64, %function
