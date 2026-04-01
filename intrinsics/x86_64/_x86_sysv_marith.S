@@ -45,7 +45,7 @@ _x86sv_modinv64:
     # General formula: res *= 2 - x * res
     # Iteration 1:
     mov rsi, 2
-    mov rdx, rax # rdx = rax / res
+    mov rdx, rax # rdx = rax/res
     imul    rdx, rdi # res * x
     sub rsi, rdx # 2 - (res * x)
     imul    rax, rsi # res *= 2 - (res * x)
