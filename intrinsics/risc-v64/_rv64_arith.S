@@ -12,12 +12,10 @@ asm_text_section
 .globl      _rv64_add64c
 .globl      _rv64_sub64b
 .globl      _rv64_wmul128
-.globl      _rv64_wdiv128
 
 .type       _rv64_add64c, @function
 .type       _rv64_sub64b, @function
 .type       _rv64_wmul128, @function
-.type       _rv64_wdiv128, @function
 
 
 /* ------- 64 BIT ADDITION WITH CARRY -------
