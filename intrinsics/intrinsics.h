@@ -17,33 +17,57 @@
 #define min(x, y) ( ((x) < (y)) ? (x) : (y) )
 #define max(x, y) ( ((x) > (y)) ? (x) : (y) )
 
+// //* ---------------------------------------------------------------------------- *//
+// //*                              IFUNC FUNCTION TABLES                           *//
+// //* ---------------------------------------------------------------------------- *//
+typedef struct {
+    uint8_t     (*clz64)(uint64_t x);
+    uint8_t     (*ctz64)(uint64_t x);
+    uint64_t    (*bswap64)(uint64_t x);
+    uint8_t     (*pcnt64)(uint64_t x);
+} _BITOPS_FTABLE;
+typedef struct {
+    uint64_t (*add64c)(uint64_t a, uint64_t b, uint8_t *carry);
+    uint64_t (*sub64b)(uint64_t a, uint64_t b, uint8_t *borrow);
+    uint64_t (*wmul128)(uint64_t a, uint64_t b, uint64_t *hi);
+    uint64_t (*wdiv128)(
+        uint64_t lo, uint64_t hi, uint64_t div, 
+        uint64_t *rhat
+    )
+} _ARITH_FTABLE;
+typedef struct {
+    uint64_t (*modinv64)(uint64_t x);
+} _MARITH_FTABLE;
+typedef struct {
+} _ALG_FTABLE;
 
-//* --------------------------- *//
-//*    SINGLE-LIMB ARITHMETIC   *//
-//* --------------------------- *//
-static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
+extern _BITOPS_FTABLE _libdnml_gbitops_ftable;
+extern _ARITH_FTABLE _libdnml_garith_ftable;
+extern _MARITH_FTABLE _libdnml_gmarith_ftable;
+extern _ALG_FTABLE _libdnml_galg_ftable;
+
+static inline void _libdnml_fill_gbitops(void) {}
+static inline void _libdnml_fill_garith(void) {}
+static inline void _libdnml_fill_gmarith(void) {}
+static inline void _libdnml_fill_galg(void) {}
+
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                    SINGLE-LIMB ARITHMETIC                               *//
+//* --------------------------------------------------------------------------------------- *//
+static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) { 
     #if __compiler_clang // Clang --> Always used
         return __builtin_addcll(a, b, *carry, carry);
     #elif __compiler_gcc // GCC --> Always used
         uint64_t sum;
         *carry = __builtin_uaddll_overflow(a, b, &sum);
         return sum;
+    #elif __compiler_msvc // MSVC --> Only on x86_64
+        uint64_t sum;
+        *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
+        return sum;
     #else
-        #if __ARCH_X86_64__ || __ARCH_ARM64__
-            #if __compiler_msvc // MSVC --> Only on x86_64
-                uint64_t sum;
-                *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
-                return sum;
-            #elif __ARCH_X86_64__ // Hand-written x86_64
-                return _x86_add64c(a, b, carry);
-            #elif __ARCH_ARM64__ // Hand-written ARM64
-                return _arm64_add64c(a, b, carry);
-            #endif
-        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
-            return _rv64_add64c(a, b, carry);
-        #else // unknown_compiler + unknown_architecture
-            return _cintrin_add64c(a, b, carry);
-        #endif
+        return _libdnml_garith_ftable.add64c(a, b, carry);
     #endif
 }
 static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
@@ -52,22 +76,12 @@ static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
         uint64_t diff;
         *borrow =  __builtin_sub_overflow(a, b, &diff);
         return diff;
+    #elif __compiler_msvc // MSVC --> Only on x86_64
+        uint64_t diff;
+        *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
+        return diff;
     #else
-        #if __ARCH_X86_64__ || __ARCH_ARM64__
-            #if __compiler_msvc // MSVC --> Only on x86_64
-                uint64_t diff;
-                *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
-                return diff;
-            #elif __ARCH_X86_64__ // Hand-written x86_64
-                return _x86_sub64b(a, b, borrow);
-            #elif __ARCH_ARM64__ // Hand-written ARM64
-                return _arm64_sub64b(a, b, borrow);
-            #endif
-        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
-            return _rv64_sub64b(a, b, borrow);
-        #else // unknown_compiler + unknown_architecture
-            return _cintrin_sub64b(a, b, borrow);
-        #endif
+        return _libdnml_garith_ftable.sub64b(a, b, borrow);
     #endif
 }
 static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
@@ -75,74 +89,31 @@ static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
         uint128 res = ((uint128)a) * ((uint128)b);
         *hi = (uint64_t)(res >> BITS_IN_UINT64_T);
         return (uint64_t)res;
+    #elif __compiler_msvc // MSVC - Only on x86/ARM64
+        return _umul128(a, b, hi);
     #else
-        #if __ARCH_X86_64__ || __ARCH_ARM64__
-            #if __compiler_msvc // MSVC - Only on x86/ARM64
-                return _umul128(a, b, hi);
-            #elif __ARCH_X86_64__ // Hand-written x86_64 code
-                return _x86_wmul128(a, b, carry);
-            #elif __ARCH_ARM64__ // Hand-written ARM64 code
-                return _arm64_wmul128(a, b, carry);
-            #endif
-        #elif __ARCH_RVI64__ // Hand-written RISC-V 64 bit
-            return _rv64_wmul128(a, b, hi);
-        #else // unknown_compiler + unknown_arch
-            return _cintrin_wmul128(a, b, carry);
-        #endif
+        return _libdnml_garith_ftable.wmul128(a, b, hi);
     #endif
 }
 static inline uint64_t __DIV_HELPER_UI64__(
     uint64_t lo, uint64_t hi, uint64_t div, 
     uint64_t *rhat
 ) {
-    // x86_64 / AMD64
-    #if __ARCH_X86_64__
-        // Native x86_64 - System-V / Win64 + VectorCall ABI
-        #if (__ABI_X64_SYSV__) || (__ABI_X64_WIN64__)
-            return _x86sv_wdiv128(lo, hi, div, rhat);
-        #elif __HAS_int128__ // GCC / Clang
-            uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
-            *rhat = (uint64_t)(dividend % div);
-            return (uint64_t)(dividend / div);
-        #elif __compiler_msvc // MSVC
-            return _udiv128(hi, lo, div, rhat);
-        #else // unknown_compiler
-            uint8_t divlz = _x86_clz64(div);
-            return _cintrin_wdiv128(lo, hi, div, rhat);
-        #endif
-
-    // ARM64 / RISC-V / unknown_arch
-    #elif __HAS_int128__ // GCC / Clang
+    #if __HAS_int128__ // GCC / Clang
         uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
         *rhat = (uint64_t)(dividend % div);
         return (uint64_t)(dividend / div);
     #elif __compiler_msvc // MSVC
         return _udiv128(hi, lo, div, rhat);
-    #else // unknown_compiler
-        uint8_t divlz = 0;
-        #if __ARCH_ARM64__
-            divclz = _arm64_clz64(div);
-        #elif __ARCH_RISCV_64__
-            divclz = _rv64_clz64(div);
-        #else
-            divclz = _cintrin_clz64(div);
-        #endif
-        return _cintrin_wdiv128(lo, hi, div, divclz, rhat);
+    #else // Unknown Compiler
+        return _libdnml_garith_ftable.wdiv128(lo, hi, div, rhat);
     #endif
 }
 
-//* ----------------------------------- *//
-//*    SINGLE-LIMB MODULAR ARITHMETIC   *//
-//* ----------------------------------- *//
-static inline uint64_t __MODINV_UI64__(uint64_t x) {
-    #if __ARCH_X86_64__
-        return _x86_modinv64(x);
-    #elif __ARCH_ARM64__
-        return _arm64_modinv64(x);
-    #else
-        return _cintrin_modinv64(x);
-    #endif
-}
+//* --------------------------------------------------------------------------------------- *//
+//*                                SINGLE-LIMB MODULAR ARITHMETIC                           *//
+//* --------------------------------------------------------------------------------------- *//
+static inline uint64_t __MODINV_UI64__(uint64_t x) { return _libdnml_gmarith_ftable.modinv64(x); }
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
     uint64_t hi, lo;
     lo = __MUL_UI64__(a, b, &hi);
@@ -169,16 +140,17 @@ static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod
     base %= mod;
     uint64_t res = 1;
     while (exp > 0) {
-        if (exp & 1) res = _cintrin_modmul64(res, base, mod);
-        base = _cintrin_modmul64(base, base, mod);
+        if (exp & 1) res = __MODMUL_UI64__(res, base, mod);
+        base = __MODMUL_UI64__(base, base, mod);
         exp >>= 1;
     } return res;
 }
 
 
-//* --------------------------- *//
-//*      GENERAL UTILITIES      *//
-//* --------------------------- *//
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                       GENERAL UTILITIES                                 *//
+//* --------------------------------------------------------------------------------------- *//
 static inline uint8_t __SAFE_EXP__(uint64_t base, uint64_t exp) {
     if (exp == 0) return 1;
     if (exp == 1) return 1;
@@ -186,57 +158,47 @@ static inline uint8_t __SAFE_EXP__(uint64_t base, uint64_t exp) {
     return (double)exp * log2((double)base) < (double)(BITS_IN_UINT64_T);
 }
 static inline uint8_t __IS_2POW__(uint64_t x) { return (x) && !(x & (x - 1));  }
-static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
-    #if x == 0
-        return 64;
-    #endif
+static inline uint8_t __CLZ_UI64__(uint64_t x) {
+    if (!x) return BITS_IN_UINT64_T;
     // The actual code
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_clzll(x);
     #elif __compiler_msvc
         return _lzcnt_u64(x);
     #else
-        #if __ARCH_X86_64__
-            return _x86_clz64(x);
-        #elif __ARCH_ARM64__
-            return _arm64_clz64(x);
-        #else
-            return _cintrin_clz64(x);
-        #endif
+        return _libdnml_gbitops_ftable.clz64(x);
     #endif
 }
-static inline uint8_t __CTZ_UI64__(uint64_t x) {        // COUNT TRAILING ZEROS
-    #if x == 0
-        return 64;
-    #endif
+static inline uint8_t __CTZ_UI64__(uint64_t x) {
+    if (!x) return BITS_IN_UINT64_T;
     // The actual code
     #if (__compiler_gcc || __compiler_clang) 
         return __builtin_ctzll(x);
     #elif __compilter_msvc
         return tzcnt_u64(x);
     #else
-        #if __ARCH_X86_64__
-            return _x86_ctz64(x);
-        #elif __ARCH_ARM64__
-            return _arm64_ctz64(x);
-        #else
-            return _cintrin_ctz64(x);
-        #endif
+        return _libdnml_gbitops_ftable.ctz64(x);
     #endif
 }
-static inline uint64_t __BSWAP_UI64__(uint64_t x) {     // BYTESWAP
+static inline uint64_t __BSWAP_UI64__(uint64_t x) {
+    if (!x || x == UINT64_MAX) return x;
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_bswap64(x);
     #elif __compiler_msvc
         return _byteswap_uint64(x);
     #else
-        #if __ARCH_X86_64__
-            return _x86_bswap64(x);
-        #elif __ARCH_ARM64__
-            return _arm64_bswap64(x);
-        #else
-            return _cintrin_bswap64(x);
-        #endif
+        return _libdnml_gbitops_ftable.bswap64(x);
+    #endif
+}
+static inline uint64_t __PCNT_UI64__(uint64_t x) { 
+    if (!x) return 0; 
+    else if (x== UINT64_MAX) return BITS_IN_UINT64_T;
+    #if (__compiler_gcc || __compiler_clang)
+        return __builtin_popcountll(x);
+    #elif __compiler_msvc
+        return __popcnt64(x);
+    #else
+        return _libdnml_fill_gbitops.pcnt64(x);
     #endif
 }
 
