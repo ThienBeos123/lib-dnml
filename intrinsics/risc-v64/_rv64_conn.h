@@ -2,8 +2,8 @@
 #define ____DNML_RVI64_CONN
 
 #include "../__asm_macros.h"
-#include "../../system/compiler.h"
-#include "../../system/arch.h"
+#include "../../system/__compiler.h"
+#include "../../system/__arch.h"
 
 #if __ARCH_RVI64__
 // _rvi64_arith.S

@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <math.h>
-#include "../../system/compiler.h"
+#include "../../system/__compiler.h"
 
 // 64 bit Count Leading Zeros
 static inline uint8_t _cintrin_clz64(uint64_t x) {

@@ -2,8 +2,8 @@
 #define DNML_ADD_SUB
 
 
-#include "../../system/include.h"
-#include "../../system/compiler.h"
+#include "../../system/__include.h"
+#include "../../system/__compiler.h"
 #include "../../sconfigs/arena.h"
 #include "../../sconfigs/numeric_config.h"
 #include "../../sconfigs/_ctx.h"

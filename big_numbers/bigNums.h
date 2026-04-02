@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-#include "../system/include.h"
-#include "../system/compiler.h"
+#include "../system/__include.h"
+#include "../system/__compiler.h"
 #include "../sconfigs/settings.h"
 #include "../sconfigs/numeric_config.h"
 #include "../sconfigs/dnml_status.h"

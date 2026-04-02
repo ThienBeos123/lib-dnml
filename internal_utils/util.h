@@ -15,7 +15,7 @@ extern "C" {
 #include "../big_numbers/bigNums.h"
 #include "../intrinsics/intrinsics.h"
 
-#include "../system/compiler.h"
+#include "../system/__compiler.h"
 #include "../sconfigs/numeric_config.h"
 #include "../sconfigs/_ctx.h"
 #include "aconv_macros.h"

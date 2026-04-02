@@ -4,8 +4,8 @@
 
 #include <math.h>
 #include <stdint.h>
-#include "../system/compiler.h"
-#include "../system/arch.h"
+#include "../system/__compiler.h"
+#include "../system/__arch.h"
 #include "../sconfigs/numeric_config.h"
 
 #include "arm64/_arm64_conn.h"

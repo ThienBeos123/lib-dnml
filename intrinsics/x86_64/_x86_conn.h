@@ -4,8 +4,8 @@
 
 
 #include "../__asm_macros.h"
-#include "../../system/compiler.h"
-#include "../../system/arch.h"
+#include "../../system/__compiler.h"
+#include "../../system/__arch.h"
 
 //* -------- SYSTEM-V ABI ---------- *//
 #if __ABI_X64_SYSV__
