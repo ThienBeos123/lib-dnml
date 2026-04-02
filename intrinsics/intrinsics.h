@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "../system/__compiler.h"
 #include "../system/__arch.h"
+#include "../system/__hwcaps.h"
 #include "../sconfigs/numeric_config.h"
 
 #include "arm64/_arm64_conn.h"
@@ -41,15 +42,87 @@ typedef struct {
 typedef struct {
 } _ALG_FTABLE;
 
-extern _BITOPS_FTABLE _libdnml_gbitops_ftable;
-extern _ARITH_FTABLE _libdnml_garith_ftable;
-extern _MARITH_FTABLE _libdnml_gmarith_ftable;
-extern _ALG_FTABLE _libdnml_galg_ftable;
+static _BITOPS_FTABLE _libdnml_gbitops_ftable;
+static _ARITH_FTABLE _libdnml_garith_ftable;
+static _MARITH_FTABLE _libdnml_gmarith_ftable;
+static _ALG_FTABLE _libdnml_galg_ftable;
 
-static inline void _libdnml_fill_gbitops(void) {}
-static inline void _libdnml_fill_garith(void) {}
-static inline void _libdnml_fill_gmarith(void) {}
-static inline void _libdnml_fill_galg(void) {}
+static inline void _libdnml_fill_gbitops(void) {
+#if __ARCH_X86_64__
+// CLZ - Detect ABM (Advanced Bit Manipulation)
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_abm) ? _x86_clz64e : _x86_clz64s;
+// CTZ - Detect BMI1 (Bit Manipulation Instructions 1)
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s;
+_libdnml_gbitops_ftable.bswap64 = _x86_bswap64;
+_libdnml_fill_gbitops.pcnt64 = _x86_pcnt64;
+
+#elif __ARCH_ARM64__
+_libdnml_gbitops_ftable.clz64 = _arm64_clz64;
+_libdnml_gbitops_ftable.ctz64 = _arm64_ctz64;
+_libdnml_gbitops_ftable.bswap64 = _arm64_bswap64;
+// _libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
+
+#elif __ARCH_RVI64__
+if (libdnml_caps.rv64_zbb) {
+    _libdnml_gbitops_ftable.clz64 = _rv64_clz64;
+    _libdnml_gbitops_ftable.ctz64 = _rv64_ctz64;
+    _libdnml_gbitops_ftable.bswap64 = _rv64_bswap64;
+    _libdnml_gbitops_ftable.pcnt64 = _rv65_pcnt64;
+} else {
+    _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
+    _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
+    _libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
+    _libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
+}
+
+#else
+_libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
+_libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
+_libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
+_libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
+#endif
+}
+static inline void _libdnml_fill_garith(void) {
+#if __ARCH_X86_64__
+_libdnml_garith_ftable.add64c = _x86_add64c;
+_libdnml_garith_ftable.sub64b = _x86_sub64b;
+_libdnml_garith_ftable.wmul128 = _x86_wmul128;
+_libdnml_garith_ftable.wdiv128 = _x86_wdiv128;
+#elif __ARCH_ARM64__
+_libdnml_garith_ftable.add64c = _arm64_add64c;
+_libdnml_garith_ftable.sub64b = _arm64_sub64b;
+_libdnml_garith_ftable.wmul128 = _arm64_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#elif __ARCH_RVI64__
+_libdnml_garith_ftable.add64c = _rv64_add64c;
+_libdnml_garith_ftable.sub64b = _rv64_sub64b;
+_libdnml_garith_ftable.wmul128 = _rv64_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#else
+_libdnml_garith_ftable.add64c = _cintrin_add64c;
+_libdnml_garith_ftable.sub64b = _cintrin_sub64b;
+_libdnml_garith_ftable.wmul128 = _cintrin_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#endif
+}
+static inline void _libdnml_fill_gmarith(void) {
+#if __ARCH_X86_64__
+_libdnml_gmarith_ftable.modinv64 = _x86_modinv64;
+#elif __ARCH_ARM64__
+_libdnml_gmarith_ftable.modinv64 = _arm64_modinv64;
+#elif __ARCH_RVI64__
+_libdnml_gmarith_ftable.modinv64 = _rv64_modinv64;
+#else
+_libdnml_gmarith_ftable.modinv64 = _cintrin_modinv64;
+#endif
+}
+static inline void _libdnml_fill_galg(void) {
+#if __ARCH_X86_64__
+#elif __ARCH_ARM64__
+#elif __ARCH_RVI64__
+#else
+#endif
+}
 
 
 //* --------------------------------------------------------------------------------------- *//
@@ -164,7 +237,7 @@ static inline uint8_t __CLZ_UI64__(uint64_t x) {
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_clzll(x);
     #elif __compiler_msvc
-        return _lzcnt_u64(x);
+        return _CountLeadingZeros64(x);
     #else
         return _libdnml_gbitops_ftable.clz64(x);
     #endif
@@ -175,7 +248,7 @@ static inline uint8_t __CTZ_UI64__(uint64_t x) {
     #if (__compiler_gcc || __compiler_clang) 
         return __builtin_ctzll(x);
     #elif __compilter_msvc
-        return tzcnt_u64(x);
+        return _CountTrailingZeros64(x);
     #else
         return _libdnml_gbitops_ftable.ctz64(x);
     #endif

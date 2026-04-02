@@ -72,6 +72,7 @@ void __DNML_DETX64_HWCAPS(void) {
     return;
 }
 
+
 // __AARCH64__ detections
 void __DNML_DETARM64_HWCAPS(void) {
     return;
