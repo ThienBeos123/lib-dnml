@@ -12,7 +12,7 @@
 
 #include "../../intrinsics/intrinsics.h"
 #include "../../internal_utils/util.h"
-#include "../../big_numbers/bigNums.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 
 #include "add_sub.h"
 #include "div.h"

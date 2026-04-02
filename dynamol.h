@@ -1,11 +1,5 @@
-#ifndef _dynamol_
-#define _dynamol_
-
-
-
-
-#include "big_numbers/bigNums.h"
-#include "big_numbers/bigInt_func.h"
+#ifndef _libdnml_dynamol_
+#define _libdnml_dynamol_
 
 
 

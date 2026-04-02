@@ -12,7 +12,7 @@ extern "C" {
 #include <math.h>
 #include <assert.h>
 
-#include "../big_numbers/bigNums.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 #include "../intrinsics/intrinsics.h"
 
 #include "../system/__compiler.h"

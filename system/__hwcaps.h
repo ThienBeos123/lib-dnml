@@ -66,12 +66,10 @@ void __DNML_DETRV64_HWCAPS(void) {
 #endif
 }
 
-
 // ABM + BMI1 detections
 void __DNML_DETX64_HWCAPS(void) {
     return;
 }
-
 
 // __AARCH64__ detections
 void __DNML_DETARM64_HWCAPS(void) {
@@ -79,7 +77,7 @@ void __DNML_DETARM64_HWCAPS(void) {
 }
 
 // Detection main + dispatch
-void _dnml_detect_hwcaps(void) {
+void _libdnml_detect_hwcaps(void) {
     #if __ARCH_X86_64__
         __DNML_DETX64_HWCAPS();
     #elif __ARCH_ARM64__

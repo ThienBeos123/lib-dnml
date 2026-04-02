@@ -3,7 +3,7 @@
 
 #include <stdalign.h>
 #include "../system/__include.h"
-#include "../big_numbers/bigNums.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 
 typedef struct {
     const bigInt* n;
