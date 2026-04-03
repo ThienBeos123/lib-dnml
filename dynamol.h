@@ -1,5 +1,5 @@
-#ifndef _libdnml_dynamol_
-#define _libdnml_dynamol_
+#ifndef libdnml_dynamol
+#define libdnml_dynamol
 
 
 
