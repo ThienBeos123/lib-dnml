@@ -1,4 +1,13 @@
-#include "atest_include.h"
+// Standard Functions
+#include <stdio.h>
+#include <stdlib.h>
+// Type declarations
+#include <inttypes.h>
+#include <stdint.h>
+// Miscallenous
+#include <pthread.h>
+#include <time.h>
+#include <errno.h>
 
 static inline uint64_t __MODINV_UI64__(uint64_t x) {
     // The input needs to be sanitized/fact-checked as odd

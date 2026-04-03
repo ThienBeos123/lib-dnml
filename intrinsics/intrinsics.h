@@ -2,123 +2,191 @@
 #define __DNML_INTRINSICS_H
 
 
-
+#include <math.h>
 #include <stdint.h>
-#include "../system/compiler.h"
+#include "../system/__compiler.h"
+#include "../system/__arch.h"
+#include "../system/__hwcaps.h"
 #include "../sconfigs/numeric_config.h"
+
+#include "arm64/_arm64_conn.h"
+#include "x86_64/_x86_conn.h"
+#include "risc-v64/_rv64_conn.h"
+#include "zvanillc/_vanillc_conn.h"
 
 
 #define min(x, y) ( ((x) < (y)) ? (x) : (y) )
 #define max(x, y) ( ((x) > (y)) ? (x) : (y) )
 
+// //* ---------------------------------------------------------------------------- *//
+// //*                              IFUNC FUNCTION TABLES                           *//
+// //* ---------------------------------------------------------------------------- *//
+typedef struct {
+    uint8_t     (*clz64)(uint64_t x);
+    uint8_t     (*ctz64)(uint64_t x);
+    uint64_t    (*bswap64)(uint64_t x);
+    uint8_t     (*pcnt64)(uint64_t x);
+} _BITOPS_FTABLE;
+typedef struct {
+    uint64_t (*add64c)(uint64_t a, uint64_t b, uint8_t *carry);
+    uint64_t (*sub64b)(uint64_t a, uint64_t b, uint8_t *borrow);
+    uint64_t (*wmul128)(uint64_t a, uint64_t b, uint64_t *hi);
+    uint64_t (*wdiv128)(
+        uint64_t lo, uint64_t hi, uint64_t div, 
+        uint64_t *rhat
+    )
+} _ARITH_FTABLE;
+typedef struct {
+    uint64_t (*modinv64)(uint64_t x);
+} _MARITH_FTABLE;
+typedef struct {
+} _ALG_FTABLE;
 
-//* --------------------------- *//
-//*    SINGLE-LIMB ARITHMETIC   *//
-//* --------------------------- *//
-static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint64_t *carry) {
-    #if __compiler_clang
+static _BITOPS_FTABLE _libdnml_gbitops_ftable;
+static _ARITH_FTABLE _libdnml_garith_ftable;
+static _MARITH_FTABLE _libdnml_gmarith_ftable;
+static _ALG_FTABLE _libdnml_galg_ftable;
+
+static inline void _libdnml_fill_gbitops(void) {
+#if __ARCH_X86_64__
+// CLZ - Detect ABM (Advanced Bit Manipulation)
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_abm) ? _x86_clz64e : _x86_clz64s;
+// CTZ - Detect BMI1 (Bit Manipulation Instructions 1)
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s;
+_libdnml_gbitops_ftable.bswap64 = _x86_bswap64;
+_libdnml_fill_gbitops.pcnt64 = _x86_pcnt64;
+
+#elif __ARCH_ARM64__
+_libdnml_gbitops_ftable.clz64 = _arm64_clz64;
+_libdnml_gbitops_ftable.ctz64 = _arm64_ctz64;
+_libdnml_gbitops_ftable.bswap64 = _arm64_bswap64;
+// _libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
+
+#elif __ARCH_RVI64__
+if (libdnml_caps.rv64_zbb) {
+    _libdnml_gbitops_ftable.clz64 = _rv64_clz64;
+    _libdnml_gbitops_ftable.ctz64 = _rv64_ctz64;
+    _libdnml_gbitops_ftable.bswap64 = _rv64_bswap64;
+    _libdnml_gbitops_ftable.pcnt64 = _rv65_pcnt64;
+} else {
+    _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
+    _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
+    _libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
+    _libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
+}
+
+#else
+_libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
+_libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
+_libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
+_libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
+#endif
+}
+static inline void _libdnml_fill_garith(void) {
+#if __ARCH_X86_64__
+_libdnml_garith_ftable.add64c = _x86_add64c;
+_libdnml_garith_ftable.sub64b = _x86_sub64b;
+_libdnml_garith_ftable.wmul128 = _x86_wmul128;
+_libdnml_garith_ftable.wdiv128 = _x86_wdiv128;
+#elif __ARCH_ARM64__
+_libdnml_garith_ftable.add64c = _arm64_add64c;
+_libdnml_garith_ftable.sub64b = _arm64_sub64b;
+_libdnml_garith_ftable.wmul128 = _arm64_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#elif __ARCH_RVI64__
+_libdnml_garith_ftable.add64c = _rv64_add64c;
+_libdnml_garith_ftable.sub64b = _rv64_sub64b;
+_libdnml_garith_ftable.wmul128 = _rv64_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#else
+_libdnml_garith_ftable.add64c = _cintrin_add64c;
+_libdnml_garith_ftable.sub64b = _cintrin_sub64b;
+_libdnml_garith_ftable.wmul128 = _cintrin_wmul128;
+_libdnml_garith_ftable.wdiv128 = _cintrin_wdiv128;
+#endif
+}
+static inline void _libdnml_fill_gmarith(void) {
+#if __ARCH_X86_64__
+_libdnml_gmarith_ftable.modinv64 = _x86_modinv64;
+#elif __ARCH_ARM64__
+_libdnml_gmarith_ftable.modinv64 = _arm64_modinv64;
+#elif __ARCH_RVI64__
+_libdnml_gmarith_ftable.modinv64 = _rv64_modinv64;
+#else
+_libdnml_gmarith_ftable.modinv64 = _cintrin_modinv64;
+#endif
+}
+static inline void _libdnml_fill_galg(void) {
+#if __ARCH_X86_64__
+#elif __ARCH_ARM64__
+#elif __ARCH_RVI64__
+#else
+#endif
+}
+
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                    SINGLE-LIMB ARITHMETIC                               *//
+//* --------------------------------------------------------------------------------------- *//
+static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) { 
+    #if __compiler_clang // Clang --> Always used
         return __builtin_addcll(a, b, *carry, carry);
-    #elif __compiler_msvc
-        uint64_t sum;
-        *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
-        return sum;
-    #elif __compiler_gcc
+    #elif __compiler_gcc // GCC --> Always used
         uint64_t sum;
         *carry = __builtin_uaddll_overflow(a, b, &sum);
         return sum;
-    #else
-        uint64_t sum, temp_carry_out;
-        uint8_t carry_in = (*carry) ? 1 : 0;
-        // ---- FUNCTION HERE ---- //
-        *carry = temp_carry_out;
+    #elif __compiler_msvc // MSVC --> Only on x86_64
+        uint64_t sum;
+        *carry = _addcarry_u64((*carry) ? 1 : 0, a, b,  &sum)
         return sum;
+    #else
+        return _libdnml_garith_ftable.add64c(a, b, carry);
     #endif
 }
-static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint64_t *borrow) {
-    #if __compiler_msvc
-        uint64_t diff;
-        *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
-        return diff;
-    #elif (__compiler_gcc || __compiler_clang)
+static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
+    #if (__compiler_gcc || __compiler_clang) 
+        // Clang / GCC --> Always used
         uint64_t diff;
         *borrow =  __builtin_sub_overflow(a, b, &diff);
         return diff;
-    #else
+    #elif __compiler_msvc // MSVC --> Only on x86_64
         uint64_t diff;
-        uint64_t temp_borrow_out;
-        uint8_t borrow_in = (*borrow) ? 1 : 0;
-        // ---- FUNCTION HERE ---- //
-        *borrow = temp_borrow_out;
+        *borrow = _subborrow_u64((*borrow) ? 1 : 0, a, b, &diff);
         return diff;
+    #else
+        return _libdnml_garith_ftable.sub64b(a, b, borrow);
     #endif
 }
 static inline uint64_t __MUL_UI64__(uint64_t a, uint64_t b, uint64_t *hi) {
-    #if __HAS_int128__
+    #if __HAS_int128__ // GCC / Clang --> ALWAYS USED
         uint128 res = ((uint128)a) * ((uint128)b);
         *hi = (uint64_t)(res >> BITS_IN_UINT64_T);
         return (uint64_t)res;
+    #elif __compiler_msvc // MSVC - Only on x86/ARM64
+        return _umul128(a, b, hi);
     #else
-        // Seperate a and b into 2 different halves
-        uint64_t a_low = a & 0xFFFFFFFF;        uint64_t b_low = b & 0xFFFFFFFF; // Extract the 32 lower bits
-        uint64_t a_high = a >> 32;              uint64_t b_high = b >> 32; // Extract the 32 upper bits
-
-        uint64_t first_mul = a_low * b_low;
-        uint64_t second_mul = a_low * b_high;
-        uint64_t third_mul = a_high * b_low;
-        uint64_t fourth_mul = a_high * b_high;
-        
-        // Lower Half Calculation
-        uint64_t mid = second_mul + third_mul;
-        uint64_t mid_carry = (mid < second_mul); // Handles mid overflow (0 <= mid < 2^65)
-        uint64_t mid_low = (mid & 0xFFFFFFFF) << 32; // Extract and Isolate the lower 32 bit of mid
-        uint64_t res = first_mul + mid_low; // Return the lower 64 bits
-        /* Lower half of a bit is attained by the formula:  Res % 2^64 = low
-        *   +) (a x b % 2^64) = (first_mul + mid * 2^32 + fourth_mul * 2^64) % 2^64
-        *                     = (first_mul + mid * 2^32) % 2^64 (1)
-        * 
-        *   +) mid                      = mid_low + mid_high * 2^32
-        *      mid * 2^32               = mid_low * 2^32 + mid_high * 2^64
-        *      (mid * 2^32) % 2^64      = (mid_low * 2^32 + mid_high * 2^64) % 2^64
-        *      (mid * 2^32) % 2^64      = mid_low * 2^32                                
-        *                               = mid_low << 32 (2)
-        * 
-        * ----> (a x b % 2^64)      = first_mul + mid_low * 2^32
-        * ----> (a x b) lower bits  = first_mul + mid_low * 2^32
-        */
-
-        // Upper Half Calculation
-        uint64_t carry1 = (res < first_mul); // Check if adding mid_low to first_mul overflows to carry to the higher half
-        uint64_t mid_high = mid >> 32; // The upper 32 bits of mid
-        /* Higher half of a bit is attained by the formula:  floor(Res / 2^64) = high
-        *   +) floor(a x b / 2^64) = floor((first_mul + mid * 2^32 + fourth_mul * 2^64) / 2^64)
-        *                          = floor((first_mul / 2^64) + (mid * 2^-32) + fourth_mul)
-        * 
-        *   +) mid                  = mid_low + mid_high * 2^32
-        *      mid * 2^-32          = (mid_low + mid_high * 2^32) / 2^32
-        *      mid * 2^-32          = (mid_low / 2^32) + mid_high
-        *      floor(mid * 2^-32)   = floor((mid_low / 2^32) + mid_high)
-        *      floor(mid * 2^-32)   = floor({0 <= mid_low / 2^32 < 1} + mid_high)  (0 <= mid_low < 2^32)
-        *      floor(mid * 2^-32)   = mid_high
-        * 
-        *   -----> floor(a x b / 2^64) = floor(first_mul / 2^64) + mid_high + fourth_mul
-        *                              = mid_high + fourth_mul
-        */
-
-        // Takes the carry from lower half + the overflowed mid bit
-        *hi = fourth_mul + carry1 + mid_high + (mid_carry << 32);
-        return res;
+        return _libdnml_garith_ftable.wmul128(a, b, hi);
+    #endif
+}
+static inline uint64_t __DIV_HELPER_UI64__(
+    uint64_t lo, uint64_t hi, uint64_t div, 
+    uint64_t *rhat
+) {
+    #if __HAS_int128__ // GCC / Clang
+        uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
+        *rhat = (uint64_t)(dividend % div);
+        return (uint64_t)(dividend / div);
+    #elif __compiler_msvc // MSVC
+        return _udiv128(hi, lo, div, rhat);
+    #else // Unknown Compiler
+        return _libdnml_garith_ftable.wdiv128(lo, hi, div, rhat);
     #endif
 }
 
-
-//* ----------------------------------- *//
-//*    SINGLE-LIMB MODULAR ARITHMETIC   *//
-//* ----------------------------------- *//
-static inline uint64_t __MODINV_UI64__(uint64_t x) {
-    uint64_t res = 2 - x;
-    for (uint8_t i = 0; i < 5; ++i) res *= 2 - x * res;
-    return res;
-}
+//* --------------------------------------------------------------------------------------- *//
+//*                                SINGLE-LIMB MODULAR ARITHMETIC                           *//
+//* --------------------------------------------------------------------------------------- *//
+static inline uint64_t __MODINV_UI64__(uint64_t x) { return _libdnml_gmarith_ftable.modinv64(x); }
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
     uint64_t hi, lo;
     lo = __MUL_UI64__(a, b, &hi);
@@ -152,53 +220,58 @@ static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod
 }
 
 
-//* --------------------------- *//
-//*      GENERAL UTILITIES      *//
-//* --------------------------- *//
-static inline uint8_t __CLZ_UI64__(uint64_t x) {        // COUNT LEADING ZEROS
-    #if x == 0
-        return 64;
-    #endif
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                       GENERAL UTILITIES                                 *//
+//* --------------------------------------------------------------------------------------- *//
+static inline uint8_t __SAFE_EXP__(uint64_t base, uint64_t exp) {
+    if (exp == 0) return 1;
+    if (exp == 1) return 1;
+    if (exp == 2) return (base <= (1ULL << 32) - 1);
+    return (double)exp * log2((double)base) < (double)(BITS_IN_UINT64_T);
+}
+static inline uint8_t __IS_2POW__(uint64_t x) { return (x) && !(x & (x - 1));  }
+static inline uint8_t __CLZ_UI64__(uint64_t x) {
+    if (!x) return BITS_IN_UINT64_T;
     // The actual code
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_clzll(x);
     #elif __compiler_msvc
-        return _lzcnt_u64(x);
+        return _CountLeadingZeros64(x);
     #else
-        uint8_t n = 0;
-        while (!(x & (1ULL < 63))) { x <<= 1; ++n }
-        return n;
+        return _libdnml_gbitops_ftable.clz64(x);
     #endif
 }
-static inline uint8_t __CTZ_UI64__(uint64_t x) {        // COUNT TRAILING ZEROS
-    #if x == 0
-        return 64;
-    #endif
+static inline uint8_t __CTZ_UI64__(uint64_t x) {
+    if (!x) return BITS_IN_UINT64_T;
     // The actual code
     #if (__compiler_gcc || __compiler_clang) 
         return __builtin_ctzll(x);
     #elif __compilter_msvc
-        return tzcnt_u64(x);
+        return _CountTrailingZeros64(x);
     #else
-        uint8_t n = 0;
-        while (!(x & 1)) { x >>= 1; ++n; }
-        return n;
+        return _libdnml_gbitops_ftable.ctz64(x);
     #endif
 }
-static inline uint64_t __BSWAP_UI64__(uint64_t x) {     // BYTESWAP
+static inline uint64_t __BSWAP_UI64__(uint64_t x) {
+    if (!x || x == UINT64_MAX) return x;
     #if (__compiler_gcc || __compiler_clang)
         return __builtin_bswap64(x);
     #elif __compiler_msvc
         return _byteswap_uint64(x);
     #else
-        return ((x << 56) |
-            ((x << 40) & 0x00FF000000000000ULL) |
-            ((x << 24) & 0x0000FF0000000000ULL) |
-            ((x << 8)  & 0x000000FF00000000ULL) |
-            ((x >> 8)  & 0x00000000FF000000ULL) |
-            ((x >> 24) & 0x0000000000FF0000ULL) |
-            ((x >> 40) & 0x000000000000FF00ULL) |
-            (x >> 56));
+        return _libdnml_gbitops_ftable.bswap64(x);
+    #endif
+}
+static inline uint64_t __PCNT_UI64__(uint64_t x) { 
+    if (!x) return 0; 
+    else if (x== UINT64_MAX) return BITS_IN_UINT64_T;
+    #if (__compiler_gcc || __compiler_clang)
+        return __builtin_popcountll(x);
+    #elif __compiler_msvc
+        return __popcnt64(x);
+    #else
+        return _libdnml_fill_gbitops.pcnt64(x);
     #endif
 }
 

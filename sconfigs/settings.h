@@ -3,13 +3,13 @@
 
 #include <assert.h>
 
-// #define _DNML_DEBUG_MODE
+#define _DNML_DEBUG_MODE 1
 
-// #ifdef _DNML_DEBUG_MODE
-//     #undef NDEBUG
-// #else
-//     #define NDEBUG
-// #endif
+#if _DNML_DEBUG_MODE
+    #undef NDEBUG
+#else
+    #define NDEBUG
+#endif
 
 
 

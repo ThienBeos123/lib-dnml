@@ -12,11 +12,10 @@ extern "C" {
 #include <math.h>
 #include <assert.h>
 
-#include "../big_numbers/bigNums.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 #include "../intrinsics/intrinsics.h"
-#include "../intrinsics/limb_math.h"
 
-#include "../system/compiler.h"
+#include "../system/__compiler.h"
 #include "../sconfigs/numeric_config.h"
 #include "../sconfigs/_ctx.h"
 #include "aconv_macros.h"

@@ -7,7 +7,6 @@
 #include "../sconfigs/dnml_status.h"
 
 #include "../intrinsics/intrinsics.h"
-#include "../intrinsics/limb_math.h"
 #include "../calc_algo/calculation.h"
 #include "../internal_utils/util.h"
 #include "bigNums.h"

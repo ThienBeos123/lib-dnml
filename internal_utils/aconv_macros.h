@@ -4,8 +4,8 @@
 
 
 
-#include "../system/compiler.h"
-#include "../big_numbers/bigNums.h"
+#include "../system/__compiler.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 #include "../sconfigs/_ctx.h"
 #include "../sconfigs/arena.h"
 #include "../sconfigs/numeric_config.h"

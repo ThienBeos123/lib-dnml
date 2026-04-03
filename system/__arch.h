@@ -1,18 +1,25 @@
 #ifndef ___DNML_ARCH_H___
 #define ___DNML_ARCH_H___
 
-/* Detecting x86/x64 Architecture */
+/* Detecting x86_64 Architecture */
 #if defined(__x86_64__) || defined(_M_X64)
     #define __ARCH_X86_64__ 1
 #else
     #define __ARCH_X86_64__ 0
 #endif
 
-/* Detecting ARM Architecture */
+/* Detecting AARCH64 / ARM64 Architecture */
 #if defined(__aarch64__) || defined(_M_ARM64)
     #define __ARCH_ARM64__ 1
 #else
     #define __ARCH_ARM64__ 0
+#endif
+
+/* Detecting RISC-V64 / RVI64  Architecture */
+#if defined(__riscv) && (__riscv_xlen == 64)
+    #define __ARCH_RVI64__ 1
+#else
+    #define __ARCH_RVI64__ 0
 #endif
 
 /* Endian Detection */
