@@ -11,22 +11,39 @@
 
 
 //* =========== TYPE DEFINITIONS =========== *//
+typedef enum {
+    DNML_CALL,
+    DNML_OCALL
+} _dnml_call_style;
+typedef struct {
+    uint64_t first;
+    uint64_t second;
+} _dnml_pair;
+typedef struct {
+    uint64_t in[4];
+    _dnml_pair exp;
+    uint8_t input_count;
+} _libdnml_case;
+
 typedef struct {
     const char *suite_name;
+    void *fn_test;
+    void *fn_ref;
+    _dnml_call_style call_style;
 
+    _libdnml_case *edge_cases;
     uint8_t edge_cases_count;
     uint8_t edge_cases_correct;
-    uint64_t *fail_edge_in1;
-    uint64_t *fail_edge_in2;
-    uint64_t *fail_edge_res;
-    uint64_t *fail_edge_exp;
+    _dnml_pair *fail_edge_res;
+    _dnml_pair *fail_edge_exp;
 
-    uint8_t random_cases_count;
-    uint8_t random_cases_correct;
-    uint64_t *fail_rand_in1;
-    uint64_t *fail_rand_in2;
-    uint64_t *fail_rand_res;
-    uint64_t *fail_rand_exp;
+    _libdnml_case *rand_cases;
+    uint8_t rand_cases_count;
+    uint8_t rand_cases_correct;
+    uint8_t rand_nin;
+    uint64_t **fail_rand_in; // An array of array of inputs
+    _dnml_pair *fail_rand_res;
+    _dnml_pair *fail_rand_exp;
 } _libdnml_suite;
 
 
@@ -39,32 +56,31 @@ typedef struct {
 
 
 
-//* =================== TESTING FUNFCTIONS =================== *//
-static inline void destroy_suite(_libdnml_suite *suite, calc_ctx fail_storage, size_t suite_mark) {
-    scratch_reset(&fail_storage, suite_mark);
-    suite = NULL;
-}
+//* =================== TEST CREATION FUNFCTIONS =================== *//
 static inline void create_suite(
-    _libdnml_suite *curr_suite, const char *suite_name,
-    uint8_t edge_count, uint8_t rand_count, 
-    calc_ctx fail_storage, size_t *suite_mark
+    _libdnml_suite *curr_suite, 
+    const char *suite_name,
+    uint8_t edge_count, uint8_t rand_count,
+    uint8_t rand_nin,
+    uint64_t *fail_res, 
+    _libdnml_case *edge_bank, 
+    _libdnml_case *rand_bank
 ) {
     curr_suite->suite_name = suite_name;
     curr_suite->edge_cases_count = edge_count;
-    *suite_mark = scratch_mark(&fail_storage);
-    curr_suite->fail_edge_in1 = (uint64_t*)(scratch_alloc(&fail_storage, edge_count));
-    curr_suite->fail_edge_in2 = (uint64_t*)(scratch_alloc(&fail_storage, edge_count));
-    curr_suite->fail_edge_res = (uint64_t*)(scratch_alloc(&fail_storage, edge_count));
-    curr_suite->fail_edge_exp = (uint64_t*)(scratch_alloc(&fail_storage, edge_count));
-
-    curr_suite->random_cases_count = rand_count;
-    curr_suite->fail_rand_in1 = (uint64_t*)(scratch_alloc(&fail_storage, rand_count));
-    curr_suite->fail_rand_in2 = (uint64_t*)(scratch_alloc(&fail_storage, rand_count));
-    curr_suite->fail_rand_res = (uint64_t*)(scratch_alloc(&fail_storage, rand_count));
-    curr_suite->fail_rand_exp = (uint64_t*)(scratch_alloc(&fail_storage, rand_count));
+    curr_suite->rand_cases_count = rand_count;
+    curr_suite->rand_nin = rand_nin;
+    // Filling in the banks
+    curr_suite->edge_cases = edge_bank;
+    curr_suite->rand_cases = rand_bank;
+    // Result storage requires at least 2ecount + 4rcount
+    curr_suite->fail_edge_res = &fail_res[0];
+    curr_suite->fail_edge_exp = &fail_res[edge_count];
+    curr_suite->fail_rand_in  = &fail_res[2 * edge_count];
+    curr_suite->fail_rand_exp = &fail_res[2 * edge_count + (rand_nin * rand_count) * rand_count];
+    curr_suite->fail_rand_res = &fail_res[2 * edge_count + (rand_nin * rand_count + 1) * rand_count];
 }
-
-static inline void start_session(
+static inline void create_session(
     _libdnml_session *curr_session,
     const char *session_name, uint8_t cli_delay,
     uint8_t suite_count, _libdnml_suite *suite_list
@@ -87,8 +103,6 @@ static inline void start_session(
 #define BOX_DIV_L   "├"
 #define BOX_DIV_R   "┤"
 #define BOX_WIDTH   60
-
-
 //* ============== SUITE BOX FUNCTIONS ============== *//
 static inline void _dnml_box_divider(void) {
     printf(BOX_DIV_L);
@@ -112,8 +126,6 @@ static inline void _dnml_box_line(const char *text) {
     if (pad < 0) pad = 0;
     printf(BOX_V " %.*s%*s" BOX_V "\n", BOX_WIDTH - 1, text, pad - 1, "");
 }
-
-
 //* ============== SESSION PROGRESS/FEATURES FUNCTIONS ============== *//
 static inline void _dnml_delay_ms(uint32_t ms) {
     struct timespec ts = { 
@@ -133,87 +145,172 @@ static inline void _dnml_loading(const char *label, uint32_t delay, uint32_t tic
 }
 static inline void _dnml_session_progress(uint8_t done, uint8_t total, const char *session_name) {
     int barw = 40;
-    int filled = (total) ? (done / total * barw) : 0;
+    int filled = (total) ? (uint8_t)(done * barw / total) : 0;
 
     printf("  %s\n  Session progression: [", session_name);
     for (int i = 0; i < barw; i++)
         printf((i < filled) ? "#" : " ");
-    printf("] %" PRIu8 "%\n\n", (total) ? (uint8_t)(done / total * 100) : 0);
+    printf("] %" PRIu8 "%\n\n", (total) ? (uint8_t)(done * 100 / total) : 0);
     fflush(stdout);
 }
+
+
+
+
+//* =================== TEST CREATION FUNFCTIONS =================== *//
+typedef uint64_t (*_fn1_t)(uint64_t);
+typedef uint64_t (*_fn2_t)(uint64_t, uint64_t);
+typedef uint64_t (*_fn3_t)(uint64_t, uint64_t, uint64_t);
+typedef uint64_t (*_fn4_t)(uint64_t, uint64_t, uint64_t, uint64_t);
+typedef uint64_t (*_fn1o_t)(uint64_t, uint64_t*);
+typedef uint64_t (*_fn2o_t)(uint64_t, uint64_t, uint64_t*);
+typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
+#define DNML_FCALL_(fn_ptr, case_ptr, out) \
+    do { \
+        switch ((case_ptr)->input_count) { \
+            case 1: (out).first = ((_fn1_t)(fn_ptr))((case_ptr)->in[0]); break;    \
+            case 2: (out).first = ((_fn2_t)(fn_ptr))(  \
+                (case_ptr)->in[0],                  \
+                (case_ptr)->in[1]                   \
+            ); break; \
+            case 3: (out).first = ((_fn3_t)(fn_ptr))(  \
+                (case_ptr)->in[0],                  \
+                (case_ptr)->in[1],                  \
+                (case_ptr)->in[2]                   \
+            ); break; \
+            case 4: (out).first = ((_fn4_t)(fn_ptr))(  \
+                (case_ptr)->in[0],                  \
+                (case_ptr)->in[1],                  \
+                (case_ptr)->in[2],                  \
+                (case_ptr)->in[3]                   \
+            ); break; \
+        } \
+    } while(0)
+#define DNML_OFCALL_(fn_ptr, case_ptr, out) \
+    do { \
+        switch ((case_ptr)->input_count) { \
+            case 1: (out).first = ((_fn1o_t)(fn_ptr))((case_ptr)->in[0], &(out).second); break; \
+            case 2: (out).first = ((_fn2o_t)(fn_ptr))( \
+                (case_ptr)->in[0],                  \
+                (case_ptr)->in[1],                  \
+               &(out).second                        \
+            ); break; \
+            case 3: (out).first = ((_fn3o_t)(fn_ptr))( \
+                (case_ptr)->in[0],                  \
+                (case_ptr)->in[1],                  \
+                (case_ptr)->in[2],                  \
+               &(out).second                        \
+            ); break; \
+        } \
+    } while(0)
+
 
 
 //* ============== FULL SUITES/SESSIONS RENDER FUNCTIONS ============== *//
-static inline void _dnml_render_suite(
-    const _libdnml_suite *s,
-    uint8_t suite_num,
-    uint32_t delay_ms
-) {
-    _dnml_box_top(s->suite_name);
-    _dnml_box_divider();
-    _dnml_delay_ms(delay_ms);
-
-    // ------ edge cases line ------
-    char edge_line[BOX_WIDTH];
-    snprintf(
-        edge_line, sizeof(edge_line), "Edge case: %d/%d",
-        s->edge_cases_correct, s->edge_cases_count
-    ); _dnml_box_line(edge_line);
-    _dnml_delay_ms(delay_ms);
-
-    // print failed edge cases
-    int fail_edge = s->edge_cases_count - s->edge_cases_correct;
-    for (int i = 0; i < fail_edge; ++i) {
-        char fail_line[BOX_WIDTH];
-        snprintf(
-            fail_line, sizeof(fail_line),
-            "+) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
-            i + 1,
-            (unsigned long long)s->fail_edge_exp[i],
-            (unsigned long long)s->fail_edge_res[i]
-        ); _dnml_box_line(fail_line);
-        _dnml_delay_ms(delay_ms);
+static inline void _dnml_run_suite(_libdnml_suite *s) {
+    //* ======== 1. EDGE CASE TESTING ======== *//
+    for (uint8_t i = 0; i < s->edge_cases_count; ++i) {
+        _dnml_pair got = {0}, exp = s->edge_cases->exp;
+        if (s->call_style == DNML_CALL) DNML_FCALL_(s->fn_test, &s->edge_cases[i], got);
+        else DNML_OFCALL_(s->fn_test,&s->edge_cases[i], got);
+        uint8_t pass = (got.first == exp.first && got.second == exp.second); 
+        if (pass) s->edge_cases_correct += 1;
+        else {
+            uint8_t findex = (i + 1) - s->edge_cases_correct;
+            s->fail_edge_res[findex] = got;
+            s->fail_edge_exp[findex] = exp;
+        }
     }
 
-
-    _dnml_box_divider();
-    // ------ random cases line ------
-    char rand_line[BOX_WIDTH];
-    snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
-             s->random_cases_correct, s->random_cases_count);
-    _dnml_box_line(rand_line);
-    _dnml_delay_ms(delay_ms);
-
-    // print failed random cases
-    int fail_rand = s->random_cases_count - s->random_cases_correct;
-    for (int i = 0; i < fail_rand; i++) {
-        char fail_line[BOX_WIDTH];
-        snprintf(
-            fail_line, sizeof(fail_line),
-            "+) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
-            i + 1,
-            (unsigned long long)s->fail_rand_exp[i],
-            (unsigned long long)s->fail_rand_res[i]
-        ); _dnml_box_line(fail_line);
-        _dnml_delay_ms(delay_ms);
+    //* ======== 2. RAND CASE TESTING ======== *//
+    for (uint8_t i = 0; i < s->rand_cases_count; ++i) {
+        _dnml_pair got = {0}, exp = {0};
+        if (s->call_style == DNML_CALL) {
+            DNML_FCALL_(s->fn_test, &s->rand_cases[i], got);
+            DNML_FCALL_(s->fn_ref,  &s->rand_cases[i], exp);
+        } else {
+            DNML_OFCALL_(s->fn_test, &s->rand_cases[i], got);
+            DNML_OFCALL_(s->fn_ref,  &s->rand_cases[i], exp);
+        } uint8_t pass = (got.first == exp.first && got.second == exp.second); 
+        if (pass) s->rand_cases_correct += 1;
+        else {
+            uint8_t findex = (i + 1) - s->rand_cases_correct;
+            s->fail_rand_res[findex] = got;
+            s->fail_rand_exp[findex] = exp;
+        }
     }
-    _dnml_box_bottom();
-    printf("\n");
-    fflush(stdout);
 }
-static inline void render_session(const _libdnml_session *session) {
-    // loading animation before session starts
-    _dnml_loading("Loading session...", session->cli_delay, 12);
-    for (uint8_t i = 0; i < session->suite_count; i++) {
-        // update progress bar before each suite
-        _dnml_session_progress(i, session->suite_count, session->session_name);
-        // loading animation between suites
-        if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
-        _dnml_render_suite(&session->suites[i], i + 1, session->cli_delay);
-    }
-    // final progress bar at 100%
-    _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
-}
+// static inline void _dnml_render_suite(
+//     _libdnml_suite *s,
+//     uint8_t suite_num,
+//     uint32_t delay_ms
+// ) {
+//     _dnml_box_top(s->suite_name);
+//     _dnml_box_divider();
+//     _dnml_delay_ms(delay_ms);
+
+//     // ------ edge cases line ------
+//     char edge_line[BOX_WIDTH];
+//     snprintf(
+//         edge_line, sizeof(edge_line), "Edge case: %d/%d",
+//         s->edge_cases_correct, s->edge_cases_count
+//     ); _dnml_box_line(edge_line);
+//     _dnml_delay_ms(delay_ms);
+
+//     // print failed edge cases
+//     int fail_edge = s->edge_cases_count - s->edge_cases_correct;
+//     for (int i = 0; i < fail_edge; ++i) {
+//         char fail_line[BOX_WIDTH];
+//         snprintf(
+//             fail_line, sizeof(fail_line),
+//             "o) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
+//             i + 1,
+//             (unsigned long long)s->fail_edge_exp[i],
+//             (unsigned long long)s->fail_edge_res[i]
+//         ); _dnml_box_line(fail_line);
+//         _dnml_delay_ms(delay_ms);
+//     }
+
+    
+//     _dnml_box_divider();
+//     // ------ random cases line ------
+//     char rand_line[BOX_WIDTH];
+//     snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
+//              s->random_cases_correct, s->random_cases_count);
+//     _dnml_box_line(rand_line);
+//     _dnml_delay_ms(delay_ms);
+
+//     // print failed random cases
+//     int fail_rand = s->random_cases_count - s->random_cases_correct;
+//     for (int i = 0; i < fail_rand; i++) {
+//         char fail_line[BOX_WIDTH];
+//         snprintf(
+//             fail_line, sizeof(fail_line),
+//             "o) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
+//             i + 1,
+//             (unsigned long long)s->fail_rand_exp[i],
+//             (unsigned long long)s->fail_rand_res[i]
+//         ); _dnml_box_line(fail_line);
+//         _dnml_delay_ms(delay_ms);
+//     }
+//     _dnml_box_bottom();
+//     putchar('\n');
+//     fflush(stdout);
+// }
+// static inline void start_session(const _libdnml_session *session) {
+//     // loading animation before session starts
+//     _dnml_loading("Loading session...", session->cli_delay, 12);
+//     for (uint8_t i = 0; i < session->suite_count; ++i) {
+//         // update progress bar before each suite
+//         _dnml_session_progress(i, session->suite_count, session->session_name);
+//         // loading animation between suites
+//         if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
+
+//         _dnml_render_suite(&session->suites[i], i + 1, session->cli_delay);
+//     }
+//     // final progress bar at 100%
+//     _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
+// }
 
 
 
