@@ -102,7 +102,7 @@ static inline void create_session(
 #define BOX_V       "│"
 #define BOX_DIV_L   "├"
 #define BOX_DIV_R   "┤"
-#define BOX_WIDTH   60
+#define BOX_WIDTH   80
 //* ============== SUITE BOX FUNCTIONS ============== *//
 static inline void _dnml_box_divider(void) {
     printf(BOX_DIV_L);
@@ -240,77 +240,87 @@ static inline void _dnml_run_suite(_libdnml_suite *s) {
         }
     }
 }
-// static inline void _dnml_render_suite(
-//     _libdnml_suite *s,
-//     uint8_t suite_num,
-//     uint32_t delay_ms
-// ) {
-//     _dnml_box_top(s->suite_name);
-//     _dnml_box_divider();
-//     _dnml_delay_ms(delay_ms);
+static inline void _dnml_render_esuite(
+    _libdnml_suite *s,
+    uint8_t suite_num,
+    uint32_t delay_ms
+) {
+    // ------ edge cases line ------
+    char edge_line[BOX_WIDTH];
+    snprintf(
+        edge_line, sizeof(edge_line), "Edge case: %d/%d",
+        s->edge_cases_correct, s->edge_cases_count
+    ); _dnml_box_line(edge_line);
+    _dnml_delay_ms(delay_ms);
 
-//     // ------ edge cases line ------
-//     char edge_line[BOX_WIDTH];
-//     snprintf(
-//         edge_line, sizeof(edge_line), "Edge case: %d/%d",
-//         s->edge_cases_correct, s->edge_cases_count
-//     ); _dnml_box_line(edge_line);
-//     _dnml_delay_ms(delay_ms);
+    // print failed edge cases
+    int fail_edge = s->edge_cases_count - s->edge_cases_correct;
+    for (int i = 0; i < fail_edge; ++i) {
+        char fail_line[BOX_WIDTH];
+        snprintf(
+            fail_line, sizeof(fail_line),
+            "o Case %d: Expected: <0x%016"PRIx64", 0x%016"PRIx64"> | Got: <0x%016"PRIx64", 0x%016"PRIx64">",
+            i + 1,
+            s->fail_edge_exp[i].first,
+            s->fail_edge_exp[i].second,
+            s->fail_edge_res[i].first,
+            s->fail_edge_res[i].second
+        ); _dnml_box_line(fail_line);
+        _dnml_delay_ms(delay_ms);
+    } fflush(stdout);
+}
+static inline void _dnml_render_rsuite(
+    _libdnml_suite *s,
+    uint8_t suite_num,
+    uint32_t delay_ms
+) {
+    // ------ random cases line ------
+    char rand_line[BOX_WIDTH];
+    snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
+             s->rand_cases_correct, s->rand_cases_count);
+    _dnml_box_line(rand_line);
+    _dnml_delay_ms(delay_ms);
 
-//     // print failed edge cases
-//     int fail_edge = s->edge_cases_count - s->edge_cases_correct;
-//     for (int i = 0; i < fail_edge; ++i) {
-//         char fail_line[BOX_WIDTH];
-//         snprintf(
-//             fail_line, sizeof(fail_line),
-//             "o) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
-//             i + 1,
-//             (unsigned long long)s->fail_edge_exp[i],
-//             (unsigned long long)s->fail_edge_res[i]
-//         ); _dnml_box_line(fail_line);
-//         _dnml_delay_ms(delay_ms);
-//     }
-
-    
-//     _dnml_box_divider();
-//     // ------ random cases line ------
-//     char rand_line[BOX_WIDTH];
-//     snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
-//              s->random_cases_correct, s->random_cases_count);
-//     _dnml_box_line(rand_line);
-//     _dnml_delay_ms(delay_ms);
-
-//     // print failed random cases
-//     int fail_rand = s->random_cases_count - s->random_cases_correct;
-//     for (int i = 0; i < fail_rand; i++) {
-//         char fail_line[BOX_WIDTH];
-//         snprintf(
-//             fail_line, sizeof(fail_line),
-//             "o) Case %d: Expected: 0x%016" PRIx64 " | Got: 0x%016" PRIx64 "",
-//             i + 1,
-//             (unsigned long long)s->fail_rand_exp[i],
-//             (unsigned long long)s->fail_rand_res[i]
-//         ); _dnml_box_line(fail_line);
-//         _dnml_delay_ms(delay_ms);
-//     }
-//     _dnml_box_bottom();
-//     putchar('\n');
-//     fflush(stdout);
-// }
-// static inline void start_session(const _libdnml_session *session) {
-//     // loading animation before session starts
-//     _dnml_loading("Loading session...", session->cli_delay, 12);
-//     for (uint8_t i = 0; i < session->suite_count; ++i) {
-//         // update progress bar before each suite
-//         _dnml_session_progress(i, session->suite_count, session->session_name);
-//         // loading animation between suites
-//         if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
-
-//         _dnml_render_suite(&session->suites[i], i + 1, session->cli_delay);
-//     }
-//     // final progress bar at 100%
-//     _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
-// }
+    // print failed random cases
+    int fail_rand = s->rand_cases_count - s->rand_cases_correct;
+    for (int i = 0; i < fail_rand; i++) {
+        char fail_line[BOX_WIDTH];
+        snprintf(
+            fail_line, sizeof(fail_line),
+            "o Case %d: Expected: <0x%016"PRIx64", 0x%016"PRIx64"> | Got: <0x%016"PRIx64", 0x%016"PRIx64">",
+            i + 1,
+            s->fail_edge_exp[i].first,
+            s->fail_edge_exp[i].second,
+            s->fail_edge_res[i].first,
+            s->fail_edge_res[i].second
+        ); _dnml_box_line(fail_line);
+        _dnml_delay_ms(delay_ms);
+    } _dnml_box_bottom();
+    putchar('\n');
+    fflush(stdout);
+}
+static inline void start_session(const _libdnml_session *session) {
+    // loading animation before session starts
+    _dnml_loading("Loading session...", session->cli_delay, 12);
+    for (uint8_t i = 0; i < session->suite_count; ++i) {
+        // update progress bar before each suite
+        _dnml_session_progress(i, session->suite_count, session->session_name);
+        // loading animation between suites
+        if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
+        _dnml_run_suite(&session->suites[i]);
+        // Draw the top of the "suite's box"
+        _dnml_box_top(session->suites[i].suite_name);
+        _dnml_box_divider();
+        _dnml_delay_ms(session->cli_delay);
+        // Render the "edge case part" of suite[i]
+        _dnml_render_esuite(&session->suites[i], i + 1, session->cli_delay);
+        // Line break into "random cases part" of suite[i]
+        _dnml_box_divider();
+        _dnml_render_rsuite(&session->suites[i], i + 1, session->cli_delay);
+    }
+    // final progress bar at 100%
+    _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
+}
 
 
 
