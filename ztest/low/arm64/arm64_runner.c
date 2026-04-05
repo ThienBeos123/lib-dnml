@@ -8,20 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int main(void) {
-    // uint8_t arm64_ecount = 10, arm64_rcount = 20;
-    // uint64_t arm64_edge[4 * arm64_ecount];
-    // uint64_t arm64_rand[4 * arm64_rcount];
-
-    // _libdnml_session arm64_test;
-    // _libdnml_suite arm64_suites[7];
-    // start_session(
-    //     &arm64_test, "Low-level Arithmetic ARM64 Test", 
-    //     500, 7, arm64_suites
-    // );
-
-    // //* ------- add64c -------*//
-    // create_suite(&arm64_suites[1], "add64c", arm64_ecount, arm64_rcount, arm64_ecount, arm64_edge);
+int main(int argc, char **argv) {
+    _dnml_output_mode arm64_out = (argc > 1 && strcmp(argv[1], "--compact") == 0) ? DNML_COUT : DNML_VOUT;
     
 
     return 0;

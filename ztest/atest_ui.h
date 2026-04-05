@@ -11,10 +11,22 @@
 
 
 //* =========== TYPE DEFINITIONS =========== *//
+// Helper Types
 typedef enum {
     DNML_CALL,
     DNML_OCALL
 } _dnml_call_style;
+typedef enum {
+    DNML_FDISPLAY,
+    DNML_TDISPLAY,
+    DNML_ODISPLAY
+} _dnml_display_mode;
+typedef enum {
+    DNML_VOUT,
+    DNML_COUT,
+} _dnml_output_mode;
+
+
 typedef struct {
     uint64_t first;
     uint64_t second;
@@ -24,6 +36,7 @@ typedef struct {
     _dnml_pair exp;
     uint8_t input_count;
 } _libdnml_case;
+
 
 typedef struct {
     const char *suite_name;
@@ -46,12 +59,14 @@ typedef struct {
     _dnml_pair *fail_rand_exp;
 } _libdnml_suite;
 
-
 typedef struct {
     const char *session_name;
     uint8_t suite_count;
     _libdnml_suite *suites;
     uint32_t cli_delay; // in ms
+    _dnml_output_mode output_mode;
+    _dnml_display_mode display_mode;
+    const char *log_path;
 } _libdnml_session;
 
 
@@ -83,12 +98,18 @@ static inline void create_suite(
 static inline void create_session(
     _libdnml_session *curr_session,
     const char *session_name, uint8_t cli_delay,
-    uint8_t suite_count, _libdnml_suite *suite_list
+    uint8_t suite_count, _libdnml_suite *suite_list,
+    _dnml_output_mode output_mode, 
+    _dnml_display_mode display_mode,
+    const char *log_path
 ) {
     curr_session->session_name = session_name;
     curr_session->cli_delay = cli_delay;
     curr_session->suite_count = suite_count;
     curr_session->suites = suite_list;
+    curr_session->output_mode = output_mode;
+    curr_session->display_mode = display_mode;
+    curr_session->log_path = log_path;
 }
 
 
@@ -240,7 +261,18 @@ static inline void _dnml_run_suite(_libdnml_suite *s) {
         }
     }
 }
-static inline void _dnml_render_esuite(
+static inline _dnml_render_csuite(_libdnml_suite *s) { // Render a "COMPACT" Suite
+    uint8_t fail_edge = s->edge_cases_count - s->edge_cases_correct;
+    uint8_t fail_rand = s->rand_cases_count - s->rand_cases_correct;
+    char status = (fail_edge + fail_rand == 0) ? '+' : '-';
+    printf(" [%c] %-20s     %2"PRIu8"/%-2"PRIu8" edge   %2"PRIu8"/%-2"PRIu8" random",
+        status, s->suite_name,
+        s->edge_cases_correct, s->edge_cases_count,
+        s->rand_cases_correct, s->rand_cases_count
+    ); if (fail_edge + fail_rand > 0) printf("  -> %s_fails.log", s->suite_name);
+    putchar('\n'); fflush(stdout);
+}
+static inline void _dnml_render_esuite( // Render the "edge half" of a verbose suite
     _libdnml_suite *s,
     uint8_t suite_num,
     uint32_t delay_ms
@@ -269,7 +301,7 @@ static inline void _dnml_render_esuite(
         _dnml_delay_ms(delay_ms);
     } fflush(stdout);
 }
-static inline void _dnml_render_rsuite(
+static inline void _dnml_render_rsuite( // Render the "rand half" of a verbose suite
     _libdnml_suite *s,
     uint8_t suite_num,
     uint32_t delay_ms
@@ -300,26 +332,39 @@ static inline void _dnml_render_rsuite(
     fflush(stdout);
 }
 static inline void start_session(const _libdnml_session *session) {
-    // loading animation before session starts
-    _dnml_loading("Loading session...", session->cli_delay, 12);
-    for (uint8_t i = 0; i < session->suite_count; ++i) {
-        // update progress bar before each suite
-        _dnml_session_progress(i, session->suite_count, session->session_name);
-        // loading animation between suites
-        if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
-        _dnml_run_suite(&session->suites[i]);
-        // Draw the top of the "suite's box"
-        _dnml_box_top(session->suites[i].suite_name);
-        _dnml_box_divider();
-        _dnml_delay_ms(session->cli_delay);
-        // Render the "edge case part" of suite[i]
-        _dnml_render_esuite(&session->suites[i], i + 1, session->cli_delay);
-        // Line break into "random cases part" of suite[i]
-        _dnml_box_divider();
-        _dnml_render_rsuite(&session->suites[i], i + 1, session->cli_delay);
+    //* ---- COMPACT MODE ---- *//
+    if (session->output_mode == DNML_COUT) {
+        printf("\n  -- %s ", session->session_name);
+        int pad = 44 - (int)(strlen)(session->session_name);
+        for (int i = 0; i < (pad - (pad & 1)) >> 1; ++i) fputs("--", stdout);
+        putchar('\n');
+        for (uint8_t i = 0; i < session->suite_count; ++i) {
+            _dnml_run_suite(&session->suites[i]);
+            _dnml_render_csuite(&session->suites[i]);
+        }
+    } 
+    //* ---- VERBSOE/FULL MODE ---- *//
+    else { // loading animation before session starts
+        _dnml_loading("Loading session...", session->cli_delay, 12);
+        for (uint8_t i = 0; i < session->suite_count; ++i) {
+            // update progress bar before each suite
+            _dnml_session_progress(i, session->suite_count, session->session_name);
+            // loading animation between suites
+            if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
+            _dnml_run_suite(&session->suites[i]);
+            // Draw the top of the "suite's box"
+            _dnml_box_top(session->suites[i].suite_name);
+            _dnml_box_divider();
+            _dnml_delay_ms(session->cli_delay);
+            // Render the "edge case part" of suite[i]
+            _dnml_render_esuite(&session->suites[i], i + 1, session->cli_delay);
+            // Line break into "random cases part" of suite[i]
+            _dnml_box_divider();
+            _dnml_render_rsuite(&session->suites[i], i + 1, session->cli_delay);
+        }
+        // final progress bar at 100%
+        _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
     }
-    // final progress bar at 100%
-    _dnml_session_progress(session->suite_count, session->suite_count, session->session_name);
 }
 
 
