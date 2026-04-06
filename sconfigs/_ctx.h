@@ -1,5 +1,5 @@
-#ifndef DNML_CTX
-#define DNML_CTX
+#ifndef __DNML_CTX__
+#define __DNML_CTX__
 
 #include <stdalign.h>
 #include "../system/__include.h"
