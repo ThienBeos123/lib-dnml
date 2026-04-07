@@ -2,7 +2,6 @@
 #define ___LIBDNML_LTEST_UI
 
 #include "../sconfigs/_ctx.h"
-#include "../sconfigs/__threads_t.h"
 #include "../adynamol/big_numbers/bigNums.h"
 
 #include <stdio.h>
@@ -18,8 +17,7 @@
 //* =========== TYPE DEFINITIONS =========== *//
 // Helper Types
 typedef enum { DNML_CALL, DNML_OCALL} _dnml_call_style;
-typedef enum { DNML_VOUT, DNML_COUT } _dnml_output_mode;
-typedef enum { TEST_CASUAL, TEST_HEAVY } _dnml_test_mode;
+typedef enum { DNML_VOUT = 4, DNML_COUT } _dnml_output_mode;
 typedef struct { uint64_t first; uint64_t second; } _dnml_pair;
 
 typedef struct {
@@ -38,31 +36,17 @@ typedef struct {
     _libdnml_case *edge_cases;
     uint32_t edge_cases_count;
     uint32_t edge_cases_correct;
-    __itomic edge_done;
-
     _dnml_pair *fail_edge_res;
     _dnml_pair *fail_edge_exp;
 
     _libdnml_case *rand_cases;
     uint32_t rand_cases_count;
     uint32_t rand_cases_correct;
-    __itomic rand_done;
-
     uint8_t rand_nin;
     uint64_t **fail_rand_in;
     _dnml_pair *fail_rand_res;
     _dnml_pair *fail_rand_exp;
 } _libdnml_suite;
-typedef struct {
-    _libdnml_suite  *suite;
-    uint32_t        delay;
-} _dnml_thread_arg;
-typedef struct {
-    _libdnml_suite *suites;
-    uint8_t         count;
-    _Atomic int    *all_done;
-    int             box_width;
-} _dnml_progress_arg;
 
 typedef struct {
     const char *session_name;
@@ -72,8 +56,6 @@ typedef struct {
     uint32_t cli_delay; // in ms
     int box_width;
     _dnml_output_mode output_mode;
-    _dnml_test_mode   test_mode;
-    uint8_t           thread_count;
 } _libdnml_session;
 
 
@@ -277,7 +259,7 @@ static inline void _dnml_run_suite(_libdnml_suite *s) {
             uint32_t findex = (i + 1) - s->edge_cases_correct;
             s->fail_edge_res[findex] = got;
             s->fail_edge_exp[findex] = exp;
-        } itomic_increment(&s->edge_done);
+        }
     }
 
     //* ======== 2. RAND CASE TESTING ======== *//
@@ -294,7 +276,7 @@ static inline void _dnml_run_suite(_libdnml_suite *s) {
             uint32_t findex = (i + 1) - s->rand_cases_correct;
             s->fail_rand_res[findex] = got;
             s->fail_rand_exp[findex] = exp;
-        } itomic_increment(&s->rand_done);
+        }
     }
 }
 static inline void _dnml_log_suite(_libdnml_suite *s) {
@@ -326,34 +308,6 @@ static inline void _dnml_log_suite(_libdnml_suite *s) {
             s->fail_rand_res[i].first, s->fail_rand_res[i].second);
     } fclose(f);
 }
-static inline void _dnml_run_sthread(void *arg) {
-    _dnml_thread_arg *a = (_dnml_thread_arg*)arg;
-    _dnml_run_suite(a->suite);
-    _dnml_log_suite(a->suite);
-}
-static void *_dnml_progress_thread(void *arg) {
-    _dnml_progress_arg *a = (_dnml_progress_arg*)arg;
-    const char *spin[] = { "|", "/", "-", "\\" };
-    uint32_t tick = 0;
-    while (!itomic_load(a->all_done)) {
-        // move cursor up N lines to redraw
-        printf("\033[%dA", a->count + 1);
-
-        for (uint8_t i = 0; i < a->count; i++) {
-            _libdnml_suite *s = &a->suites[i];
-            uint32_t total = s->edge_cases_count + s->rand_cases_count;
-            uint32_t done  = itomic_load(&s->edge_done)
-                           + itomic_load(&s->rand_done);
-            int bw    = a->box_width - 20;
-            int filled = total ? (done * bw / total) : 0;
-
-            printf("  %s %-16s [", spin[tick % 4], s->suite_name);
-            for (int j = 0; j < bw; j++)
-                printf(j < filled ? "#" : " ");
-            printf("] %5" PRIu32 "/%-5" PRIu32 "\n", done, total);
-        } fflush(stdout); tick++; _dnml_sleep(100); // 100ms refresh
-    } return NULL;
-}
 static inline void _dnml_render_csuite(_libdnml_suite *s) { // Render a "COMPACT" Suite
     uint8_t fail_edge = s->edge_cases_count - s->edge_cases_correct;
     uint8_t fail_rand = s->rand_cases_count - s->rand_cases_correct;
@@ -365,18 +319,13 @@ static inline void _dnml_render_csuite(_libdnml_suite *s) { // Render a "COMPACT
     ); if (fail_edge + fail_rand > 0) printf("  -> %s_fails.log", s->suite_name);
     putchar('\n'); fflush(stdout);
 }
-static inline void _dnml_render_esuite( // Render the "edge half" of a verbose suite
-    _libdnml_suite *s,
-    uint8_t suite_num,
-    uint32_t delay_ms,
-    int session_bw
-) {
+static inline void _dnml_render_esuite(_libdnml_suite *s, uint8_t suite_num, uint32_t delay_ms, int bw) {
+    _dnml_box_top(s->suite_name, bw); _dnml_box_divider(bw); _dnml_delay_ms(delay_ms);
     // ------ edge cases line ------
-    char edge_line[BOX_WIDTH];
-    snprintf(
+    char edge_line[BOX_WIDTH]; snprintf(
         edge_line, sizeof(edge_line), "Edge case: %d/%d",
         s->edge_cases_correct, s->edge_cases_count
-    ); _dnml_box_line(edge_line, session_bw);
+    ); _dnml_box_line(edge_line, bw);
     _dnml_delay_ms(delay_ms);
 
     // print failed edge cases
@@ -391,21 +340,17 @@ static inline void _dnml_render_esuite( // Render the "edge half" of a verbose s
             s->fail_edge_exp[i].second,
             s->fail_edge_res[i].first,
             s->fail_edge_res[i].second
-        ); _dnml_box_line(fail_line, session_bw);
+        ); _dnml_box_line(fail_line, bw);
         _dnml_delay_ms(delay_ms);
     } fflush(stdout);
 }
-static inline void _dnml_render_rsuite( // Render the "rand half" of a verbose suite
-    _libdnml_suite *s,
-    uint8_t suite_num,
-    uint32_t delay_ms,
-    int session_bw
-) {
+static inline void _dnml_render_rsuite(_libdnml_suite *s, uint8_t suite_num, uint32_t delay_ms, int bw) {
+    _dnml_box_divider(bw);
     // ------ random cases line ------
     char rand_line[BOX_WIDTH];
     snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
              s->rand_cases_correct, s->rand_cases_count);
-    _dnml_box_line(rand_line, session_bw);
+    _dnml_box_line(rand_line, bw);
     _dnml_delay_ms(delay_ms);
 
     // print failed random cases
@@ -421,16 +366,16 @@ static inline void _dnml_render_rsuite( // Render the "rand half" of a verbose s
             s->fail_rand_exp[i].second,
             s->fail_rand_res[i].first,
             s->fail_rand_res[i].second
-        ); _dnml_box_line(fail_line, session_bw);
+        ); _dnml_box_line(fail_line, bw);
         _dnml_delay_ms(delay_ms);
-    } _dnml_box_bottom(session_bw);
+    } _dnml_box_bottom(bw);
     putchar('\n');
     fflush(stdout);
 }
 static inline void start_session(const _libdnml_session *session) {
     int bw = session->box_width;
     //* ---- COMPACT MODE ---- *//
-    if (session->output_mode == DNML_COUT) {
+    if (session->output_mode >= DNML_COUT) {
         printf("\n  -- %s ", session->session_name);
         int pad = 44 - (int)(strlen)(session->session_name);
         for (int i = 0; i < (pad - (pad & 1)) >> 1; ++i) fputs("--", stdout);
@@ -443,8 +388,6 @@ static inline void start_session(const _libdnml_session *session) {
     //* ---- VERBSOE/FULL MODE ---- *//
     // loading animation before session starts
     _dnml_loading("Loading session...", session->cli_delay, 12);
-
-
     for (uint8_t i = 0; i < session->suite_count; ++i) {
         // update progress bar before each suite
         _dnml_session_progress(i, session->suite_count, session->session_name);
@@ -452,14 +395,8 @@ static inline void start_session(const _libdnml_session *session) {
         if (i > 0) _dnml_loading("Running suite...", session->cli_delay, 8);
         _dnml_run_suite(&session->suites[i]);
         _dnml_log_suite(&session->suites[i]);
-        // Draw the top of the "suite's box"
-        _dnml_box_top(session->suites[i].suite_name, bw);
-        _dnml_box_divider(bw);
-        _dnml_delay_ms(session->cli_delay);
-        // Render the "edge case part" of suite[i]
+        // Render the "edge case" & "rand case" part of suite[i]
         _dnml_render_esuite(&session->suites[i], i + 1, session->cli_delay, bw);
-        // Line break into "random cases part" of suite[i]
-        _dnml_box_divider(bw);
         _dnml_render_rsuite(&session->suites[i], i + 1, session->cli_delay, bw);
     }
     // final progress bar at 100%
