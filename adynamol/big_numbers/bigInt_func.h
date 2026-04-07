@@ -8,7 +8,7 @@
 
 #include "../../intrinsics/intrinsics.h"
 #include "../../calc_algo/calculation.h"
-#include "../../internal_utils/util.h"
+#include "../../dutil/util.h"
 #include "bigNums.h"
 
 //todo ===================================== NUMERIC FUNCTIONALITIES ===================================== todo//

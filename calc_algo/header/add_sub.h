@@ -9,7 +9,7 @@
 #include "../../sconfigs/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
-#include "../../internal_utils/util.h"
+#include "../../dutil/util.h"
 #include "../../adynamol/big_numbers/bigNums.h"
 
 

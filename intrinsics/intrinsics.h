@@ -22,10 +22,10 @@
 // //*                              IFUNC FUNCTION TABLES                           *//
 // //* ---------------------------------------------------------------------------- *//
 typedef struct {
-    uint8_t     (*clz64)(uint64_t x);
-    uint8_t     (*ctz64)(uint64_t x);
+    uint64_t     (*clz64)(uint64_t x);
+    uint64_t     (*ctz64)(uint64_t x);
     uint64_t    (*bswap64)(uint64_t x);
-    uint8_t     (*pcnt64)(uint64_t x);
+    uint64_t     (*pcnt64)(uint64_t x);
 } _BITOPS_FTABLE;
 typedef struct {
     uint64_t (*add64c)(uint64_t a, uint64_t b, uint8_t *carry);
@@ -34,7 +34,7 @@ typedef struct {
     uint64_t (*wdiv128)(
         uint64_t lo, uint64_t hi, uint64_t div, 
         uint64_t *rhat
-    )
+    );
 } _ARITH_FTABLE;
 typedef struct {
     uint64_t (*modinv64)(uint64_t x);
@@ -128,9 +128,10 @@ static inline void _libdnml_fill_galg(void) {
 //* --------------------------------------------------------------------------------------- *//
 //*                                    SINGLE-LIMB ARITHMETIC                               *//
 //* --------------------------------------------------------------------------------------- *//
-static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) { 
+static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
+    *carry = (*carry) ? 1 : 0;
     #if __compiler_clang // Clang --> Always used
-        return __builtin_addcll(a, b, *carry, carry);
+        return __builtin_addcll(a, b, *carry, (unsigned long long*)carry);
     #elif __compiler_gcc // GCC --> Always used
         uint64_t sum;
         *carry = __builtin_uaddll_overflow(a, b, &sum);
@@ -144,6 +145,7 @@ static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
     #endif
 }
 static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
+    *borrow = (*borrow) ? 1 : 0;
     #if (__compiler_gcc || __compiler_clang) 
         // Clang / GCC --> Always used
         uint64_t diff;
@@ -179,6 +181,9 @@ static inline uint64_t __DIV_HELPER_UI64__(
     #elif __compiler_msvc // MSVC
         return _udiv128(hi, lo, div, rhat);
     #else // Unknown Compiler
+        #if !(__ARCH_X86_64__)
+            *rhat = _libdnml_gbitops_ftable.clz64(div);
+        #endif
         return _libdnml_garith_ftable.wdiv128(lo, hi, div, rhat);
     #endif
 }

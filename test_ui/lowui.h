@@ -20,13 +20,13 @@ typedef enum { DNML_CALL, DNML_OCALL} _dnml_call_style;
 typedef enum { DNML_VOUT = 4, DNML_COUT } _dnml_output_mode;
 typedef struct { uint64_t first; uint64_t second; } _dnml_pair;
 
-typedef struct {
+typedef struct _libdnml_case {
     _dnml_pair exp;
     uint8_t input_count;
     uint64_t *in;
 } _libdnml_case;
 
-typedef struct {
+typedef struct _libdnml_suite {
     const char *suite_name;
     void *fn_test;
     void *fn_ref;
@@ -34,8 +34,8 @@ typedef struct {
     const char *log_path;
 
     _libdnml_case *edge_cases;
-    uint32_t edge_cases_count;
-    uint32_t edge_cases_correct;
+    uint8_t edge_cases_count;
+    uint8_t edge_cases_correct;
     _dnml_pair *fail_edge_res;
     _dnml_pair *fail_edge_exp;
 
@@ -48,25 +48,24 @@ typedef struct {
     _dnml_pair *fail_rand_exp;
 } _libdnml_suite;
 
-typedef struct {
+typedef struct _libdnml_session {
     const char *session_name;
     uint8_t suite_count;
     _libdnml_suite *suites;
-
+    _dnml_output_mode output_mode;
     uint32_t cli_delay; // in ms
     int box_width;
-    _dnml_output_mode output_mode;
 } _libdnml_session;
 
 
 
 //* =================== TEST CREATION FUNFCTIONS =================== *//
+static inline uint64_t resbuf_size(uint32_t rcount, uint8_t ecount) { return (ecount + rcount) << 1; }
 static inline void create_suite(
-    _libdnml_suite *curr_suite, 
-    const char *suite_name,
-    uint8_t edge_count, uint8_t rand_count,
-    uint8_t rand_nin, uint64_t **fail_randin, _dnml_pair *res_storage, 
+    _libdnml_suite *curr_suite, const char *suite_name,
+    uint8_t edge_count, uint32_t rand_count, uint8_t rand_nin, 
     _libdnml_case *edge_bank, _libdnml_case *rand_bank,
+    uint64_t **fail_randin, _dnml_pair *res_storage, 
     const char *log_path
 ) {
     curr_suite->suite_name = suite_name;
@@ -81,8 +80,8 @@ static inline void create_suite(
     curr_suite->fail_edge_res = &res_storage[0];
     curr_suite->fail_edge_exp = &res_storage[edge_count];
     curr_suite->fail_rand_in  = fail_randin;
-    curr_suite->fail_rand_exp = &res_storage[2 * edge_count + rand_count];
-    curr_suite->fail_rand_res = &res_storage[2 * edge_count + 2 * rand_count];
+    curr_suite->fail_rand_exp = &res_storage[2 * edge_count];
+    curr_suite->fail_rand_res = &res_storage[2 * edge_count + rand_count];
 }
 static inline void create_session(
     _libdnml_session *curr_session,
@@ -134,11 +133,11 @@ static inline void _dnml_box_line(const char *text, int bw) {
     printf(BOX_V " %.*s%*s" BOX_V "\n", bw - 1, text, pad - 1, "");
 }
 //* ============== SESSION PROGRESS/FEATURES FUNCTIONS ============== *//
-static inline int _dnml_itosn(uint32_t x, char *buf, int buflen) {
+static inline int _dnml_itosn(uint64_t x, char *buf, int buflen) {
     if (!buflen) return 0;
     int i = buflen - 1, xlen = 0;
     while (x) { if (i < 0) { break; }
-        buf[i] = '0' + char(x % 10);
+        buf[i] = '0' + (char)(x % 10);
         x /= 10; --i;
     } return xlen;
 }
@@ -230,18 +229,24 @@ typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
 #define DNML_OFCALL_(fn_ptr, case_ptr, out) \
     do { \
         switch ((case_ptr)->input_count) { \
-            case 1: (out).first = ((_fn1o_t)(fn_ptr))((case_ptr)->in[0], &(out).second); break; \
-            case 2: (out).first = ((_fn2o_t)(fn_ptr))( \
-                (case_ptr)->in[0],                  \
-                (case_ptr)->in[1],                  \
-               &(out).second                        \
-            ); break; \
-            case 3: (out).first = ((_fn3o_t)(fn_ptr))( \
-                (case_ptr)->in[0],                  \
-                (case_ptr)->in[1],                  \
-                (case_ptr)->in[2],                  \
-               &(out).second                        \
-            ); break; \
+            case 1: { \
+                (out).first = ((_fn1o_t)(fn_ptr))(                  \
+                (case_ptr)->in[0],                                  \
+               &(case_ptr)->in[1]                                   \
+                ); (out).second = (case_ptr)->in[1]; break; }       \
+            case 2: { \
+                (out).first = ((_fn2o_t)(fn_ptr))(                  \
+                (case_ptr)->in[0],                                  \
+                (case_ptr)->in[1],                                  \
+               &(case_ptr)->in[2]                                   \
+            ); (out).second = (case_ptr)->in[2]; break; }           \
+            case 3: { \
+                (out).first = ((_fn3o_t)(fn_ptr))(                  \
+                (case_ptr)->in[0],                                  \
+                (case_ptr)->in[1],                                  \
+                (case_ptr)->in[2],                                  \
+               &(case_ptr)->in[3]                                   \
+            ); (out).second = (case_ptr)->in[3]; break; } \
         } \
     } while(0)
 
