@@ -20,16 +20,20 @@ int main(int argc, char **argv) {
     _libdnml_case ecases[20]; _libdnml_case rcases[rcount];
     uint64_t rinbuf[rcount][3]; _dnml_pair resbuf[resbuf_size(rcount, 20)];
 
-
     // -------------- THE ACTUAL TESTS -------------- //
     // Testing ARM64 Add Carry - _arm64_add64c
     _libdnml_suite add64c_suite; addc_setup(
-        &add64c_suite, "ARM64 Intrinsic", ecases, 
+        &add64c_suite, "add64c - ARM64", ecases, 
         rcases, rcount, rinbuf, resbuf, 
         "../logs/arm64_arith.txt",
-        _arm64_add64c, _cintrin_add64c
+        _arm64_add64c, _cintrin_add64c);
+    // Testing ARM64 Sub borrow - _arm64_sub64b
+    _libdnml_suite sub64b_suite; subb_setup(
+        &sub64b_suite, "sub64b - ARM64", ecases, 
+        rcases, rcount, rinbuf, resbuf, 
+        "../logs/arm64_arith.txt",
+        _arm64_sub64b, _cintrin_sub64b
     );
-
 
     return 0;
 }

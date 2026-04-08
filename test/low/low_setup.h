@@ -60,8 +60,7 @@ static inline void addc_setup(
     uint64_t **ribuf, _dnml_pair *resbuf, const char *addclp,
     uint64_t (*test_fn)(uint64_t, uint64_t, uint8_t),
     uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t)
-) { srand(time(NULL));
-    static uint8_t addc_in = 3;
+) { srand(time(NULL)); static uint8_t addc_in = 3;
     // Basic Tests
     ecases[0] = (_libdnml_case){ .in = {0, 0, 0}, .exp = {0, 0}, .input_count = addc_in };
     ecases[1] = (_libdnml_case){ .in = {0, 0, 1}, .exp = {1, 0}, .input_count = addc_in };
@@ -85,14 +84,12 @@ static inline void addc_setup(
     // Signed Arithmetic overlap / ALU tests
     ecases[17] = (_libdnml_case){ .in = {alt64bit1, alt64bit2, 1}, .exp = {0, 1}, .input_count = addc_in };
     ecases[18] = (_libdnml_case){ .in = {5,         U64m - 4,  0}, .exp = {0, 1}, .input_count = addc_in };
-    ecases[19] = (_libdnml_case){ .in = {U64m>>1-1, 0, 1},         .exp = {U64m>>1, 0}, .input_count = addc_in };
+    ecases[19] = (_libdnml_case){ .in = {U64m>>1, 0, 1}, .exp = {U64m>>1+1, 0}, .input_count = addc_in };
     // Randomly Generated Cases filling
     for (uint32_t i = 0; i < rcount; ++i) {
-        uint64_t in1 = barebone_rand();
-        uint64_t in2 = barebone_rand();
-        uint64_t in3 = barebone_rand();
+        uint64_t in3 = (barebone_rand() & 1) ? 1 : 0;
         rcases[i] = (_libdnml_case){ 
-            .in = {barebone_rand(), barebone_rand(), barebone_rand()}, 
+            .in = {barebone_rand(), barebone_rand(), in3}, 
             .input_count = addc_in 
         };
     } _DNML_SUITE_SETUP(s, name, 20, rcount, 
@@ -100,7 +97,49 @@ static inline void addc_setup(
         resbuf, test_fn, ref_fn, addclp
     ); return;
 }
-
-
+static inline void subb_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *addclp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint8_t),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t)
+) { srand(time(NULL)); static uint8_t subb_in = 3;
+    // Basic Tests
+    ecases[0] = (_libdnml_case){ .in = {0, 0, 0}, .exp = {0, 0}, .input_count = subb_in };
+    ecases[1] = (_libdnml_case){ .in = {1, 0, 0}, .exp = {1, 0}, .input_count = subb_in };
+    ecases[2] = (_libdnml_case){ .in = {5, 5, 0}, .exp = {0, 0}, .input_count = subb_in };
+    ecases[3] = (_libdnml_case){ .in = {9, 4, 1}, .exp = {4, 0}, .input_count = subb_in };
+    ecases[4] = (_libdnml_case){ .in = {9, 8, 1}, .exp = {0, 0}, .input_count = subb_in };
+    // Rollover/Underflow tests
+    ecases[5] = (_libdnml_case){ .in = {16, 20, 0},     .exp = {U64m - 4, 1}, .input_count = subb_in };
+    ecases[6] = (_libdnml_case){ .in = {0,  1,  0},     .exp = {U64m, 1}, .input_count = subb_in };
+    ecases[7] = (_libdnml_case){ .in = {15, U64m, 1},   .exp = {14, 1}, .input_count = subb_in };
+    ecases[8] = (_libdnml_case){ .in = {0,  0, 1},      .exp = {U64m, 1}, .input_count = subb_in };
+    ecases[9] = (_libdnml_case){ .in = {10, 10, 1},     .exp = {U64m, 1}, .input_count = subb_in };
+    // Near the edge tests
+    ecases[10] = (_libdnml_case){ .in = {U64m, U64m, 0}, .exp = {U64m-1, 1}, .input_count = subb_in };
+    ecases[11] = (_libdnml_case){ .in = {U64m, U64m, 1}, .exp = {U64m, 1}, .input_count = subb_in };
+    ecases[12] = (_libdnml_case){ .in = {U64m, 0, 0},    .exp = {U64m, 1}, .input_count = subb_in };
+    ecases[13] = (_libdnml_case){ .in = {U64m, 0, 1},    .exp = {U64m-1, 0}, .input_count = subb_in };
+    ecases[14] = (_libdnml_case){ .in = {0,    U64m, 0}, .exp = {1, 1}, .input_count = subb_in };
+    ecases[15] = (_libdnml_case){ .in = {0,    U64m, 1}, .exp = {0, 1}, .input_count = subb_in };
+    // Bitwise Stress Test
+    ecases[16] = (_libdnml_case){ .in = {alt64bit1, alt64bit2, 0}, .exp = {alt64bit2, 0}, .input_count = subb_in };
+    ecases[17] = (_libdnml_case){ .in = {alt64bit2, alt64bit1, 1}, .exp = {alt64bit1+1, 1}, .input_count = subb_in };
+    ecases[18] = (_libdnml_case){ .in = {U64m>>1+1, U64m>>1, 1},   .exp = {0, 0}, .input_count = subb_in };
+    // API/Function Logic test
+    ecases[19] = (_libdnml_case){ .in = {5, U64m, 1}, .exp = {5, 1}, .input_count = subb_in };
+    // Randomly Generated Cases filling
+    for (uint32_t i = 0; i < rcount; ++i) {
+        uint64_t in3 = (barebone_rand() & 1) ? 0 : 1;
+        rcases[i] = (_libdnml_case){ 
+            .in = {barebone_rand(), barebone_rand(), in3}, 
+            .input_count = subb_in
+        };
+    } _DNML_SUITE_SETUP(s, name, 20, rcount,
+        subb_in, ecases, rcases, ribuf,
+        resbuf, test_fn, ref_fn, addclp
+    ); return;
+}
 
 #endif
