@@ -26,13 +26,21 @@ int main(int argc, char **argv) {
         &add64c_suite, "add64c - ARM64", ecases, 
         rcases, rcount, rinbuf, resbuf, 
         "../logs/arm64_arith.txt",
-        _arm64_add64c, _cintrin_add64c);
+        _arm64_add64c, _cintrin_add64c
+    );
     // Testing ARM64 Sub borrow - _arm64_sub64b
     _libdnml_suite sub64b_suite; subb_setup(
         &sub64b_suite, "sub64b - ARM64", ecases, 
         rcases, rcount, rinbuf, resbuf, 
         "../logs/arm64_arith.txt",
         _arm64_sub64b, _cintrin_sub64b
+    );
+    // Testing ARM64 128 bit Wide Multiplication
+    _libdnml_suite sub64b_suite; wmul_setup(
+        &_arm64_wmul128, "wmul128 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_arith.txt",
+        _arm64_wmul128, _cintrin_wmul128
     );
 
     return 0;
