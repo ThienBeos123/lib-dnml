@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define case _libdnml_case
+#define pair _dnml_pair
 #define u64 uint64_t
 #define u32 uint32_t
 
@@ -15,12 +17,12 @@
 int main(int argc, char **argv) {
     // ----------------- PRE-TEST SETUP ----------------- //
     // Parse terminal args + Setup env constants
-    uint32_t rcount = 100;
+    u32 rcount = 100;
     // Buffer Setup
-    _libdnml_case ecases[20]; _libdnml_case rcases[rcount];
-    uint64_t rinbuf[rcount][3]; _dnml_pair resbuf[resbuf_size(rcount, 20)];
+    case ecases[20]; case rcases[rcount];
+    u64 rinbuf[rcount][3]; pair resbuf[resbuf_size(rcount, 20)];
 
-    // -------------- THE ACTUAL TESTS -------------- //
+    // -------------- ARITHMETIC TEST SUITES -------------- //
     // Testing ARM64 Add Carry - _arm64_add64c
     _libdnml_suite add64c_suite; addc_setup(
         &add64c_suite, "add64c - ARM64", ecases, 
@@ -36,12 +38,21 @@ int main(int argc, char **argv) {
         _arm64_sub64b, _cintrin_sub64b
     );
     // Testing ARM64 128 bit Wide Multiplication
-    _libdnml_suite sub64b_suite; wmul_setup(
-        &_arm64_wmul128, "wmul128 - ARM64", ecases,
+    _libdnml_suite wmul128_suite; wmul_setup(
+        &wmul128_suite, "wmul128 - ARM64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/arm64_arith.txt",
         _arm64_wmul128, _cintrin_wmul128
     );
+
+    // -------------- MODULAR ARITHETMIC TEST SUITES -------------- //
+    _libdnml_suite modinv64_suite;
+
+    // -------------- BITWISE OPERATIONS TEST SUITES -------------- //
+    _libdnml_suite clz64_suite;
+    _libdnml_suite ctz64_suite;
+    _libdnml_suite bswap64_suite;
+    _libdnml_suite pcnt64_suite;
 
     return 0;
 }

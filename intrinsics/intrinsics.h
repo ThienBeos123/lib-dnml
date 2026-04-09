@@ -8,6 +8,7 @@
 #include "../system/__arch.h"
 #include "../system/__hwcaps.h"
 #include "../sconfigs/numeric_config.h"
+#include "../sconfigs/settings.h"
 
 #include "arm64/_arm64_conn.h"
 #include "x86_64/_x86_conn.h"
@@ -128,6 +129,10 @@ static inline void _libdnml_fill_galg(void) {
 //* --------------------------------------------------------------------------------------- *//
 //*                                    SINGLE-LIMB ARITHMETIC                               *//
 //* --------------------------------------------------------------------------------------- *//
+static inline uint64_t _cintrin_divwrap(uint64_t lo, uint64_t hi, uint64_t div, uint64_t *rhat) {
+    *rhat = _cintrin_clz64(div);
+    return _cintrin_wdiv128(lo, hi, div, rhat);
+}
 static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
     *carry = (*carry) ? 1 : 0;
     #if __compiler_clang // Clang --> Always used
@@ -174,6 +179,11 @@ static inline uint64_t __DIV_HELPER_UI64__(
     uint64_t lo, uint64_t hi, uint64_t div, 
     uint64_t *rhat
 ) {
+    if (hi >= div) { if (_DNML_DEBUG_MODE) { 
+            fputs("Division Error - Can't contain full quotient in 64 bit", stderr);
+            abort();
+        } else { *rhat = 0; return 0; }
+    } 
     #if __HAS_int128__ // GCC / Clang
         uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
         *rhat = (uint64_t)(dividend % div);
