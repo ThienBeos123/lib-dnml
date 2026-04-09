@@ -46,7 +46,12 @@ int main(int argc, char **argv) {
     );
 
     // -------------- MODULAR ARITHETMIC TEST SUITES -------------- //
-    _libdnml_suite modinv64_suite;
+    _libdnml_suite modinv64_suite; modinv_setup(
+        &modinv64_suite, "modinv64 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_marith.txt",
+        _arm64_modinv64, _cintrin_modinv64
+    );
 
     // -------------- BITWISE OPERATIONS TEST SUITES -------------- //
     _libdnml_suite clz64_suite;

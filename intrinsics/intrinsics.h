@@ -201,7 +201,10 @@ static inline uint64_t __DIV_HELPER_UI64__(
 //* --------------------------------------------------------------------------------------- *//
 //*                                SINGLE-LIMB MODULAR ARITHMETIC                           *//
 //* --------------------------------------------------------------------------------------- *//
-static inline uint64_t __MODINV_UI64__(uint64_t x) { return _libdnml_gmarith_ftable.modinv64(x); }
+static inline uint64_t __MODINV_UI64__(uint64_t x) { 
+    if (!(x & 1)) return 0;
+    return _libdnml_gmarith_ftable.modinv64(x);
+}
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
     uint64_t hi, lo;
     lo = __MUL_UI64__(a, b, &hi);

@@ -17,6 +17,7 @@
 
 #define alt64_1 0xAAAAAAAAAAAAAAAA
 #define alt64_2 0x5555555555555555
+#define dalt    0x3333333333333333
 #define half64_1 0x00000000FFFFFFFF
 #define half64_2 0xFFFFFFFF00000000
 
@@ -254,6 +255,61 @@ static inline void wdiv_setup(
 }
 
 
+
+//* ======================================= *//
+//* ======= MODARITH SUITE SETUP ======== *//
+//* ======================================= *//
+static inline void modinv_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *wmullp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint64_t*),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t*)
+) {
+    srand(time(NULL)); static uint8_t modinv_in = 1;
+    // Core, Basic cases
+    ecases[0] = (_libdnml_case){ .in = {1},     .exp = {1},     .input_count = modinv_in };
+    ecases[1] = (_libdnml_case){ .in = {U64m},  .exp = {U64m},  .input_count = modinv_in };
+    ecases[2] = (_libdnml_case){ .in = {3},     .exp = {0xAAAAAAAAAAAAAAAB}, .input_count = modinv_in };
+    ecases[3] = (_libdnml_case){ .in = {5},     .exp = {0xCCCCCCCCCCCCCCCD}, .input_count = modinv_in };
+    ecases[4] = (_libdnml_case){ .in = {7},     .exp = {0xB6DB6DB6DB6DB6DB}, .input_count = modinv_in };
+    // Self-Inverting cases
+    ecases[5] = (_libdnml_case){ 
+        .in = {0x7FFFFFFFFFFFFFFF}, 
+        .exp = {0x7FFFFFFFFFFFFFFF}, 
+        .input_count = modinv_in 
+    };
+    ecases[6] = (_libdnml_case){ 
+        .in = {0x8000000000000001}, 
+        .exp = {0x8000000000000001},
+        .input_count = modinv_in 
+    }; 
+    ecases[7] = (_libdnml_case){ .in = {U64m-2}, .exp = {alt64_2}, .input_count = modinv_in };
+    ecases[8] = (_libdnml_case){ .in = {U32m},   .exp = {0xFFFFFFFEFFFFFFFF}, .input_count = modinv_in };
+    // Specific Patterns and Cases
+    ecases[9] = (_libdnml_case){ .in = {17},    .exp = {0xF0F0F0F0F0F0F0F1}, .input_count = modinv_in };
+    ecases[10] = (_libdnml_case){ .in = {15},   .exp = {0xEEEEEEEEEEEEEEEF}, .input_count = modinv_in };
+    ecases[11] = (_libdnml_case){ .in = {alt64_2}, .exp = {1, U64m-2}, .input_count = modinv_in };
+    ecases[12] = (_libdnml_case){ .in = {dalt}, .exp = {dalt},               .input_count = modinv_in };
+    ecases[13] = (_libdnml_case){ .in = {19},   .exp = {0x79435E50D79435E3}, .input_count = modinv_in };
+    ecases[14] = (_libdnml_case){ 
+        .in = {0x1234567890ABCDEF},
+        .exp = {0x3196E67A831E018F},
+        .input_count = modinv_in 
+    };
+    // Randomly Generated Cases filling
+    for (uint32_t i = 0; i < rcount; ++i) {
+        uint64_t in = barebone_rand();
+        while (!(in & 1)) in = barebone_rand();
+        rcases[i] = (_libdnml_case) {
+            .in = {in},
+            .input_count = modinv_in
+        };
+    } _DNML_SUITE_SETUP(s, name, 15, rcount,
+        modinv_in, ecases, rcases, ribuf,
+        resbuf, test_fn, ref_fn, wmullp
+    ); return;
+}
 
 
 
