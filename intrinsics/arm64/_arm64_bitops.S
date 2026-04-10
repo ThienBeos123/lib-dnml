@@ -45,7 +45,7 @@ _arm64_bswap64:
     ret
 
 
-/* ------- COUNT LEADING ZERO 64 BIT -------
+/* ------- POPULATION COUNT 64 BIT -------
 * uint8_t _arm64_pcnt64(uint64_t x)
 * arg: x0: uint64_t x --> (64 BIT)
 * ret: x0: pcnt(x) -----> (8  BIT)
