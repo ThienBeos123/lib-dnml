@@ -45,6 +45,7 @@ int main(int argc, char **argv) {
         _arm64_wmul128, _cintrin_wmul128
     );
 
+
     // -------------- MODULAR ARITHETMIC TEST SUITES -------------- //
     _libdnml_suite modinv64_suite; modinv_setup(
         &modinv64_suite, "modinv64 - ARM64", ecases,
@@ -53,11 +54,33 @@ int main(int argc, char **argv) {
         _arm64_modinv64, _cintrin_modinv64
     );
 
+
     // -------------- BITWISE OPERATIONS TEST SUITES -------------- //
-    _libdnml_suite clz64_suite;
-    _libdnml_suite ctz64_suite;
-    _libdnml_suite bswap64_suite;
-    _libdnml_suite pcnt64_suite;
+    _libdnml_suite clz64_suite; clz_setup(
+        &clz64_suite, "clz64 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_bitops.txt",
+        _arm64_clz64, _cintrin_clz64
+    );
+    _libdnml_suite ctz64_suite; ctz_setup(
+        &ctz64_suite, "ctz64 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_bitops.txt",
+        _arm64_ctz64, _cintrin_ctz64
+    );
+    _libdnml_suite bswap64_suite; bswap_setup(
+        &bswap64_suite, "bswap64 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_bitops.txt",
+        _arm64_bswap64, _cintrin_bswap64
+    );
+    _libdnml_suite pcnt64_suite; pcnt_setup(
+        &pcnt64_suite, "pcnt64 - ARM64", ecases,
+        rcases, rcount, rinbuf, resbuf,
+        "../logs/arm64_bitops.txt",
+        NULL, NULL
+        // _arm64_pcnt64, _cintrin_clz64
+    );
 
     return 0;
 }

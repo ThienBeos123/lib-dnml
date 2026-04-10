@@ -9,8 +9,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define bin32 (sizeof(uint32_t) * CHAR_BIT)
+
+#define U8m UINT8_MAX
+#define U16m UINT16_MAX
 #define U32m UINT32_MAX
+#define U31m (U32m >> 1)
+
 #define U64m UINT64_MAX
 #define U63m (U64m >> 1)
 #define U62m (U64m >> 2)
@@ -256,9 +260,9 @@ static inline void wdiv_setup(
 
 
 
-//* ======================================= *//
-//* ======= MODARITH SUITE SETUP ======== *//
-//* ======================================= *//
+//* ========================================== *//
+//* ===== MODULAR ARITHMETIC SUITE SETUP ===== *//
+//* ========================================== *//
 static inline void modinv_setup(
     _libdnml_suite *s, const char *name,
     _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
@@ -289,7 +293,7 @@ static inline void modinv_setup(
     // Specific Patterns and Cases
     ecases[9] = (_libdnml_case){ .in = {17},    .exp = {0xF0F0F0F0F0F0F0F1}, .input_count = modinv_in };
     ecases[10] = (_libdnml_case){ .in = {15},   .exp = {0xEEEEEEEEEEEEEEEF}, .input_count = modinv_in };
-    ecases[11] = (_libdnml_case){ .in = {alt64_2}, .exp = {1, U64m-2}, .input_count = modinv_in };
+    ecases[11] = (_libdnml_case){ .in = {alt64_2}, .exp = {U64m-2},          .input_count = modinv_in };
     ecases[12] = (_libdnml_case){ .in = {dalt}, .exp = {dalt},               .input_count = modinv_in };
     ecases[13] = (_libdnml_case){ .in = {19},   .exp = {0x79435E50D79435E3}, .input_count = modinv_in };
     ecases[14] = (_libdnml_case){ 
@@ -311,6 +315,73 @@ static inline void modinv_setup(
     ); return;
 }
 
+
+
+//* ========================================== *//
+//* ===== BITWISE OPERATIONS SUITE SETUP ===== *//
+//* ========================================== *//
+static inline void clz_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *wmullp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint64_t*),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t*)
+) {
+    srand(time(NULL)); static uint8_t clz_in = 1;
+    // Core, Basic cases
+    ecases[0] = (_libdnml_case){ .in = {0},      .exp = {64}, .input_count = clz_in };
+    ecases[1] = (_libdnml_case){ .in = {U64m},   .exp = {0},  .input_count = clz_in };
+    ecases[2] = (_libdnml_case){ .in = {U63m+1}, .exp = {0xAAAAAAAAAAAAAAAB}, .input_count = clz_in };
+    ecases[3] = (_libdnml_case){ .in = {1},      .exp = {63}, .input_count = clz_in };
+    // Off-by-1 Cases
+    ecases[4] = (_libdnml_case){ .in = {U62m+1}, .exp = {1},  .input_count = clz_in };
+    ecases[5] = (_libdnml_case){ .in = {2},      .exp = {62}, .input_count = clz_in };
+    ecases[6] = (_libdnml_case){ .in = {0x0010000000000001}, .exp = {11}, .input_count = clz_in }; 
+    ecases[7] = (_libdnml_case){ .in = {U31m+1},    .exp = {32}, .input_count = clz_in };
+    ecases[8] = (_libdnml_case){ .in = {U32m+1<<1}, .exp = {30}, .input_count = clz_in };
+    // Block Boundaries
+    ecases[9] = (_libdnml_case){ .in = {half64_1},      .exp = {32}, .input_count = clz_in };
+    ecases[10] = (_libdnml_case){ .in = {half64_1+1},   .exp = {31}, .input_count = clz_in };
+    ecases[11] = (_libdnml_case){ .in = {U8m},          .exp = {56}, .input_count = clz_in };
+    ecases[12] = (_libdnml_case){ .in = {U16m},         .exp = {48}, .input_count = clz_in };
+    ecases[13] = (_libdnml_case){ .in = {U64m << 16},   .exp = {16}, .input_count = clz_in };
+    // Pattern Cases
+    ecases[14] = (_libdnml_case){ .in = {0x0F00000000000000}, .exp = {4}, .input_count = clz_in };
+    ecases[15] = (_libdnml_case){ .in = {0x00F0000000000000}, .exp = {8}, .input_count = clz_in };
+    ecases[16] = (_libdnml_case){ .in = {alt64_1}, .exp = {0}, .input_count = clz_in };
+    ecases[17] = (_libdnml_case){ .in = {alt64_2}, .exp = {1}, .input_count = clz_in };
+    ecases[18] = (_libdnml_case){ .in = {0x0000800000000001}, .exp = {16}, .input_count = clz_in };
+    ecases[19] = (_libdnml_case){ .in = {0x0FFFFFFFFFFFFFFF}, .exp = {4},  .input_count = clz_in };
+    // Randomly Generated Cases filling
+    for (uint32_t i = 0; i < rcount; ++i) {
+        uint64_t in = barebone_rand();
+        rcases[i] = (_libdnml_case) { .in = {in}, .input_count = clz_in };
+    } _DNML_SUITE_SETUP(s, name, 15, rcount,
+        clz_in, ecases, rcases, ribuf,
+        resbuf, test_fn, ref_fn, wmullp
+    ); return;
+}
+static inline void ctz_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *wmullp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint64_t*),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t*)
+) {}
+static inline void bswap_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *wmullp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint64_t*),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t*)
+) {}
+static inline void pcnt_setup(
+    _libdnml_suite *s, const char *name,
+    _libdnml_case *ecases, _libdnml_case *rcases, uint32_t rcount, 
+    uint64_t **ribuf, _dnml_pair *resbuf, const char *wmullp,
+    uint64_t (*test_fn)(uint64_t, uint64_t, uint64_t*),
+    uint64_t (*ref_fn)(uint64_t, uint64_t, uint64_t*)
+) {}
 
 
 #endif
