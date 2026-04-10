@@ -56,13 +56,11 @@ _libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_abm) ? _x86_clz64e : _x86_clz6
 _libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s;
 _libdnml_gbitops_ftable.bswap64 = _x86_bswap64;
 _libdnml_fill_gbitops.pcnt64 = _x86_pcnt64;
-
 #elif __ARCH_ARM64__
 _libdnml_gbitops_ftable.clz64 = _arm64_clz64;
 _libdnml_gbitops_ftable.ctz64 = _arm64_ctz64;
 _libdnml_gbitops_ftable.bswap64 = _arm64_bswap64;
-// _libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
-
+_libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
 #elif __ARCH_RVI64__
 if (libdnml_caps.rv64_zbb) {
     _libdnml_gbitops_ftable.clz64 = _rv64_clz64;
@@ -75,7 +73,6 @@ if (libdnml_caps.rv64_zbb) {
     _libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
     _libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
 }
-
 #else
 _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
 _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;

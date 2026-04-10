@@ -5,7 +5,6 @@
 #include "../../system/__arch.h"
 #include "../../system/__compiler.h"
 
-#if __ARCH_ARM64__
 // _arm64_arith.S
 extern uint64_t _arm64_add64c(uint64_t a, uint64_t b, uint8_t *carry);
 extern uint64_t _arm64_sub64b(uint64_t a, uint64_t b, uint8_t *borrow);
@@ -19,5 +18,5 @@ extern uint8_t _arm64_ctz64(uint64_t x);
 extern uint64_t _arm64_bswap64(uint64_t x);
 extern uint8_t _arm64_pcnt64(uint64_t x);
 
-#endif
+
 #endif
