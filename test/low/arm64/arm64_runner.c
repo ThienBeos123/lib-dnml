@@ -8,10 +8,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define case _libdnml_case
-#define pair _dnml_pair
-#define u64 uint64_t
-#define u32 uint32_t
 
 
 int main(int argc, char **argv) {
@@ -78,8 +74,7 @@ int main(int argc, char **argv) {
         &pcnt64_suite, "pcnt64 - ARM64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/arm64_bitops.txt",
-        NULL, NULL
-        // _arm64_pcnt64, _cintrin_clz64
+        _arm64_pcnt64, _cintrin_clz64
     );
 
     return 0;

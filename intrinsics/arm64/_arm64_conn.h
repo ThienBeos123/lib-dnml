@@ -14,9 +14,10 @@ extern uint64_t _arm64_wmul128(uint64_t a, uint64_t b, uint64_t *hi);
 extern uint64_t _arm64_modinv64(uint64_t x);
 // _arm64_alg.S
 // _arm64_bitops.S
-extern uint64_t _arm64_clz64(uint64_t x);
-extern uint64_t _arm64_ctz64(uint64_t x);
+extern uint8_t _arm64_clz64(uint64_t x);
+extern uint8_t _arm64_ctz64(uint64_t x);
 extern uint64_t _arm64_bswap64(uint64_t x);
+extern uint8_t _arm64_pcnt64(uint64_t x);
 
 #endif
 #endif

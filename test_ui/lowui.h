@@ -22,7 +22,7 @@ typedef struct { uint64_t first; uint64_t second; } _dnml_pair;
 
 typedef struct _libdnml_case {
     _dnml_pair exp;
-    uint8_t input_count;
+    uint8_t inc;
     uint64_t *in;
 } _libdnml_case;
 
@@ -207,7 +207,7 @@ typedef uint64_t (*_fn2o_t)(uint64_t, uint64_t, uint64_t*);
 typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
 #define DNML_FCALL_(fn_ptr, case_ptr, out) \
     do { \
-        switch ((case_ptr)->input_count) { \
+        switch ((case_ptr)->inc) { \
             case 1: (out).first = ((_fn1_t)(fn_ptr))((case_ptr)->in[0]); break;    \
             case 2: (out).first = ((_fn2_t)(fn_ptr))(  \
                 (case_ptr)->in[0],                  \
@@ -228,7 +228,7 @@ typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
     } while(0)
 #define DNML_OFCALL_(fn_ptr, case_ptr, out) \
     do { \
-        switch ((case_ptr)->input_count) { \
+        switch ((case_ptr)->inc) { \
             case 1: { \
                 (out).first = ((_fn1o_t)(fn_ptr))(                  \
                 (case_ptr)->in[0],                                  \
@@ -294,7 +294,7 @@ static inline void _dnml_log_suite(_libdnml_suite *s) {
     //* PRINTS EDGE CASES *//
     for (uint32_t i = 0; i < fail_edge; ++i) {
         fprintf(f, "o) Edge case %" PRIu32 ":\n", i + 1);
-        for (uint8_t j = 0; j < s->edge_cases[i].input_count; ++j) {
+        for (uint8_t j = 0; j < s->edge_cases[i].inc; ++j) {
             fprintf(f, "     in[%" PRIu8 "]: 0x%016" PRIx64 "\n", j, s->edge_cases[i].in[j]);
         } fprintf(f, "     expected: <0x%016" PRIx64 ", 0x%016" PRIx64 ">\n", 
             s->fail_edge_exp[i].first, s->fail_edge_exp[i].second);
