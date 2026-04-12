@@ -53,9 +53,10 @@ static inline void _libdnml_fill_gbitops(void) {
 // CLZ - Detect ABM (Advanced Bit Manipulation)
 _libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_abm) ? _x86_clz64e : _x86_clz64s;
 // CTZ - Detect BMI1 (Bit Manipulation Instructions 1)
-_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s;
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s
+// POPCNT - Detect SSE4.2
+_libdnml_fill_gbitops.pcnt64 = (libdnml_caps.x86_sse4_2) ? _x86_pcnt64e : _cintrin_pcnt64;
 _libdnml_gbitops_ftable.bswap64 = _x86_bswap64;
-_libdnml_fill_gbitops.pcnt64 = _x86_pcnt64;
 #elif __ARCH_ARM64__
 _libdnml_gbitops_ftable.clz64 = _arm64_clz64;
 _libdnml_gbitops_ftable.ctz64 = _arm64_ctz64;

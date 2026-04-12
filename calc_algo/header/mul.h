@@ -14,7 +14,7 @@ extern "C" {
 #include "../../sconfigs/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
-#include "../../dutil/util.h"
+#include "../../util/util.h"
 #include "../../adynamol/big_numbers/bigNums.h"
 
 #include "add_sub.h"

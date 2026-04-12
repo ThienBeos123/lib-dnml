@@ -10,10 +10,7 @@
 #include <string.h>
 
 #if defined(__linux__) || defined(__linux) 
-    #include <cpuid.h>
     #include <sys/syscall.h>
-#elif (defined(__APPLE__) && defined(__MACH__))
-    #include <cpuid.h>
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
     #include <sys/aux.h>
 #elif __compiler_msvc || defined(_WIN32)
