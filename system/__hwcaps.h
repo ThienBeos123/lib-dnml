@@ -3,8 +3,9 @@
 
 
 //* ----------- INCLUDES & MACROS ----------- *//
-#include <__arch.h>
-#include <__compiler.h>
+#include "__arch.h"
+#include "__compiler.h"
+#include "asm/__sys_conn.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -126,37 +127,23 @@ static inline void ___x86_WIN64_detcaps(void) {
     );
 #endif
 }
-static inline void ___x86_LINUX_detcaps(void) {
+static inline void ___x86_Pdetcaps(void) {
 #if defined(__linux__) || defined(__linux)
-    unsigned int eax, ebx, ecx, edx;
-    libdnml_caps.x86_sse4_2 = (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) ? (ecx & bit_SSE42) : 0;
-    libdnml_caps.x86_abm = (__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx)) ? (ecx & bit_ABM) : 0;
-    libdnml_caps.x86_bmi1 = (__get_cpuid(7, 0, &eax, &ebx, &ecx, &edx)) ? (ebx & bit_BMI1) : 0;
-#endif
-}
-static inline void ___x86_MAC_detcaps(void) {
-#if defined(__APPLE__) && defined(__MACH__)
-    unsigned int eax, ebx, ecx, edx;
-    // SSE4.2 Extension detection
-    __cpuid_count(1, 0, eax, ebx, ecx, edx);
-    libdnml_caps.x86_sse4_2 = (ecx & (1 << 20)) != 0;
-    // BMI1 Extension detection - MAX-LEAF CHECK REQUIRED
-    __cpuid_count(0, 0, eax, ebx, ecx, edx); 
-    if (eax >= 7) {
-        __cpuid_count(7, 0, eax, ebx, ecx, edx);
-        libdnml_caps.x86_bmi1 = (ebx & (1 << 3)) != 0; 
-    } 
-    // ABM Extension detection - MAX-LEAF CHECK REQUIRED
-    __cpuid_count(0x80000000, 0, eax, ebx, ecx, edx);
-    if (eax >= 0x80000001) {
-        __cpuid_count(0x80000001, 0, eax, ebx, ecx, edx);
-        libdnml_caps.x86_abm = (ecx & (1 << 5)) != 0; 
-    }
-#endif
-}
-static inline void ___x86_BSDs_detcaps(void) {
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-
+    unsigned int det_registers[4] = {0};
+    unsigned int max_instruct = 0;
+    // SSE4.2 Detection
+    max_instruct = __sysv_cpu_maxl();
+    __sysv_get_cpuid(1, 0, det_registers);
+    libdnml_caps.x86_sse4_2 = (det_registers[2] & bit_SSE42) != 0;
+    // ABM Detection
+    if (max_instruct >= 0x80000001) {
+        __sysv_get_cpuid(0x80000001, 0, det_registers);
+        libdnml_caps.x86_abm = (det_registers[2] & bit_ABM) != 0;
+    } else libdnml_caps.x86_abm = 0;
+    if (max_instruct >= 7) {
+        __sysv_get_cpuid(7, 0, det_registers);
+        libdnml_caps.x86_bmi1 = (det_registers[1] & bit_BMI1) != 0;
+    } else libdnml_caps.x86_bmi1 = 0;
 #endif
 }
 static inline void __DNML_DETX64_HWCAPS(void) {
@@ -166,14 +153,10 @@ static inline void __DNML_DETX64_HWCAPS(void) {
     libdnml_caps.x86_bmi1 = __builtin_cpu_supports("bmi");
     libdnml_caps.x86_abm = __builtin_cpu_supports("abm");
 #elif __compiler_msvc || defined(_WIN32)
-    ___x86_WIN64_detcaps();   
-#elif defined(__linux__) || defined(__linux)
-    ___x86_LINUX_detcaps();
-#elif defined(__APPLE__) && defined(__MACH__)
-    ___x86_MAC_detcaps();
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
-    ___x86_BSDs_detcaps();
-#else // BARE METAL
+    ___x86_WIN64_detcaps();
+#elif __ABI_X64_SYSV__ // System-V - Any other OS
+    ___x86_Pdetcaps();
+#else // BARE METAL - Unknown ABI
     libdnml_caps.x86_abm = _DNML_BARE_X86_ABM;
     libdnml_caps.x86_bmi1 = _DNML_BARE_X86_BMI1;
     libdnml_caps.x86_sse4_2 = _DNML_BARE_X86_SSE4_2;
