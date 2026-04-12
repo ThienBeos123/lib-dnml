@@ -1,7 +1,7 @@
 #ifndef ____DNML_RVI64_CONN
 #define ____DNML_RVI64_CONN
 
-#include "../__asm_macros.h"
+#include "../../system/asm/__asm_macros.h"
 #include "../../system/__compiler.h"
 #include "../../system/__arch.h"
 
