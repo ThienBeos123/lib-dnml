@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
         &pcnt64_suite, "pcnt64 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_bitops.txt",
-        _x86_pcnt64, _cintrin_clz64
+        _x86_pcnt64e, _cintrin_clz64
     );
 
     return 0;

@@ -66,7 +66,7 @@ if (libdnml_caps.rv64_zbb) {
     _libdnml_gbitops_ftable.clz64 = _rv64_clz64;
     _libdnml_gbitops_ftable.ctz64 = _rv64_ctz64;
     _libdnml_gbitops_ftable.bswap64 = _rv64_bswap64;
-    _libdnml_gbitops_ftable.pcnt64 = _rv65_pcnt64;
+    _libdnml_gbitops_ftable.pcnt64 = _rv64_pcnt64;
 } else {
     _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
     _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;

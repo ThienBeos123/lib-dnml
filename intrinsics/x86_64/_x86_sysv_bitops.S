@@ -10,12 +10,14 @@ asm_text_section
 .globl          _x86sv_ctz64e
 .globl          _x86sv_ctz64s
 .globl          _x86sv_bswap64
+.globl          _x86sv_pcnt64e
 
 .type	        _x86sv_clz64e, %function
 .type           _x86sv_clz64s, %function
 .type           _x86sv_ctz64e, %function
 .type           _x86sv_ctz64s, %function
 .type           _x86sv_bswap64, %function
+.type           _x86sv_pcnt64e, %function
 .p2align	    4, 0x90
 
 
@@ -37,6 +39,8 @@ _x86sv_clz64s:
     ret
 
 
+
+
 /* ------- COUNT TRAILING ZERO 64 BIT - BMI1-EXTENDED -------
 * uint8_t _x86sv_ctz64e(uint64_t x)
 * arg: rdi: uint64_t x --> (64 BIT)
@@ -54,6 +58,9 @@ _x86sv_ctz64s:
     bsf rax, rdi
     ret
 
+
+
+
 /* ------- BYTE SWAP 64 BIT -------
 * uint8_t _x86sv_bswap64(uint64_t x)
 * arg: rdi: uint64_t x ----> (64 BIT)
@@ -62,6 +69,14 @@ _x86sv_ctz64s:
 _x86sv_bswap64:
     bswap   rdi
     mov rax, rdi
+    ret
+/* ------- POPULATION COUNT 64 BIT -------
+* uint8_t _x86sv_pcnt64e(uint64_t x)
+* arg: rdi: uint64_t x ----> (64 BIT)
+* ret: rax: pcnt(x) -------> (8  BIT)
+*/
+_x86sv_pcnt64e:
+    popcnt rax, rdi
     ret
 
 

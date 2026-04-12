@@ -34,6 +34,7 @@ extern uint64_t _x86sv_bswap64(uint64_t x);
 #define _x86_ctz64e     _x86sv_ctz64e
 #define _x86_ctz64s     _x86sv_ctz64s
 #define _x86_bswap64    _x86sv_bswap64
+#define _x86_pcnt64e    _x86sv_pcnt64e
 
 
 //* -------- WINDOW-64 ABI ---------- *//
@@ -65,6 +66,7 @@ extern uint64_t _x86w64_bswap64(uint64_t x);
 #define _x86_ctz64e     _x86w64_ctz64e
 #define _x86_ctz64s     _x86w64_ctz64s
 #define _x86_bswap64    _x86w64_bswap64
+#define _x86_pcnt64e    _x86w64_pcnt64e
 
 
 //* -------- UNKNOWN ABI ---------- *//
@@ -83,7 +85,7 @@ extern uint64_t _x86w64_bswap64(uint64_t x);
 #define _x86_ctz64e     _cintrin_ctz64
 #define _x86_ctz64s     _cintrin_ctz64
 #define _x86_bswap64    _cintrin_bswap64
-#define _x86_pcnt64     _cintrin_pcnt64
+#define _x86_pcnt64e    _cintrin_pcnt64
 
 #endif
 #endif

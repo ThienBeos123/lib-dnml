@@ -75,12 +75,6 @@ int main(int argc, char **argv) {
         "../logs/x86_bitops.txt",
         _x86_bswap64, _cintrin_bswap64
     );
-    _libdnml_suite pcnt64_suite; pcnt_setup(
-        &pcnt64_suite, "pcnt64 - x86_64", ecases,
-        rcases, rcount, rinbuf, resbuf,
-        "../logs/x86_bitops.txt",
-        _x86_pcnt64, _cintrin_clz64
-    );
 
     return 0;
 }
