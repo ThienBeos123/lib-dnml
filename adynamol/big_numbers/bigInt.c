@@ -22,11 +22,11 @@ static local_thread dnml_arena ___DASI_NUMERIC_ARENA_;
 static local_thread dnml_arena ___DASI_LOWLVL_ARENA_;
 static inline dnml_arena* _USE_ARENA(void) {
     // Support 512 limbs (the gold standard)
-    if (___DASI_NUMERIC_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 4096);
+    if (___DASI_NUMERIC_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 512);
     return &___DASI_NUMERIC_ARENA_;
 } 
 static inline dnml_arena* _USE_LOW_ARENA(void) {
-    if (___DASI_LOWLVL_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 4096);
+    if (___DASI_LOWLVL_ARENA_.base = NULL) init_arena(&___DASI_NUMERIC_ARENA_, 512);
     return &___DASI_LOWLVL_ARENA_;
 }
 
