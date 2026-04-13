@@ -8,6 +8,7 @@
 #include "../system/__arch.h"
 #include "../system/__hwcaps.h"
 #include "../sconfigs/numeric_config.h"
+#include "../sconfigs/settings.h"
 
 #include "arm64/_arm64_conn.h"
 #include "x86_64/_x86_conn.h"
@@ -22,10 +23,10 @@
 // //*                              IFUNC FUNCTION TABLES                           *//
 // //* ---------------------------------------------------------------------------- *//
 typedef struct {
-    uint8_t     (*clz64)(uint64_t x);
-    uint8_t     (*ctz64)(uint64_t x);
+    uint64_t     (*clz64)(uint64_t x);
+    uint64_t     (*ctz64)(uint64_t x);
     uint64_t    (*bswap64)(uint64_t x);
-    uint8_t     (*pcnt64)(uint64_t x);
+    uint64_t     (*pcnt64)(uint64_t x);
 } _BITOPS_FTABLE;
 typedef struct {
     uint64_t (*add64c)(uint64_t a, uint64_t b, uint8_t *carry);
@@ -34,7 +35,7 @@ typedef struct {
     uint64_t (*wdiv128)(
         uint64_t lo, uint64_t hi, uint64_t div, 
         uint64_t *rhat
-    )
+    );
 } _ARITH_FTABLE;
 typedef struct {
     uint64_t (*modinv64)(uint64_t x);
@@ -52,29 +53,27 @@ static inline void _libdnml_fill_gbitops(void) {
 // CLZ - Detect ABM (Advanced Bit Manipulation)
 _libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_abm) ? _x86_clz64e : _x86_clz64s;
 // CTZ - Detect BMI1 (Bit Manipulation Instructions 1)
-_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s;
+_libdnml_gbitops_ftable.clz64 = (libdnml_caps.x86_bmi1) ? _x86_ctz64e : _x86_ctz64s
+// POPCNT - Detect SSE4.2
+_libdnml_fill_gbitops.pcnt64 = (libdnml_caps.x86_sse4_2) ? _x86_pcnt64e : _cintrin_pcnt64;
 _libdnml_gbitops_ftable.bswap64 = _x86_bswap64;
-_libdnml_fill_gbitops.pcnt64 = _x86_pcnt64;
-
 #elif __ARCH_ARM64__
 _libdnml_gbitops_ftable.clz64 = _arm64_clz64;
 _libdnml_gbitops_ftable.ctz64 = _arm64_ctz64;
 _libdnml_gbitops_ftable.bswap64 = _arm64_bswap64;
-// _libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
-
+_libdnml_gbitops_ftable.pcnt64 = _arm64_pcnt64;
 #elif __ARCH_RVI64__
 if (libdnml_caps.rv64_zbb) {
     _libdnml_gbitops_ftable.clz64 = _rv64_clz64;
     _libdnml_gbitops_ftable.ctz64 = _rv64_ctz64;
     _libdnml_gbitops_ftable.bswap64 = _rv64_bswap64;
-    _libdnml_gbitops_ftable.pcnt64 = _rv65_pcnt64;
+    _libdnml_gbitops_ftable.pcnt64 = _rv64_pcnt64;
 } else {
     _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
     _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
     _libdnml_gbitops_ftable.bswap64 = _cintrin_bswap64;
     _libdnml_gbitops_ftable.pcnt64 = _cintrin_pcnt64;
 }
-
 #else
 _libdnml_gbitops_ftable.clz64 = _cintrin_clz64;
 _libdnml_gbitops_ftable.ctz64 = _cintrin_ctz64;
@@ -128,9 +127,14 @@ static inline void _libdnml_fill_galg(void) {
 //* --------------------------------------------------------------------------------------- *//
 //*                                    SINGLE-LIMB ARITHMETIC                               *//
 //* --------------------------------------------------------------------------------------- *//
-static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) { 
+static inline uint64_t _cintrin_divwrap(uint64_t lo, uint64_t hi, uint64_t div, uint64_t *rhat) {
+    *rhat = _cintrin_clz64(div);
+    return _cintrin_wdiv128(lo, hi, div, rhat);
+}
+static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
+    *carry = (*carry) ? 1 : 0;
     #if __compiler_clang // Clang --> Always used
-        return __builtin_addcll(a, b, *carry, carry);
+        return __builtin_addcll(a, b, *carry, (unsigned long long*)carry);
     #elif __compiler_gcc // GCC --> Always used
         uint64_t sum;
         *carry = __builtin_uaddll_overflow(a, b, &sum);
@@ -144,6 +148,7 @@ static inline uint64_t __ADD_UI64__(uint64_t a, uint64_t b, uint8_t *carry) {
     #endif
 }
 static inline uint64_t __SUB_UI64__(uint64_t a, uint64_t b, uint8_t *borrow) {
+    *borrow = (*borrow) ? 1 : 0;
     #if (__compiler_gcc || __compiler_clang) 
         // Clang / GCC --> Always used
         uint64_t diff;
@@ -172,6 +177,11 @@ static inline uint64_t __DIV_HELPER_UI64__(
     uint64_t lo, uint64_t hi, uint64_t div, 
     uint64_t *rhat
 ) {
+    if (hi >= div) { if (_DNML_DEBUG_MODE) { 
+            fputs("Division Error - Can't contain full quotient in 64 bit", stderr);
+            abort();
+        } else { *rhat = 0; return 0; }
+    } 
     #if __HAS_int128__ // GCC / Clang
         uint128 dividend = ((uint128)(hi) << BITS_IN_UINT64_T) | lo; 
         *rhat = (uint64_t)(dividend % div);
@@ -179,6 +189,9 @@ static inline uint64_t __DIV_HELPER_UI64__(
     #elif __compiler_msvc // MSVC
         return _udiv128(hi, lo, div, rhat);
     #else // Unknown Compiler
+        #if !(__ARCH_X86_64__)
+            *rhat = _libdnml_gbitops_ftable.clz64(div);
+        #endif
         return _libdnml_garith_ftable.wdiv128(lo, hi, div, rhat);
     #endif
 }
@@ -186,7 +199,10 @@ static inline uint64_t __DIV_HELPER_UI64__(
 //* --------------------------------------------------------------------------------------- *//
 //*                                SINGLE-LIMB MODULAR ARITHMETIC                           *//
 //* --------------------------------------------------------------------------------------- *//
-static inline uint64_t __MODINV_UI64__(uint64_t x) { return _libdnml_gmarith_ftable.modinv64(x); }
+static inline uint64_t __MODINV_UI64__(uint64_t x) { 
+    if (!(x & 1)) return 0;
+    return _libdnml_gmarith_ftable.modinv64(x);
+}
 static inline uint64_t __MODMUL_UI64__(uint64_t a, uint64_t b, uint64_t mod) {
     uint64_t hi, lo;
     lo = __MUL_UI64__(a, b, &hi);

@@ -1,14 +1,14 @@
 #ifndef dnml_bi_func
 #define dnml_bi_func
 
-#include "../system/include.h"
-#include "../sconfigs/settings.h"
-#include "../sconfigs/arena.h"
-#include "../sconfigs/dnml_status.h"
+#include "../../system/__include.h"
+#include "../../sconfigs/settings.h"
+#include "../../sconfigs/arena.h"
+#include "../../sconfigs/dnml_status.h"
 
-#include "../intrinsics/intrinsics.h"
-#include "../calc_algo/calculation.h"
-#include "../internal_utils/util.h"
+#include "../../intrinsics/intrinsics.h"
+#include "../../calc_algo/calculation.h"
+#include "../../util/util.h"
 #include "bigNums.h"
 
 //todo ===================================== NUMERIC FUNCTIONALITIES ===================================== todo//

@@ -12,7 +12,7 @@
 
 
 #define BIGINT_TEMP(name, limb_count, ctx) \
-    limb_t *name##_limbs = scratch_alloc(&(ctx), (limb_count) * BYTES_IN_UINT64_T); \
+    limb_t *name##_limbs = scratch_alloc(&(ctx), (limb_count)); \
     bigInt name = {.limbs = name##_limbs, .sign = 1, .n = 0, .cap = (limb_count)};
 
 

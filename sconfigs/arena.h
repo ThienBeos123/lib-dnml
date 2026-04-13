@@ -7,17 +7,11 @@
 #include "../system/__compiler.h"
 
 //* ============= Declarations =============
-typedef struct {
+typedef struct dnml_arena {
     uint64_t *base;
     size_t  cap;
     size_t  offset;
 } dnml_arena;
-
-// Context Container for 
-// nested operation independency
-typedef struct {
-    dnml_arena arena;
-} dnml_ctx;
 
 //* ============= FUNCTIONALITIES ============= *//
 static inline void init_arena(dnml_arena *a, size_t init_cap) {
