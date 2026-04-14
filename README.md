@@ -5,10 +5,8 @@
 
 <div align="center">
 
+[![lib-dnml banner](doc/libdnml_banner.svg)](doc/libdnml_banner.svg)
 
-[![lib-dnml banner]](doc/libdnml_banner.svg)
-
-[![github actions ci badge]][github actions ci]
 [![][latest-release-shield]][latest-release-link]
 [![][downloads-shield]][downloads-link]
 <br>
@@ -28,6 +26,7 @@ An open-source, high-performance, multi-purpose, arbitrary-precision library in 
 
 
 ## Overview
+lib-dnml is precisely a collection of modules serving different purposes, but foundated on a shared backend basis:
 - **Dynamol**: Efficient mathematical computation module, providing arbitrary-sized numerical types
 - **Drypto**: Cryptographically-secure, constant-time mathematical operations and entropy-generation module
 - **dBedded**: Light-weight, maximmally-flexible embedded development module
@@ -35,6 +34,9 @@ An open-source, high-performance, multi-purpose, arbitrary-precision library in 
 
 
 ## Key Features
+
+### lib-dnml is, precisely, a collection of modules serving different purposes. 
+
 - **Arbitrary-Precision**: Integers (bigInt) & Floating-point numbers (bigFloat) 
 - **Cryptographically secure**: Constant-time operations against timed-based attacks
 - **Cross-platform Compability**: Supported on nearly all 64 bit platform, (see more in [Platform Compatibily](#platform-compatibiltiy))
@@ -114,6 +116,12 @@ If you are a developer who wants to either contribute to our project, or just wa
 lib-dnml is licensed under the Apache License 2.0, enabling for free acquisition and utilization for both commercial and non-commercial purposes as long you meet the project's conditions
 
 
-
 ## Contributing
 Please have a look at [CONTRIBUTING.md](CONTRIBUTING.md) if you're interest in developing, maintaining, or overall just contributing in our project.
+
+
+[latest-release-shield]: https://img.shields.io/github/v/release/ThienBeos123/lib-dnml
+[latest-release-link]: https://github.com/ThienBeos123/lib-dnml/releases
+
+[downloads-shield]: https://img.shields.io/github/downloads/ThienBeos123/lib-dnml/total
+[downloads-link]: https://github.com/ThienBeos123/lib-dnml/releases
