@@ -19,27 +19,27 @@ int main(int argc, char **argv) {
 
     // -------------- ARITHMETIC TEST SUITES -------------- //
     // Testing x86_64 Add Carry - _arm64_add64c
-    _libdnml_suite add64c_suite; addc_setup(
+    _libdnml_lsuite add64c_suite; addc_setup(
         &add64c_suite, "add64c - x86_64", ecases, 
         rcases, rcount, rinbuf, resbuf, 
         "../logs/x86_arith.txt",
         _x86_add64c, _cintrin_add64c
     );
     // Testing x86_64 Sub borrow - _arm64_sub64b
-    _libdnml_suite sub64b_suite; subb_setup(
+    _libdnml_lsuite sub64b_suite; subb_setup(
         &sub64b_suite, "sub64b - x86_64", ecases, 
         rcases, rcount, rinbuf, resbuf, 
         "../logs/x86_arith.txt",
         _x86_sub64b, _cintrin_sub64b
     );
     // Testing x86_64 128 bit Wide Multiplication
-    _libdnml_suite wmul128_suite; wmul_setup(
+    _libdnml_lsuite wmul128_suite; wmul_setup(
         &wmul128_suite, "wmul128 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_arith.txt",
         _x86_wmul128, _cintrin_wmul128
     );
-    _libdnml_suite wdiv128_suite; wdiv_setup(
+    _libdnml_lsuite wdiv128_suite; wdiv_setup(
         &wdiv128_suite, "wdiv128 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_arith.txt",
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
 
     // -------------- MODULAR ARITHETMIC TEST SUITES -------------- //
-    _libdnml_suite modinv64_suite; modinv_setup(
+    _libdnml_lsuite modinv64_suite; modinv_setup(
         &modinv64_suite, "modinv64 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_marith.txt",
@@ -57,25 +57,25 @@ int main(int argc, char **argv) {
 
 
     // -------------- BITWISE OPERATIONS TEST SUITES -------------- //
-    _libdnml_suite clz64_suite; clz_setup(
+    _libdnml_lsuite clz64_suite; clz_setup(
         &clz64_suite, "clz64e - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_bitops.txt",
         _x86_clz64e, _cintrin_clz64
     );
-    _libdnml_suite ctz64_suite; ctz_setup(
+    _libdnml_lsuite ctz64_suite; ctz_setup(
         &ctz64_suite, "ctz64e - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_bitops.txt",
         _x86_ctz64e, _cintrin_ctz64
     );
-    _libdnml_suite bswap64_suite; bswap_setup(
+    _libdnml_lsuite bswap64_suite; bswap_setup(
         &bswap64_suite, "bswap64 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_bitops.txt",
         _x86_bswap64, _cintrin_bswap64
     );
-    _libdnml_suite pcnt64_suite; pcnt_setup(
+    _libdnml_lsuite pcnt64_suite; pcnt_setup(
         &pcnt64_suite, "pcnt64 - x86_64", ecases,
         rcases, rcount, rinbuf, resbuf,
         "../logs/x86_bitops.txt",

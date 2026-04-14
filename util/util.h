@@ -38,6 +38,7 @@ uint8_t _prefix_handle_stream__(FILE* stream, uint8_t *base, uint16_t *curr_char
 inline size_t __BITCOUNT___(size_t digit_count, uint8_t base);
 inline uint8_t __BASEN_DCOUNT__(uint64_t val, uint8_t base);
 inline uint64_t __MAG_I64__(int64_t val);
+inline uint64_t _stou64(const char *buf, int buflen);
 
 
 /* ---------------------- */

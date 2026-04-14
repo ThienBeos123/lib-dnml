@@ -16,3 +16,14 @@ inline uint64_t __MAG_I64__(int64_t val) {
         (uint64_t)(llabs(val + 1)) + 1 :
         (uint64_t)(llabs(val));
 }
+inline uint64_t _stou64(const char *buf, int buflen) {
+    if (!buflen || !buf) return 0;
+    uint64_t res = 0;
+    for (size_t i = 0; i < buflen; ++i) {
+        if (buf[i] == '\0') break;
+        if (buf[i] < '0' || buf[i] > '9') return 0;
+        uint8_t digit = (uint8_t)(buf[i] - '0');
+        if (res > (UINT64_MAX - digit) / 10) return 0;
+        res = (res * 10) + digit;
+    } return res;
+}
