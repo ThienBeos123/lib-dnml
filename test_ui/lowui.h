@@ -34,8 +34,8 @@ typedef struct _libdnml_lsuite {
     _dnml_pair *fail_edge_exp;
 
     _libdnml_case *rand_cases;
-    uint32_t rand_cases_count;
-    uint32_t rand_cases_correct;
+    uint16_t rand_cases_count;
+    uint16_t rand_cases_correct;
     uint8_t rand_nin;
     uint64_t **fail_rand_in;
     _dnml_pair *fail_rand_res;
@@ -45,9 +45,10 @@ typedef struct _libdnml_lsuite {
 
 
 //* =================== TEST CREATION FUNFCTIONS =================== *//
+static inline size_t resbuf_size(uint8_t ecount, uint16_t rcount) { return (ecount + rcount) << 1; }
 static inline void create_suite(
     _libdnml_lsuite *curr_suite, const char *suite_name,
-    uint8_t edge_count, uint32_t rand_count, uint8_t rand_nin, 
+    uint8_t edge_count, uint16_t rand_count, uint8_t rand_nin, 
     _libdnml_case *edge_bank, _libdnml_case *rand_bank,
     uint64_t **fail_randin, _dnml_pair *res_storage, 
     const char *log_path
@@ -239,20 +240,20 @@ typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
 //* ============== FULL SUITES/SESSIONS RENDER FUNCTIONS ============== *//
 static inline void _dnml_run_suite(_libdnml_lsuite *s) {
     //* ======== 1. EDGE CASE TESTING ======== *//
-    for (uint32_t i = 0; i < s->edge_cases_count; ++i) {
+    for (uint8_t i = 0; i < s->edge_cases_count; ++i) {
         _dnml_pair got = {0}, exp = s->edge_cases->exp;
         if (s->call_style == DNML_CALL) DNML_FCALL_(s->fn_test, &s->edge_cases[i], got);
         else DNML_OFCALL_(s->fn_test,&s->edge_cases[i], got);
         if (_comp_pair(got, exp)) s->edge_cases_correct += 1;
         else {
-            uint32_t findex = (i + 1) - s->edge_cases_correct;
+            uint8_t findex = (i + 1) - s->edge_cases_correct;
             s->fail_edge_res[findex] = got;
             s->fail_edge_exp[findex] = exp;
         }
     }
 
     //* ======== 2. RAND CASE TESTING ======== *//
-    for (uint32_t i = 0; i < s->rand_cases_count; ++i) {
+    for (uint16_t i = 0; i < s->rand_cases_count; ++i) {
         _dnml_pair got = {0}, exp = {0};
         if (s->call_style == DNML_CALL) {
             DNML_FCALL_(s->fn_test, &s->rand_cases[i], got);
@@ -262,21 +263,21 @@ static inline void _dnml_run_suite(_libdnml_lsuite *s) {
             DNML_OFCALL_(s->fn_ref,  &s->rand_cases[i], exp);
         } if (_comp_pair(got, exp)) s->rand_cases_correct += 1;
         else {
-            uint32_t findex = (i + 1) - s->rand_cases_correct;
+            uint16_t findex = (i + 1) - s->rand_cases_correct;
             s->fail_rand_res[findex] = got;
             s->fail_rand_exp[findex] = exp;
         }
     }
 }
 static inline void _dnml_log_suite(_libdnml_lsuite *s) {
-    uint32_t fail_edge = s->edge_cases_count - s->edge_cases_correct;
-    uint32_t fail_rand = s->rand_cases_count - s->rand_cases_correct;
+    uint16_t fail_edge = s->edge_cases_count - s->edge_cases_correct;
+    uint16_t fail_rand = s->rand_cases_count - s->rand_cases_correct;
 
     if ((fail_edge + fail_rand) == 0 || !s->log_path) return;
     FILE *f = fopen(s->log_path, "w"); if (!f) return;
     fprintf(f, "======== %s FAIL LOG ========", s->suite_name);
     //* PRINTS EDGE CASES *//
-    for (uint32_t i = 0; i < fail_edge; ++i) {
+    for (uint8_t i = 0; i < fail_edge; ++i) {
         fprintf(f, "o) Edge case %" PRIu32 ":\n", i + 1);
         for (uint8_t j = 0; j < s->edge_cases[i].inc; ++j) {
             fprintf(f, "     in[%" PRIu8 "]: 0x%016" PRIx64 "\n", j, s->edge_cases[i].in[j]);
@@ -287,7 +288,7 @@ static inline void _dnml_log_suite(_libdnml_lsuite *s) {
     }
 
     //* PRINTS RANDOM CASES *//
-    for (uint32_t i = 0; i < fail_rand; ++i) {
+    for (uint16_t i = 0; i < fail_rand; ++i) {
         fprintf(f, "o) Rand case %" PRIu32 ":\n", i + 1);
         for (uint8_t j = 0; j < s->rand_nin; ++j) {
             fprintf(f, "     in[%" PRIu8 "]: 0x%016" PRIx64 "\n", j, s->fail_rand_in[i][j]);

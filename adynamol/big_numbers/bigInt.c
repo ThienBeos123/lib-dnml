@@ -2712,7 +2712,7 @@ inline void __BIGINT_CANONICALIZE__(bigInt *x) {
         x->cap = 1;
     }
     if (x->n > x->cap) x->n = x->cap;
-    if (x->sign != 1 || x->sign != -1) {
+    if (x->sign != 1 && x->sign != -1) {
         // Just reset to ensure value safety and certainty
         x->n = 0;
         x->sign = 1;
