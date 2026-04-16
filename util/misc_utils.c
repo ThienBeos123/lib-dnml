@@ -27,3 +27,11 @@ inline uint64_t _stou64(const char *buf, int buflen) {
         res = (res * 10) + digit;
     } return res;
 }
+inline int _itosn(uint64_t x, char *buf, int buflen) {
+    if (!buflen) return 0;
+    int i = buflen - 1, xlen = 0;
+    while (x) { if (i < 0) { break; }
+        buf[i] = '0' + (char)(x % 10);
+        x /= 10; --i;
+    } return xlen;
+}
