@@ -3,7 +3,7 @@
 
 
 //* ----------- INCLUDES & MACROS ----------- *//
-#include "__arch.h"
+#include "__platform.h"
 #include "__compiler.h"
 #include "asm/__sys_conn.h"
 #include <stdint.h>

@@ -3,7 +3,7 @@
 
 #include "../../system/asm/__asm_macros.h"
 #include "../../system/__compiler.h"
-#include "../../system/__arch.h"
+#include "../../system/__platform.h"
 
 
 // _rvi64_arith.S

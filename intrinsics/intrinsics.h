@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "../system/__compiler.h"
-#include "../system/__arch.h"
+#include "../system/__platform.h"
 #include "../system/__hwcaps.h"
 #include "../sconfigs/numeric_config.h"
 #include "../sconfigs/settings.h"

@@ -2,7 +2,7 @@
 #define ____DNML_AARCH64_CONN
 
 #include "../../system/asm/__asm_macros.h"
-#include "../../system/__arch.h"
+#include "../../system/__platform.h"
 #include "../../system/__compiler.h"
 
 // _arm64_arith.S

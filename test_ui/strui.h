@@ -20,7 +20,6 @@
 typedef enum res_type { NONE, BIGINT, STRING } operated_types;
 typedef enum _dnml_scase_type {
     _BITOS_CASE_CONV,
-    _BITOS_CASE_ASSIGN,
     _BITOS_CASE_PRINT,
     _BITOS_CASE_SERIAL, // Includes fwrite & serialize
     _BITOS_CASE_DUMP,
@@ -157,7 +156,10 @@ static str_res run_bitos_case(const _libdnml_scase *c, size_t bufsize, void *fn)
                 c->in.bitos_conv.base,
                 c->in.bitos_conv.uppercase
             ); snprintf(ret.str, bufsize, "%.*s", bufsize, buf);
-            return ret;
+            return ret; break;
+        }
+        case _BITOS_CASE_PRINT: {
+            
         }
     };
 }
