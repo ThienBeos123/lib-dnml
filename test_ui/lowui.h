@@ -22,31 +22,24 @@ typedef struct _libdnml_case {
 
 typedef struct _libdnml_lsuite {
     const char *suite_name;
-    void *fn_test;
-    void *fn_ref;
+    void *fn_test;  void *fn_ref;
     _dnml_call_style call_style;
     const char *log_path;
 
     _libdnml_case *edge_cases;
-    uint8_t edge_cases_count;
-    uint8_t edge_cases_correct;
-    _dnml_pair *fail_edge_res;
-    _dnml_pair *fail_edge_exp;
+    uint8_t edge_cases_count;   uint8_t edge_cases_correct;
+    _dnml_pair *fail_edge_res;  _dnml_pair *fail_edge_exp;
 
     _libdnml_case *rand_cases;
-    uint16_t rand_cases_count;
-    uint16_t rand_cases_correct;
-    uint8_t rand_nin;
-    uint64_t **fail_rand_in;
-    _dnml_pair *fail_rand_res;
-    _dnml_pair *fail_rand_exp;
+    uint16_t rand_cases_count;  uint16_t rand_cases_correct;    uint8_t rand_nin;
+    uint64_t **fail_rand_in;    _dnml_pair *fail_rand_res;      _dnml_pair *fail_rand_exp;
 } _libdnml_lsuite;
 
 
 
 //* =================== TEST CREATION FUNFCTIONS =================== *//
 static inline size_t resbuf_size(uint8_t ecount, uint16_t rcount) { return (ecount + rcount) << 1; }
-static inline void create_suite(
+static inline void create_lsuite(
     _libdnml_lsuite *curr_suite, const char *suite_name,
     uint8_t edge_count, uint16_t rand_count, uint8_t rand_nin, 
     _libdnml_case *edge_bank, _libdnml_case *rand_bank,

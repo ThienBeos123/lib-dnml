@@ -433,40 +433,36 @@ dnml_status __BIGINT_STRNLEN_INIT__(bigInt *x, const char* str, size_t len);
 dnml_status __BIGINT_BASENLEN_INIT__(bigInt *x, const char* str, uint8_t base, size_t len);
 
 
-
-//* -------------------- CONVERSIONS --------------------- */
-char* __BIGINT_TO_STRING__(const bigInt x);
-char* __BIGINT_TO_BASE__(const bigInt x, uint8_t base);
-char* __BIGINT_TO_STRINGF__(const bigInt x, uint8_t base, bool uppercase);
+//* ------------------------------ ASSIGNMENTS ------------------------------- */
+/* Truncative BigInt --> String */
+dnml_status __BIGINT_TTO_STR__(char* str, const bigInt x);
+dnml_status __BIGINT_TTO_STRB__(char* str, const bigInt x, uint8_t base);
+dnml_status __BIGINT_TTO_STRNLEN__(char* str, const bigInt x, size_t len);
+dnml_status __BIGINT_TTO_STRBNLEN__(char* str, const bigInt x, uint8_t base, size_t len);
+dnml_status __BIGINT_TTO_STRF__(char* str, const bigInt x, uint8_t base, size_t len);
+/* Safe BigInt --> String */
+dnml_status __BIGINT_TOSTR__(char* str, const bigInt x);
+dnml_status __BIGINT_TOSTRB__(char* str, const bigInt x, uint8_t base);
+dnml_status __BIGINT_TO_STRNLEN__(char* str, const bigInt x, size_t len);
+dnml_status __BIGINT_TO_STRBNLEN__(char* str, const bigInt x, uint8_t base, size_t len);
+dnml_status __BIGINT_TO_STRF(char* str, const bigInt x, uint8_t base, size_t len);
+//* -------------------------- BigInt Conversions -------------------------- *//
 bigInt __BIGINT_FROM_STRING__(const char* str, dnml_status *err);
 bigInt __BIGINT_FROM_BASE__(const char* str, uint8_t base, dnml_status *err);
 bigInt __BIGINT_FROM_STRNLEN__(const char* str, size_t len, dnml_status *err);
 bigInt __BIGINT_FROM_BASENLEN__(const char* str, uint8_t base, size_t len, dnml_status *err);
-
-
-
-//* -------------------- ASSIGNMENTS --------------------- */
-/* --------- Truncative BigInt --> String ---------- */
-dnml_status __BIGINT_TSET_STRING__(char* str, const bigInt x);
-dnml_status __BIGINT_TSET_BASE__(char* str, const bigInt x, uint8_t base);
-dnml_status __BIGINT_TSET_STRNLEN__(char* str, const bigInt x, size_t len);
-dnml_status __BIGINT_TSET_BASENLEN__(char* str, const bigInt x, uint8_t base, size_t len);
-/* ------------- Safe BigInt --> String ------------ */
-dnml_status __BIGINT_SET_STRING__(char* str, const bigInt x);
-dnml_status __BIGINT_SET_BASE__(char* str, const bigInt x, uint8_t base);
-dnml_status __BIGINT_SET_STRNLEN__(char* str, const bigInt x, size_t len);
-dnml_status __BIGINT_SET_BASENLEN__(char* str, const bigInt x, uint8_t base, size_t len);
-/* ----------- Default String --> BigInt ----------- */
+//* -------------------------- BigInt Assignments -------------------------- *//
+/* Default String --> BigInt */
 dnml_status __BIGINT_GET_STRING__(bigInt *x, const char *str);
 dnml_status __BIGINT_GET_BASE__(bigInt *x, const char *str, uint8_t base);
 dnml_status __BIGINT_GET_STRNLEN__(bigInt *x, const char *str, size_t len);
 dnml_status __BIGINT_GET_BASENLEN__(bigInt *x, const char *str, uint8_t base, size_t len);
-/* --------- Truncative String --> BigInt ---------- */
+/* Truncative String --> BigInt */
 dnml_status __BIGINT_TGET_STRING__(bigInt *x, const char *str);
 dnml_status __BIGINT_TGET_BASE__(bigInt *x, const char *str, uint8_t base);
 dnml_status __BIGINT_TGET_STRNLEN__(bigInt *x, const char *str, size_t len);
 dnml_status __BIGINT_TGET_BASENLEN__(bigInt *x, const char *str, uint8_t base, size_t len);
-/* ------------- Safe String --> BigInt ------------ */
+/* Safe String --> BigInt */
 dnml_status __BIGINT_SGET_STRING__(bigInt *x, const char *str);
 dnml_status __BIGINT_SGET_BASE__(bigInt *x, const char *str, uint8_t base);
 dnml_status __BIGINT_SGET_STRNLEN__(bigInt *x, const char *str, size_t len);

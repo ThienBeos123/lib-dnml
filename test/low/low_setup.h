@@ -47,7 +47,7 @@
     ecount, rcount, rin,        \
     edge, rand, ribuf, resbuf,  \
     test_fn, ref_fn, logp       \
-) do { create_suite( \
+) do { create_lsuite( \
     suite, name,            \
     ecount, rcount, rin,    \
     edge, rand,             \
