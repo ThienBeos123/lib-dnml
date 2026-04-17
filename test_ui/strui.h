@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <inttypes.h>
 #include <string.h>
 #include <time.h>
@@ -15,6 +16,8 @@
 
 
 //* =========== TYPE DEFINITIONS =========== *//
+// Small, supporting types
+typedef enum res_type { NONE, BIGINT, STRING } operated_types;
 typedef enum _dnml_scase_type {
     _BITOS_CASE_CONV,
     _BITOS_CASE_ASSIGN,
@@ -29,33 +32,51 @@ typedef enum _dnml_scase_type {
     _STOBI_CASE_DESERIAL,
     _STOBI_CASE_FREAD
 } _dnml_scase_type;
-typedef struct {
-    enum { BIGINT, STRING, STATUS } type;
-    union { bigInt bi; dnml_status stat; const char str[]; } data;
+
+
+// Input and Results containers
+typedef struct str_res {
+/* Notes:
+    Instead of using a union to store
+    the varying return types of I/O operations,
+    we seperate results into entirely different struct fields.
+    This is for:
+        - Using a union won't allow for the definition
+            of an incomplete array, forcing the usage of pointers
+            ----> Complicated testing and storing 
+
+        - Incomplete struct fields allow for the independent
+            storage of the string by the struct header, simplifying
+            string storage instead of relying on external storage
+*/
+    operated_types type;
+    dnml_status status;
+    bigInt bi;
+    char str[];
 } str_res;
 typedef union sinput_cases{
     // BigInt --> String (BI TO S)
-        struct { const bigInt x; uint8_t base; bool uppercase; } bitos_conv;
-        struct { char* str; const bigInt x; uint8_t base; size_t len; } bitos_assign;
-        struct { FILE *stream; const bigInt x; uint8_t base; bool uppercase; } bitos_print;
-        struct { FILE *stream; const bigInt x; } bitos_serial;
-        struct { const bigInt x; bool uppercase; } bitos_dump;
-        // String --> BigInt (S TO BI)
-        struct { bigInt *x; const char* str; uint8_t base; size_t len; } stobi_init;
-        struct { const char* str; uint8_t base; size_t len; dnml_status *err; } stobi_conv;
-        struct { bigInt *x; const char *str; uint8_t base; size_t len; } stobi_assign;
-        struct { FILE *stream; bigInt *x; uint8_t base; } stobi_scan;
-        struct { FILE *stream; const char* str; size_t len; dnml_status *err; } stobi_deserial;
-        struct { FILE *stream; bigInt *x; } stobi_fread;
+    struct { char* str; size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv;
+    struct { FILE *stream; const bigInt x; uint8_t base; bool uppercase; } bitos_print;
+    struct { FILE *stream; const bigInt x; } bitos_serial;
+    struct { const bigInt x; bool uppercase; } bitos_dump;
+    // String --> BigInt (S TO BI)
+    struct { bigInt *x; const char* str; size_t len; uint8_t base; } stobi_init;
+    struct { const char* str; size_t len; uint8_t base; dnml_status *err; } stobi_conv;
+    struct { bigInt *x; const char *str; size_t len; uint8_t base; } stobi_assign;
+    struct { FILE *stream; bigInt *x; uint8_t base; } stobi_scan;
+    struct { FILE *stream; const char* str; size_t len; dnml_status *err; } stobi_deserial;
+    struct { FILE *stream; bigInt *x; } stobi_fread;
 } sinput_cases;
 
+
+// Cases & Suites
 typedef struct _libdnml_scase {
     uint8_t inc;
     _dnml_scase_type case_type;
     sinput_cases in;
     str_res exp;
 } _libdnml_scase;
-
 typedef struct _libdnml_str_suite {
     const char *suite_name;
     void *fn_test;  void *fn_ref;
@@ -114,27 +135,29 @@ static inline void create_str_session(
 
 //* =================== FUNCTION-GENERALIZATION DISPATCHER =================== *//
 // BigInt --> String Function signatures
-typedef char* (*bitos_conv_fn)(const bigInt, uint8_t, bool);
-typedef void (*bitos_assign_fn)(char*, const bigInt, uint8_t, size_t);
+typedef dnml_status (*bitos_conv_fn)(char*, size_t, const bigInt, uint8_t, bool);
 typedef void (*bitos_print_fn)(FILE*, const bigInt, uint8_t, bool);
 typedef void (*bitos_serial_fn)(FILE*, const bigInt);
 typedef void (*bitos_dump_fn)(const bigInt, bool uppercase);
 // String --> BigInt Function signatures
-typedef void (*stobi_init_fn)(bigInt*, const char*, uint8_t, size_t);
-typedef void (*stobi_conv_fn)(const char*, uint8_t, size_t, dnml_status*);
-typedef void (*stobi_assign_fn)(bigInt*, const char*, uint8_t, size_t);
+typedef void (*stobi_init_fn)(bigInt*, const char*, size_t, uint8_t);
+typedef void (*stobi_conv_fn)(const char*, size_t uint8_t, dnml_status*);
+typedef void (*stobi_assign_fn)(bigInt*, const char*, size_t, uint8_t);
 typedef void (*stobi_scan_fn)(FILE*, bigInt*, uint8_t);
 typedef void (*stobi_deserial_fn)(FILE*, const char*, size_t, dnml_status);
 typedef void (*stobi_fread_fn)(FILE*, bigInt*);
 
-static str_res run_case(const _libdnml_scase *c, void *fn) {
+static str_res run_bitos_case(const _libdnml_scase *c, size_t bufsize, void *fn) {
     switch (c->case_type) {
         case _BITOS_CASE_CONV: {
-            char *res_str = ((bitos_conv_fn)fn)(
+            char buf[bufsize]; str_res ret = {.type = STRING};
+            ret.status = ((bitos_conv_fn)fn)(
+                buf, bufsize, 
                 c->in.bitos_conv.x,
                 c->in.bitos_conv.base,
                 c->in.bitos_conv.uppercase
-            );
+            ); snprintf(ret.str, bufsize, "%.*s", bufsize, buf);
+            return ret;
         }
     };
 }
