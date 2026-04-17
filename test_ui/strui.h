@@ -29,13 +29,13 @@ typedef enum {
     _STOBI_CASE_DESERIAL,
     _STOBI_CASE_FREAD
 } _dnml_case_type;
+typedef struct {
+    enum { BIGINT, STRING, STATUS };
+    union { bigInt bi; const char* str; dnml_status stat; };
+} str_res;
 
-
-typedef struct _libdnml_case {
-    uint8_t inc;
-    _dnml_case_type case_type;
-    union {
-        // BigInt --> String (BI TO S)
+typedef union input_cases{
+    // BigInt --> String (BI TO S)
         struct { const bigInt x; uint8_t base; bool uppercase; } bitos_conv;
         struct { char* str; const bigInt x; uint8_t base; size_t len; } bitos_assign;
         struct { FILE *stream; const bigInt x; uint8_t base; bool uppercase; } bitos_print;
@@ -48,7 +48,11 @@ typedef struct _libdnml_case {
         struct { FILE *stream; bigInt *x; uint8_t base; } stobi_scan;
         struct { FILE *stream; const char* str; size_t len; dnml_status *err; } stobi_deserial;
         struct { FILE *stream; bigInt *x; } stobi_fread;
-    } in;
+} input_cases;
+typedef struct _libdnml_scase {
+    uint8_t inc;
+    _dnml_case_type case_type;
+    input_cases in;
     union {
         const char *str;
         bigInt x;
@@ -56,16 +60,32 @@ typedef struct _libdnml_case {
     } exp;
 } _libdnml_case;
 
+
 typedef struct _libdnml_lsuite {
     const char *suite_name;
     void *fn_test;
     void *fn_ref;
     _dnml_call_style call_style;
     const char *log_path;
+
+    // Edge cases storage
+    _libdnml_scase *edge;
+    uint8_t ecount;
+    uint8_t ecorrect;
+    str_res *fail_eres;
+    str_res *fail_eexp;
+
+    // Random cases storage
+    _libdnml_scase *rand;
+    uint16_t rcount;
+    uint16_t rcorrect;
+    uint8_t rnin;
+    input_cases *fail_rin;
+    str_res *fail_rres;
+    str_res *fail_rexp;
 } _libdnml_lsuite;
 
 
-//* =================== TEST CREATION FUNFCTIONS =================== *//
 //* =================== TEST CREATION FUNFCTIONS =================== *//
 
 
