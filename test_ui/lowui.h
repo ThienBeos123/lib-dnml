@@ -181,7 +181,7 @@ static inline void _dnml_log_suite(_libdnml_lsuite *s) {
             fprintf(f, "     in[%" PRIu8 "]: 0x%016" PRIx64 "\n", j, s->edge_cases[i].in[j]);
         } fprintf(f, "     expected: <0x%016" PRIx64 ", 0x%016" PRIx64 ">\n", 
             s->fail_edge_exp[i].first, s->fail_edge_exp[i].second);
-        fprintf(f, "     got: <0x%016" PRIx64 ", 0x%016" PRIx64 ">\n", 
+        fprintf(f, "     got:      <0x%016" PRIx64 ", 0x%016" PRIx64 ">\n", 
             s->fail_edge_res[i].first, s->fail_edge_res[i].second);
     }
 

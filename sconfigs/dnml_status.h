@@ -24,5 +24,29 @@ typedef enum ___44594E414D4F4C_737461747573___ {
     FILE_ILLEGAL                // 202
 } dnml_status;
 
+static inline void _print_dnml_status(dnml_status a, FILE *f) {
+    switch (a) {
+        case BIGINT_SUCCESS:    fputs("BIGINT_SUCCESS", f); break;
+        case BIGINT_NULL:       fputs("BIGINT_NULL", f); break;
+        case BIGINT_ERR_INVAL:  fputs("BIGINT_SUCCESS", f); break;
+        case BIGINT_ERR_RANGE:  fputs("BIGINT_SUCCESS", f); break;
+        case BIGINT_ERR_DOMAIN: fputs("BIGINT_SUCCESS", f); break;
+
+        case STR_SUCCESS:               fputs("BIGINT_SUCCESS", f); break;
+        case STR_NULL:                  fputs("BIGINT_SUCCESS", f); break;
+        case STR_EMPTY:                 fputs("BIGINT_SUCCESS", f); break;
+        case STR_INVALID_CAP:           fputs("BIGINT_SUCCESS", f); break;
+        case STR_INCOMPLETE:            fputs("BIGINT_SUCCESS", f); break;
+        case STR_INVALID_SIGN:          fputs("BIGINT_SUCCESS", f); break;
+        case STR_INVALID_BASE_PREFIX:   fputs("BIGINT_SUCCESS", f); break;
+        case STR_INVALID_BASE:          fputs("BIGINT_SUCCESS", f); break;
+        case STR_INVALID_DIGIT:         fputs("BIGINT_SUCCESS", f); break;
+
+        case FILE_ERR_PARSE:    fputs("BIGINT_SUCCESS", f); break;
+        case FILE_INVAL:        fputs("BIGINT_SUCCESS", f); break;
+        case FILE_ILLEGAL:      fputs("BIGINT_SUCCESS", f); break;
+    }
+}
+
 
 #endif

@@ -2673,55 +2673,38 @@ bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_st
 
 
 //todo ====================================== 5. GENERAL UTILITIES ===================================== *//
-void __BIGINT_LIMB_DUMP__(const bigInt x) {
+void __BIGINT_LIMB_DUMP__(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
-    puts  ("---------- DECIMAL LIMB DUMP ----------\n");
-    printf("Limbs' starting location: %p\n", (void*)(x.limbs));
-    puts  ("-----------------------------------------");
-    #if __ARCH_X86_64__ || __ARCH_ARM64__
-        // PRINTING LIMB DUMP FOR 64 BITS ARCHITECTURE
-        puts("memloc              offset     value                   ASCII\n");
-    #else
-        // PRINTING LIMB DUMP FOR 32 BITS ARCHITECTURE
-        puts("memloc      offset      value                   ASCII\n");
-    #endif
+    fputs  (        "--- DECIMAL LIMB DUMP --------------------------------------\n", stream);
+    fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
+    fputs  (        "------------------------------------------------------------\n", stream);
+    fputs(          "memloc              offset     value                   ASCII\n", stream);
     char ascii[8];
     for (size_t i = 0; i < x.cap; ++i) {
         _ASCII_COLUMN__(x.limbs[i], &ascii);
-        printf("%p %#9zx %20" PRIu64 "%.8s", &x.limbs[i], i, x.limbs[i], ascii);
-    } putchar('\n');
+        fprintf(stream, "%p %#9zx %20" PRIu64 "%.8s", &x.limbs[i], i, x.limbs[i], ascii);
+    } fputc('\n', stream);
+    fputs(          "--------------------------------------------------------\n", stream);
 }
-void __BIGINT_HEX_DUMP__(const bigInt x, bool uppercase) {
+void __BIGINT_HEX_DUMP__(FILE *stream, const bigInt x, bool uppercase) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
-    puts  ("------------- HEX LIMB DUMP -------------\n");
-    printf("Limbs' starting location: %p\n", (void*)(x.limbs));
-    puts  ("-----------------------------------------\n");
-    #if __ARCH_X86_64__ || __ARCH_ARM64__
-        // PRINTING LIMB DUMP FOR 64 BITS ARCHITECTURE
-        puts("memloc              offset     value               ASCII\n");
-    #else
-        // PRINTING LIMB DUMP FOR 32 BITS ARCHITECTURE
-        puts("memloc      offset      value               ASCII\n");
-    #endif
+    fputs  (        "--- HEX LIMB DUMP --------------------------------------\n", stream);
+    fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
+    fputs  (        "--------------------------------------------------------\n", stream);
+    fputs(          "memloc              offset     value               ASCII\n", stream);
     char ascii[8];
     for (size_t i = 0; i < x.cap; ++i) {
         _ASCII_COLUMN__(x.limbs[i], &ascii);
-        printf("%p %#9zx %#16" PRIX64 "%.8s", &x.limbs[i], i, x.limbs[i], ascii);
-    } putchar('\n');
-    puts  ("-----------------------------------------\n");
+        fprintf(stream, "%p %#9zx %#16" PRIX64 "%.8s", &x.limbs[i], i, x.limbs[i], ascii);
+    } fputc('\n', stream);
+    fputs(          "--------------------------------------------------------\n", stream);
 }
-void __BIGINT_BIN_DUMP__(const bigInt x) {
+void __BIGINT_BIN_DUMP__(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
-    puts  ("----------- BINARY LIMB DUMP ----------\n");
-    printf("Limbs' starting location: %p\n", (void*)(x.limbs));
-    puts  ("-----------------------------------------");
-    #if __ARCH_X86_64__ || __ARCH_ARM64__
-        // PRINTING LIMB DUMP FOR 64 BITS ARCHITECTURE
-        puts("memloc              offset     value                                                                    ASCII\n");
-    #else
-        // PRINTING LIMB DUMP FOR 32 BITS ARCHITECTURE
-        puts("memloc      offset      value                                                                    ASCII\n");
-    #endif
+    fputs  (        "--- BINARY LIMB DUMP ----------------------------------------------------------------------------------------\n", stream);
+    fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
+    fputs  (        "-------------------------------------------------------------------------------------------------------------\n", stream);
+    fputs(          "memloc              offset     value                                                                    ASCII\n", stream);
     limb_t temp_val; char d[64], ascii[8];
     for (size_t i = 0; i < x.cap; ++i) {
         temp_val = x.limbs[i];
@@ -2731,19 +2714,20 @@ void __BIGINT_BIN_DUMP__(const bigInt x) {
             temp_val >>= 1;
         }
         _ASCII_COLUMN__(x.limbs[i], &ascii);
-        printf("%p %#9zx %.64s %.8s", &x.limbs[i], i, d, ascii);
-    } putchar('\n');
+        fprintf(stream, "%p %#9zx %.64s %.8s", &x.limbs[i], i, d, ascii);
+    } fputc('\n', stream);
+    fputs(          "-------------------------------------------------------------------------------------------------------------\n", stream);
 } 
-void __BIGINT_INFO__(const bigInt x) {
+void __BIGINT_INFO__(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
-    puts    ("-------- [ BIGINT DEBUG INFO ] --------\n");
-    printf  ("Adress:       %p\n", x.limbs);
-    printf  ("Sign:         %" PRId8 " %s\n", x.sign, (x.sign == -1) ? "(Negative)" : "(Positive)");
-    printf  ("Size:         %zu limbs (Used)\n", x.n);
-    printf  ("Capacity:     %zu limbs (Total)\n\n", x.cap);
+    fputs    (        "-------- [ BIGINT DEBUG INFO ] --------\n", stream);
+    fprintf  (stream, "Adress:       %p\n", x.limbs);
+    fprintf  (stream, "Sign:         %" PRId8 " %s\n", x.sign, (x.sign == -1) ? "(Negative)" : "(Positive)");
+    fprintf  (stream, "Size:         %zu limbs (Used)\n", x.n);
+    fprintf  (stream, "Capacity:     %zu limbs (Total)\n\n", x.cap);
 
-    puts    ("Limb Data (Little-Endian: LSL -> MSL)\n");
-    for (size_t i = 0; i < x.cap; ++i) printf("[%10zu]: %#16" PRIX64, x.limbs[i], i);
-    puts  ("-----------------------------------------\n");
+    fputs    (        "Limb Data (Little-Endian: LSL -> MSL)\n", stream);
+    for (size_t i = 0; i < x.cap; ++i) fprintf(stream, "[%10zu]: %#16" PRIX64, x.limbs[i], i);
+    fputs  (          "-----------------------------------------\n", stream);
 }
 
