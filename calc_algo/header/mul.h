@@ -10,8 +10,8 @@ extern "C" {
 
 #include "../../system/__include.h"
 #include "../../system/__compiler.h"
-#include "../../sconfigs/numeric_config.h"
-#include "../../sconfigs/_ctx.h"
+#include "../../sconfigs/settings/numeric_config.h"
+#include "../../sconfigs/memory/_ctx.h"
 
 #include "../../intrinsics/intrinsics.h"
 #include "../../util/util.h"

@@ -7,10 +7,7 @@ extern "C" {
 
 #include "../system/__include.h"
 #include "../system/__compiler.h"
-#include "../sconfigs/settings.h"
-#include "../sconfigs/numeric_config.h"
-#include "../sconfigs/dnml_status.h"
-#include "../sconfigs/arena.h"
+#include "../sconfigs/settings/settings.h"
 
 //todo =========================================== TYPE DEFINITION =============================================
 #define BIGINT_LIMBS_BITS 64

@@ -2,8 +2,8 @@
 #define dnml_bi_func
 
 #include "../../system/__include.h"
-#include "../../sconfigs/settings.h"
-#include "../../sconfigs/arena.h"
+#include "../../sconfigs/settings/settings.h"
+#include "../../sconfigs/memory/arena.h"
 #include "../../sconfigs/dnml_status.h"
 
 #include "../../intrinsics/intrinsics.h"
@@ -509,7 +509,7 @@ dnml_status __BIGINT_FREAD__(FILE *stream, bigInt *x);
 dnml_status __BIGINT_FSREAD__(FILE *stream, bigInt *x);
 dnml_status __BIGINT_FTREAD__(FILE *stream, bigInt *x);
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
-char* __BIGINT_SERIALIZE__(FILE *stream, const bigInt x);
+void __BIGINT_SERIALIZE__(char *buf, size_t len, const bigInt x, size_t *written);
 bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_status *err);
 
 

@@ -7,8 +7,8 @@
 #include "../system/__compiler.h"
 #include "../system/__platform.h"
 #include "../system/__hwcaps.h"
-#include "../sconfigs/numeric_config.h"
-#include "../sconfigs/settings.h"
+#include "../sconfigs/settings/numeric_config.h"
+#include "../sconfigs/settings/settings.h"
 
 #include "arm64/_arm64_conn.h"
 #include "x86_64/_x86_conn.h"

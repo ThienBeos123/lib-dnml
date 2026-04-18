@@ -16,8 +16,8 @@ extern "C" {
 #include "../intrinsics/intrinsics.h"
 
 #include "../system/__compiler.h"
-#include "../sconfigs/numeric_config.h"
-#include "../sconfigs/_ctx.h"
+#include "../sconfigs/settings/numeric_config.h"
+#include "../sconfigs/memory/_ctx.h"
 #include "aconv_macros.h"
 
 /* ---------------------- */

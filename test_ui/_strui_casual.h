@@ -12,6 +12,7 @@
 
 #include "../adynamol/big_numbers/bigNums.h"
 #include "../sconfigs/dnml_status.h"
+#include "../sconfigs/memory/_scratch.h"
 #include "_test_base.h"
 
 
@@ -19,17 +20,13 @@
 // Small, supporting types
 typedef enum res_type { NONE, BIGINT, STRING } operated_types;
 typedef enum _dnml_scase_type {
-    _BITOS_CASE_CONV,
-    _BITOS_CASE_PRINT,
-    _BITOS_CASE_SERIAL, // Includes fwrite & serialize
+    _BITOS_CASE_CONV,       _BITOS_CASE_PRINT,     
+    _BITOS_CASE_SERIAL,     _BITOS_CASE_FWRITE,
     _BITOS_CASE_DUMP,
 
-    _STOBI_CASE_INIT,
-    _STOBI_CASE_CONV,
-    _STOBI_CASE_ASSIGN,
-    _STOBI_CASE_SCAN,
-    _STOBI_CASE_DESERIAL,
-    _STOBI_CASE_FREAD
+    _STOBI_CASE_INIT,       _STOBI_CASE_ASSIGN,
+    _STOBI_CASE_CONV,       _STOBI_CASE_SCAN,
+    _STOBI_CASE_DESERIAL,   _STOBI_CASE_FREAD
 } _dnml_scase_type;
 
 
@@ -50,14 +47,15 @@ typedef struct str_res {
 */
     operated_types type;
     dnml_status status;
-    bigInt bi;
+    union { bigInt bi; size_t len; } data;
     char str[];
 } str_res;
 typedef union sinput_cases{
     // BigInt --> String (BI TO S)
     struct { char* str; size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv;
-    struct { FILE *stream; const bigInt x; uint8_t base; bool uppercase; } bitos_print;
-    struct { FILE *stream; const bigInt x; } bitos_serial;
+    struct { const bigInt x; uint8_t base; bool uppercase; } bitos_print;
+    struct { char *buf; size_t len; const bigInt x; } bitos_serial;
+    struct { const bigInt x; } bitos_fwrite;
     struct { const bigInt x; bool uppercase; } bitos_dump;
     // String --> BigInt (S TO BI)
     struct { bigInt *x; const char* str; size_t len; uint8_t base; } stobi_init;
@@ -71,7 +69,6 @@ typedef union sinput_cases{
 
 // Cases & Suites
 typedef struct _libdnml_scase {
-    uint8_t inc;
     _dnml_scase_type case_type;
     sinput_cases in;
     str_res exp;
@@ -134,9 +131,10 @@ static inline void create_str_session(
 
 //* =================== FUNCTION-GENERALIZATION DISPATCHER =================== *//
 // BigInt --> String Function signatures
-typedef dnml_status (*bitos_conv_fn)(char*, size_t, const bigInt, uint8_t, bool);
-typedef void (*bitos_print_fn)(FILE*, const bigInt, uint8_t, bool);
-typedef void (*bitos_serial_fn)(FILE*, const bigInt);
+typedef dnml_status (*bitos_conv_fn)(char*, size_t, const bigInt, uint8_t, bool, size_t*);
+typedef void (*bitos_fprint_fn)(FILE*, const bigInt, uint8_t, bool);
+typedef void (*bitos_serial_fn)(char*, size_t, const bigInt, size_t*);
+typedef void (*bitos_fwrite_fn)(FILE*, const bigInt);
 typedef void (*bitos_dump_fn)(const bigInt, bool uppercase);
 // String --> BigInt Function signatures
 typedef void (*stobi_init_fn)(bigInt*, const char*, size_t, uint8_t);
@@ -146,23 +144,68 @@ typedef void (*stobi_scan_fn)(FILE*, bigInt*, uint8_t);
 typedef void (*stobi_deserial_fn)(FILE*, const char*, size_t, dnml_status);
 typedef void (*stobi_fread_fn)(FILE*, bigInt*);
 
-static str_res run_bitos_case(const _libdnml_scase *c, size_t bufsize, void *fn) {
+static str_res *alloc_res(dnml_dratch*a, size_t len) {
+    str_res *r = (str_res*)(dratch_alloc(a, sizeof(str_res) + len + 1));
+    r->type = STRING;
+    r->data.len = len;
+    return r;
+}
+static str_res *run_bitos_case(const _libdnml_scase *c, void *fn, dnml_dratch *buf, dnml_dratch *res) {
     switch (c->case_type) {
         case _BITOS_CASE_CONV: {
-            char buf[bufsize]; str_res ret = {.type = STRING};
-            ret.status = ((bitos_conv_fn)fn)(
-                buf, bufsize, 
+            size_t bufsize = c->in.bitos_conv.len, bitos_mark = dratch_mark(buf);
+            char *tmp = (char*)(dratch_alloc(buf, bufsize + 1)); size_t written = 0;
+            dnml_status st = ((bitos_conv_fn)fn)(tmp, bufsize,
                 c->in.bitos_conv.x,
                 c->in.bitos_conv.base,
-                c->in.bitos_conv.uppercase
-            ); snprintf(ret.str, bufsize, "%.*s", bufsize, buf);
-            return ret; break;
+                c->in.bitos_conv.uppercase, &written
+            ); size_t len = (written < bufsize) ? written : 
+                (bufsize ? bufsize - 1 : 0);
+            if (bufsize) tmp[len] = '\0';
+
+            str_res *ret = alloc_res(res, len);
+            ret->status = st; memcpy(ret->str, tmp, len + 1);
+            dratch_reset(buf, bitos_mark); return ret;
         }
         case _BITOS_CASE_PRINT: {
+            FILE *f = tmpfile(); if (!f) return NULL;
+            ((bitos_fprint_fn)fn)(f,
+                c->in.bitos_print.x,
+                c->in.bitos_print.base,
+                c->in.bitos_print.uppercase
+            ); fflush(f); rewind(f);
+
+            size_t cap = 1024, len = 0, bitos_mark = dratch_mark(buf);
+            char *tmp = (char*)dratch_alloc(buf, cap);
+            while (1) {
+                if (len == cap) dratch_grow(buf, len);
+                size_t n = fread(tmp + len, 1, cap - len, f);
+                len += n; if (feof(f)) break;
+            } tmp[len] = '\0'; fclose(f);
+
+            str_res *ret = alloc_res(res, len);
+            ret->status = STR_SUCCESS;
+            memcpy(ret->str, tmp, len + 1);
+            dratch_reset(buf, bitos_mark); return ret;
+        }
+        case _BITOS_CASE_SERIAL: {
+            size_t bufsize = c->in.bitos_serial.len, bitos_mark = dratch_mark(buf);
+            char *tmp = (char*)dratch_alloc(buf, bufsize + 1); size_t written = 0;
+            ((bitos_serial_fn)fn)(tmp, bufsize, c->in.bitos_serial.x, &written); 
+            size_t len = (written < bufsize) ? written : 
+                (bufsize ? bufsize - 1 : 0);
+            if (bufsize) tmp[len] = '\0';
+
+            str_res *ret = alloc_res(res, len);
+            ret->status = STR_SUCCESS; memcpy(ret->str, tmp, len + 1);
+            dratch_reset(buf, bitos_mark); return ret;
+        }
+        case _BITOS_CASE_DUMP: {
             
         }
     };
 }
+static str_res run_stobi_case() {}
 
 
 
