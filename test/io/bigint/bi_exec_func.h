@@ -20,7 +20,10 @@ typedef struct { const bigInt x; bool uppercase; } bitos_util_in;
 // STOBI Input Structs
 typedef struct { const char *str; size_t len; uint8_t base; } stobi_init_in;
 typedef struct { const char *str; size_t len; uint8_t base; } stobi_conv_in;
-typedef struct { const char *str; size_t len; uint8_t base; } stobi_assign_in;
+typedef struct { const char *str; size_t len; uint8_t base; size_t bi_size; } stobi_assign_in;
+typedef struct { FILE *stream; uint8_t base; size_t bi_size; } stobi_scan_in;
+typedef struct { FILE *stream; size_t bi_size; } stobi_fread_in;
+typedef struct { const char* str; size_t len; } stobi_deserialize_in;
 
 
 
@@ -196,7 +199,7 @@ static inline void exec_bitos_sfputf(const void *vin, str_res *out, void *ctx) {
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
     out->data.len = len; fclose(tmp);
 }
-// Raw Input
+// Stream-based Raw Output - fwrite
 static inline void exec_bitos_fwrite(const void *vin, str_res *out, void *ctx) {
     bitos_fwrite_in *in = vin; out->type = STRING;
     FILE *tmp = tmpfile(); if (tmp == NULL) { 
@@ -337,68 +340,108 @@ static inline void exec_stobi_from_strnb(const void *vin, str_res *out, void *ct
 // Default Assignments - get_str - GROWS
 static inline void exec_stobi_get_str(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_get_str(&out->data.bi, in->str);
 }
 static inline void exec_stobi_get_strb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_get_strb(&out->data.bi, in->str, in->base);
 }
 static inline void exec_stobi_get_strn(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_get_strn(&out->data.bi, in->str, in->len);
 }
 static inline void exec_stobi_get_strnb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_get_strnb(&out->data.bi, in->str, in->len, in->base);
 }
 // Truncative Assignments - tget_str - TRUNCATE
 static inline void exec_stobi_tget_str(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_tget_str(&out->data.bi, in->str);
 }
 static inline void exec_stobi_tget_strb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_tget_strb(&out->data.bi, in->str, in->base);
 }
 static inline void exec_stobi_tget_strn(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_tget_strn(&out->data.bi, in->str, in->len);
 }
 static inline void exec_stobi_tget_strnb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_tget_strnb(&out->data.bi, in->str, in->len, in->base);
 }
 // Safe / Strict Assignments - sget_str - RETURNS AN ERROR
 static inline void exec_stobi_sget_str(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_sget_str(&out->data.bi, in->str);
 }
 static inline void exec_stobi_sget_strb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_sget_strb(&out->data.bi, in->str, in->base);
 }
 static inline void exec_stobi_sget_strn(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_sget_strn(&out->data.bi, in->str, in->len);
 }
 static inline void exec_stobi_sget_strnb(const void *vin, str_res *out, void *ctx) {
     const stobi_assign_in *in = vin;
-    out->type = BIGINT;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
     out->status = bigInt_sget_strnb(&out->data.bi, in->str, in->len, in->base);
 }
-
-
+// Stream-based Input Scanning - fscan
+static inline void exec_stobi_fscan(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_fscan(in->stream, &out->data.bi);
+}
+static inline void exec_stobi_fscanb(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_fscanb(in->stream, &out->data.bi, in->base);
+}
+static inline void exec_stobi_fsscan(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_fsscan(in->stream, &out->data.bi);
+}
+static inline void exec_stobi_fsscanb(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_fsscanb(in->stream, &out->data.bi, in->base);
+}
+static inline void exec_stobi_ftscan(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_ftscan(in->stream, &out->data.bi);
+}
+static inline void exec_stobi_ftscanb(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_ftscanb(in->stream, &out->data.bi, in->base);
+}
+// Stream-based Raw Input - fread
+static inline void exec_stobi_fread(const void *vin, str_res *out, void *ctx) {
+    stobi_scan_in *in = vin;
+    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
+    out->status = bigInt_fread(in->stream, &out->data.bi);
+}
+static inline void exec_stobi_deserialize(const void *vin, str_res *out, void *ctx) {
+    stobi_deserialize_in *in = vin;
+    out->type = BIGINT;
+    out->data.bi = bigInt_deserialize(in->str, in->len, &out->status);
+}
 
 
 #endif

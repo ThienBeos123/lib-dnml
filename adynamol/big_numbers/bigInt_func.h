@@ -15,7 +15,7 @@
 //* ------------- CONSTRUCTORS & DESCTRUCTORS -------------- */
 inline void __BIGINT_FREE__(bigInt *x); // Destructor
 void __BIGINT_EMPTY_INIT__(bigInt *__bigInteger); // Default Constructor
-void __BIGINT_LIMBS_INIT__(bigInt *__bigInteger, size_t __fixed_size);
+void bigInt_linit(bigInt *__bigInteger, size_t __fixed_size);
 void __BIGINT_STANDARD_INIT__(bigInt *__bigInteger, const bigInt __preBigInt);
 void __BIGINT_UI64_INIT__(bigInt *__bigInteger, uint64_t __unsigned_int);
 void __BIGINT_I64_INIT__(bigInt *__bigInteger, int64_t __signed_int);
@@ -51,7 +51,7 @@ void __BIGINT_LD_INIT__(bigInt *__bigInteger, long double __float );
                                                                             \
         /* BigInt Initialization */                                         \
         bigInt                     __BIGINT_STANDARD_INIT__,                \
-        size_t                     __BIGINT_LIMBS_INIT__,                   \
+        size_t                     bigInt_linit,                            \
                                                                             \
         /* Empty Initialization */                                          \
         default:                    __BIGINT_EMPTY_INIT__                   \
@@ -438,31 +438,31 @@ void bigInt_sfput(FILE *stream, const bigInt x);
 void bigInt_sfputb(FILE *stream, const bigInt x, uint8_t base);
 void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase);
 /* --------- Standard Stream (stdin) INPUT ---------  */
-dnml_status __BIGINT_GET__(bigInt *x);
-dnml_status __BIGINT_GETB__(bigInt *x, uint8_t base);
-dnml_status __BIGINT_SGET__(bigInt *x);
-dnml_status __BIGINT_SGETB__(bigInt *x, uint8_t base);
-dnml_status __BIGINT_TGET__(bigInt *x);
-dnml_status __BIGINT_TGETB__(bigInt *x, uint8_t base);
+dnml_status bigInt_scan(bigInt *x);
+dnml_status bigInt_scanb(bigInt *x, uint8_t base);
+dnml_status bigInt_sscan(bigInt *x);
+dnml_status bigInt_sscanb(bigInt *x, uint8_t base);
+dnml_status bigInt_tscan(bigInt *x);
+dnml_status bigInt_tscanb(bigInt *x, uint8_t base);
 /* --------- Custom Stream INPUT ---------  */
-dnml_status __BIGINT_FGET__(FILE *stream, bigInt *x);
-dnml_status __BIGINT_FGETB__(FILE *stream, bigInt *x, uint8_t base);
-dnml_status __BIGINT_FSGET__(FILE *stream, bigInt *x);
-dnml_status __BIGINT_FSGETB__(FILE *stream, bigInt *x, uint8_t base);
-dnml_status __BIGINT_FTGET__(FILE *stream, bigInt *x);
-dnml_status __BIGINT_FTGETB__(FILE *stream, bigInt *x, uint8_t base);
+dnml_status bigInt_fscan(FILE *stream, bigInt *x);
+dnml_status bigInt_fscanb(FILE *stream, bigInt *x, uint8_t base);
+dnml_status bigInt_fsscan(FILE *stream, bigInt *x);
+dnml_status bigInt_fsscanb(FILE *stream, bigInt *x, uint8_t base);
+dnml_status bigInt_ftscan(FILE *stream, bigInt *x);
+dnml_status bigInt_ftscanb(FILE *stream, bigInt *x, uint8_t base);
 
 
 
 //* -------------------- BINARY INPUTS/OUTPUTS --------------------- */
 /* --------- Binary INPUT/OUTPUT ---------  */
 void bigInt_fwrite(FILE *stream, const bigInt x);
-dnml_status __BIGINT_FREAD__(FILE *stream, bigInt *x);
-dnml_status __BIGINT_FSREAD__(FILE *stream, bigInt *x);
-dnml_status __BIGINT_FTREAD__(FILE *stream, bigInt *x);
+dnml_status bigInt_fread(FILE *stream, bigInt *x);
+dnml_status bigInt_fsread(FILE *stream, bigInt *x);
+dnml_status bigInt_ftread(FILE *stream, bigInt *x);
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
 dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x);
-bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_status *err);
+bigInt bigInt_deserialize(const char* str, size_t len, dnml_status *err);
 
 
 

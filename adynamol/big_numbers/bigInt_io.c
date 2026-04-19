@@ -1951,7 +1951,7 @@ void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase) {
     }
 }
 /* --------- Standard Stream (stdin) INPUT ---------  */
-dnml_status __BIGINT_GET__(bigInt *x) {
+dnml_status bigInt_scan(bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace & Sign *//
     uint16_t current_char = _skip_whitespace__(stdin); uint8_t sign = 1;
@@ -1996,7 +1996,7 @@ dnml_status __BIGINT_GET__(bigInt *x) {
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_GETB__(bigInt *x, uint8_t base) {
+dnml_status bigInt_scanb(bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace, Sign, & Leading zeros *//
     uint16_t current_char = _skip_whitespace__(stdin); uint8_t sign = 1;
@@ -2031,7 +2031,7 @@ dnml_status __BIGINT_GETB__(bigInt *x, uint8_t base) {
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_SGET__(bigInt *x) {
+dnml_status bigInt_sscan(bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_SGET_ARENA = _USE_ARENA();
     //* Whitespace & Sign *//
@@ -2084,7 +2084,7 @@ dnml_status __BIGINT_SGET__(bigInt *x) {
     arena_reset(_DASI_SGET_ARENA, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_SGETB__(bigInt *x, uint8_t base) {
+dnml_status bigInt_sscanb(bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_SGETB_ARENA = _USE_ARENA();
     //* Whitespace, Sign, & Leading Zeros *//
@@ -2127,7 +2127,7 @@ dnml_status __BIGINT_SGETB__(bigInt *x, uint8_t base) {
     arena_reset(_DASI_SGETB_ARENA, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_TGET__(bigInt *x) {
+dnml_status bigInt_tscan(bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_TGET_ARENA = _USE_ARENA();
     //* Whitespace & Sign *//
@@ -2179,7 +2179,7 @@ dnml_status __BIGINT_TGET__(bigInt *x) {
     arena_reset(_DASI_TGET_ARENA, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_TGETB__(bigInt *x, uint8_t base) {
+dnml_status bigInt_tscanb(bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_TGETB_ARENA = _USE_ARENA();
     //* Whitespace, Sign, & Leading zeros *//
@@ -2222,7 +2222,7 @@ dnml_status __BIGINT_TGETB__(bigInt *x, uint8_t base) {
     tmp_limbs = NULL; return STR_SUCCESS;
 }
 /* --------- Custom Stream INPUT ---------  */
-dnml_status __BIGINT_FGET__(FILE *stream, bigInt *x) {
+dnml_status bigInt_fscan(FILE *stream, bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace -> Setup -> Signs *//
     char lexical_comp[3];
@@ -2307,7 +2307,7 @@ dnml_status __BIGINT_FGET__(FILE *stream, bigInt *x) {
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_FGETB__(FILE *stream, bigInt *x, uint8_t base) {
+dnml_status bigInt_fscanb(FILE *stream, bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace -> Signs -> Leading Zeros *//
     uint8_t sign = 1; int curr_char;
@@ -2359,7 +2359,7 @@ dnml_status __BIGINT_FGETB__(FILE *stream, bigInt *x, uint8_t base) {
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_FSGET__(FILE *stream, bigInt *x) {
+dnml_status bigInt_fsscan(FILE *stream, bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_FSGET = _USE_ARENA();
     //* Whitespace -> Setup -> Signs *//
@@ -2450,7 +2450,7 @@ dnml_status __BIGINT_FSGET__(FILE *stream, bigInt *x) {
     arena_reset(_DASI_FSGET, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_FSGETB__(FILE *stream, bigInt *x, uint8_t base) {
+dnml_status bigInt_fsscanb(FILE *stream, bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_FSGETB = _USE_ARENA();
     //* Whitespace -> Signs -> Leading Zeros *//
@@ -2508,7 +2508,7 @@ dnml_status __BIGINT_FSGETB__(FILE *stream, bigInt *x, uint8_t base) {
     arena_reset(_DASI_FSGETB, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_FTGET__(FILE *stream, bigInt *x) {
+dnml_status bigInt_ftscan(FILE *stream, bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_FSGET = _USE_ARENA();
     //* Whitespace -> Setup -> Signs *//
@@ -2600,7 +2600,7 @@ dnml_status __BIGINT_FTGET__(FILE *stream, bigInt *x) {
     arena_reset(_DASI_FSGET, tmp_mark);
     tmp_limbs = NULL; return STR_SUCCESS;
 }
-dnml_status __BIGINT_FTGETB__(FILE *stream, bigInt *x, uint8_t base) {
+dnml_status bigInt_ftscanb(FILE *stream, bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
     dnml_arena *_DASI_FSGETB = _USE_ARENA();
     //* Whitespace -> Signs -> Leading Zeros *//
@@ -2666,12 +2666,12 @@ dnml_status __BIGINT_FTGETB__(FILE *stream, bigInt *x, uint8_t base) {
 //todo ================================= 4. SERIALIZATION & DESERIALIZATION ============================== *//
 /* --------- Binary INPUT/OUTPUT ---------  */
 void bigInt_fwrite(FILE *stream, const bigInt x) {}
-dnml_status __BIGINT_FREAD__(FILE *stream, bigInt *x) {}
-dnml_status __BIGINT_FSREAD__(FILE *stream, bigInt *x) {}
-dnml_status __BIGINT_FTREAD__(FILE *stream, bigInt *x) {}
+dnml_status bigInt_fread(FILE *stream, bigInt *x) {}
+dnml_status bigInt_fsread(FILE *stream, bigInt *x) {}
+dnml_status bigInt_ftread(FILE *stream, bigInt *x) {}
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
 dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x) {}
-bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_status *err) {}
+bigInt bigInt_deserialize(const char* str, size_t len, dnml_status *err) {}
 
 
 
