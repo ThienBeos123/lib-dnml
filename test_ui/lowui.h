@@ -33,6 +33,8 @@ typedef struct _libdnml_lsuite {
     _libdnml_case *rand_cases;
     uint16_t rand_cases_count;  uint16_t rand_cases_correct;    uint8_t rand_nin;
     uint64_t **fail_rand_in;    _dnml_pair *fail_rand_res;      _dnml_pair *fail_rand_exp;
+
+    int fail_enums[];
 } _libdnml_lsuite;
 
 
@@ -138,6 +140,7 @@ typedef uint64_t (*_fn3o_t)(uint64_t, uint64_t, uint64_t, uint64_t*);
 //* ============== FULL SUITES/SESSIONS RENDER FUNCTIONS ============== *//
 static inline void _dnml_run_suite(_libdnml_lsuite *s) {
     //* ======== 1. EDGE CASE TESTING ======== *//
+    int enum_i = 0;
     for (uint8_t i = 0; i < s->edge_cases_count; ++i) {
         _dnml_pair got = {0}, exp = s->edge_cases->exp;
         if (s->call_style == DNML_CALL) DNML_FCALL_(s->fn_test, &s->edge_cases[i], got);
@@ -147,6 +150,7 @@ static inline void _dnml_run_suite(_libdnml_lsuite *s) {
             uint8_t findex = (i + 1) - s->edge_cases_correct;
             s->fail_edge_res[findex] = got;
             s->fail_edge_exp[findex] = exp;
+            s->fail_enums[enum_i] = i + 1; ++enum_i;
         }
     }
 
@@ -176,7 +180,7 @@ static inline void _dnml_log_suite(_libdnml_lsuite *s) {
     fprintf(f, "======== %s FAIL LOG ========", s->suite_name);
     //* PRINTS EDGE CASES *//
     for (uint8_t i = 0; i < fail_edge; ++i) {
-        fprintf(f, "o) Edge case %" PRIu32 ":\n", i + 1);
+        fprintf(f, "o) Edge case %d: \n", s->fail_enums[i]);
         for (uint8_t j = 0; j < s->edge_cases[i].inc; ++j) {
             fprintf(f, "     in[%" PRIu8 "]: 0x%016" PRIx64 "\n", j, s->edge_cases[i].in[j]);
         } fprintf(f, "     expected: <0x%016" PRIx64 ", 0x%016" PRIx64 ">\n", 
@@ -220,10 +224,10 @@ static inline void _dnml_render_esuite(_libdnml_lsuite *s, uint8_t suite_num, ui
     int fail_edge = s->edge_cases_count - s->edge_cases_correct;
     char curr_index[10], fail_line[BOX_WIDTH];
     for (int i = 0; i < fail_edge; ++i) { fail_line[BOX_WIDTH];
-        int curri_len = (i, curr_index, sizeof(curr_index));
+        int ilen = (s->fail_enums[i], curr_index, sizeof(curr_index));
         snprintf(fail_line, sizeof(fail_line),
             "o) Case %.*s: Expected: <0x%016" PRIx64 ", 0x%016" PRIx64 "> | Got: <0x%016" PRIx64 ", 0x%016 " PRIx64 ">",
-            curri_len, curr_index,
+            ilen, curr_index,
             s->fail_edge_exp[i].first,
             s->fail_edge_exp[i].second,
             s->fail_edge_res[i].first,
