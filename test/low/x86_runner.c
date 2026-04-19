@@ -1,10 +1,10 @@
-#include "../../../intrinsics/x86_64/_x86_conn.h"
-#include "../../../intrinsics/zvanillc/_vanillc_conn.h"
+#include "../../intrinsics/x86_64/_x86_conn.h"
+#include "../../intrinsics/zvanillc/_vanillc_conn.h"
 // Utilities
-#include "../../../system/__hwcaps.h"
-#include "../../../util/util.h"
-#include "../../../test_ui/lowui.h"
-#include "../low_setup.h"
+#include "../../system/__hwcaps.h"
+#include "../../util/util.h"
+#include "../../test_ui/lowui.h"
+#include "low_setup.h"
 // STDLIB utilities
 #include <stdint.h>
 #include <stdio.h>

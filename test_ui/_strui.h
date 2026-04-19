@@ -43,7 +43,7 @@ typedef struct str_res {
 // Cases & Suites
 typedef struct _libdnml_scase {
     uint8_t inc;
-    void** in;
+    void* in;
     str_res exp;
     str_res res;
     void* recons;
@@ -107,10 +107,10 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool
 
 
 //* =================== FUNCTION-GENERALIZATION DISPATCHER =================== *//
-typedef void (*dnml_exec_fn)(const void* *in, str_res *out, void *ctx);
+typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
 typedef void (*dnml_inverse_fn)(const str_res out, void *reconstructed, void *ctx);
 typedef bool (*dnml_cmp_fn)(const void *original, const void *reconstructed);
-typedef void (*dnml_fmt_in_fn)(FILE *f, const void* *in);
+typedef void (*dnml_fmt_in_fn)(FILE *f, const void *in);
 
 static str_res *alloc_res(dnml_dratch *a, size_t len) {
     str_res *r = (str_res*)(dratch_alloc(a, sizeof(str_res) + len + 1));
@@ -145,7 +145,7 @@ typedef struct _libdnml_str_suite {
     // Random cases storage
     _libdnml_scase *rand;
     uint16_t rcount;        uint16_t rcorrect;
-    void** *fail_rin;       str_res *fail_rres; void* *fail_rrecons;
+    void* *fail_rin;       str_res *fail_rres; void* *fail_rrecons;
 
     int fail_enums[];
 } _libdnml_str_suite;
@@ -313,7 +313,7 @@ static inline void _dnml_render_esuite(_libdnml_str_suite *s, uint8_t suite_num,
     char curr_index[10], fail_line[bw]; FILE *tmp = tmpfile(); 
     if (tmp == NULL) { perror("Failed to open a tmpfile(), Terminating..."); abort(); }
     for (int i = 0; i < fail_edge; ++i) { 
-        fail_line[bw] = {1};
+        memset(fail_line, (char)(1), bw);
         int curri_len = (i, curr_index, sizeof(curr_index));
         snprintf(fail_line, sizeof(fail_line), "Case %" PRIu16 ": \n", s->fail_enums[i]);
         _dnml_box_line(fail_line, bw);
@@ -354,7 +354,7 @@ static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num,
     char curr_index[10], fail_line[bw]; FILE *tmp = tmpfile(); 
     if (tmp == NULL) { perror("Failed to open a tmpfile(), Terminating..."); abort(); }
     for (int i = 0; i < fail_rand; i++) {
-        fail_line[bw] = {1}; // Resetting buffer to ASCII 1
+        memset(fail_line, (char)(1), bw); // Resetting buffer to ASCII 1
         int ilen = _itosn(i, curr_index, sizeof(curr_index));
         snprintf(fail_line, sizeof(fail_line), "Case %d: \n", i + 1);
         _dnml_box_line(fail_line, bw);
@@ -371,8 +371,7 @@ static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num,
 
         freopen(NULL, "w", tmp);
         fputs("    - Reconstruction: ", tmp);
-        void *idk[1] = { s->fail_rrecons[i] };
-        (*s->typefmt_fn)(tmp, idk);
+        (*s->typefmt_fn)(tmp, s->fail_rrecons[i]);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         _dnml_delay_ms(delay_ms);

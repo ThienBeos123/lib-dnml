@@ -45,7 +45,7 @@ static const char _DIGIT_[32] = {
 };
 
 /* Global, Thread-local Arena */
-static const uint16_t ___DASI_IO_BUFSIZE = 16384;
+static const uint16_t ___DASI_IO_BUFSIZE = 4096;
 static local_thread char ___DASI_IO_CHUNKBUF_[___DASI_IO_BUFSIZE];
 static local_thread dnml_arena ___DASI_IO_ARENA_;
 static inline dnml_arena* _USE_ARENA(void) {
@@ -71,7 +71,7 @@ static inline void _ASCII_COLUMN__(limb_t val, char* c) {
 
 
 //todo ======================================= 1. CONSTRUCTIONS ======================================= *//
-dnml_status __BIGINT_STRING_INIT__(bigInt *x, const char* str) {
+dnml_status bigInt_strinit(bigInt *x, const char* str) {
     if (x->limbs) return STR_SUCCESS; // Already initialized
     if (*str == '\0') return STR_EMPTY;
     dnml_arena* _DASI_STR_INIT_ARENA = _USE_ARENA();
@@ -146,7 +146,7 @@ dnml_status __BIGINT_STRING_INIT__(bigInt *x, const char* str) {
     arena_reset(_DASI_STR_INIT_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_BASE_INIT__(bigInt *x, const char* str, uint8_t base) {
+dnml_status bigInt_strbinit(bigInt *x, const char* str, uint8_t base) {
     if (x->limbs) return STR_SUCCESS; // Already initialized
     if (*str == '\0') return STR_EMPTY;
     dnml_arena* _DASI_BASE_INIT_ARENA = _USE_ARENA();
@@ -207,7 +207,7 @@ dnml_status __BIGINT_BASE_INIT__(bigInt *x, const char* str, uint8_t base) {
     arena_reset(_DASI_BASE_INIT_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_STRNLEN_INIT__(bigInt *x, const char* str, size_t len) {
+dnml_status bigInt_strninit(bigInt *x, const char* str, size_t len) {
     if (x->limbs) return STR_SUCCESS; // Already initialized
     if (*str == '\0') return STR_EMPTY;
     dnml_arena* _DASI_STRNLEN_INIT_ARENA = _USE_ARENA();
@@ -284,7 +284,7 @@ dnml_status __BIGINT_STRNLEN_INIT__(bigInt *x, const char* str, size_t len) {
     arena_reset(_DASI_STRNLEN_INIT_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_BASENLEN_INIT__(bigInt *x, const char* str, size_t len, uint8_t base) {
+dnml_status bigInt_strnbinit(bigInt *x, const char* str, size_t len, uint8_t base) {
     if (x->limbs) return STR_SUCCESS; // Already initialized
     if (*str == '\0') return STR_EMPTY;
     dnml_arena* _DASI_BASENLEN_INIT_ARENA = _USE_ARENA();
@@ -352,14 +352,14 @@ dnml_status __BIGINT_BASENLEN_INIT__(bigInt *x, const char* str, size_t len, uin
 //todo ================================= 2. CONVERSIONS & ASSIGNMENTS ================================= *//
 //* -------------------------- String Conversions -------------------------- *//
 /* Truncative BigInt --> String */
-dnml_status __BIGINT_TTO_STR__(char* str, const bigInt x, size_t *written) {
+dnml_status bigInt_tto_str(char* str, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_TSET_STRING_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
     size_t str_length = strlen(str); // Early segfauly if no NULL-Terminator found
     uint8_t sign_space = (x.sign == -1) ? 1 : 0;
     if (str_length <= sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_TSET_STRING_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_TSET_STRING_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -370,21 +370,21 @@ dnml_status __BIGINT_TTO_STR__(char* str, const bigInt x, size_t *written) {
 
     for (size_t i = str_length - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, 10);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(_DASI_TSET_STRING_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TTO_STRB__(char* str, const bigInt x, uint8_t base, size_t *written) {
+dnml_status bigInt_tto_strb(char* str, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_TSET_BASE_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
     size_t str_length = strlen(str); // Early segfauly if no NULL-Terminator found
     uint8_t sign_space = (x.sign == -1) ? 1 : 0;
     if (str_length <= sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_TSET_BASE_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_TSET_BASE_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -395,20 +395,20 @@ dnml_status __BIGINT_TTO_STRB__(char* str, const bigInt x, uint8_t base, size_t 
 
     for (size_t i = str_length - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(_DASI_TSET_BASE_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TTO_STRNLEN__(char* str, size_t len, const bigInt x, size_t *written) {
+dnml_status bigInt_tto_strn(char* str, size_t len, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_TSET_STRNLEN_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
     uint8_t sign_space = (x.sign == -1) ? 1 : 0;
     if (len <= sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_TSET_STRNLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_TSET_STRNLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -419,20 +419,20 @@ dnml_status __BIGINT_TTO_STRNLEN__(char* str, size_t len, const bigInt x, size_t
 
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, 10);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_TSET_STRNLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TTO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_t base, size_t *written) {
+dnml_status bigInt_tto_strnb(char* str, size_t len, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_TSET_BASENLEN_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
     uint8_t sign_space = (x.sign == -1) ? 1 : 0;
     if (len <= sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_TSET_BASENLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_TSET_BASENLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -443,14 +443,14 @@ dnml_status __BIGINT_TTO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8
 
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_TSET_BASENLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TTO_STRF__(
+dnml_status bigInt_tto_strf(
     char* str, size_t len, 
     const bigInt x, uint8_t base, 
     bool uppercase, size_t *written
@@ -469,14 +469,14 @@ dnml_status __BIGINT_TTO_STRF__(
             case 8:  str[1 + sign_space] = 'o' + prefix_add; break;
             case 16: str[1 + sign_space] = 'x' + prefix_add; break;
         }
-    } *written += sign_space + prefix_space; 
+    } *written += sign_space + prefix_space;
     size_t tmp_mark = arena_mark(_DASI_TSET_BASENLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_TSET_BASENLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
     bigInt tmp_buf = { .limbs = tmp_limbs, .sign = x.sign,  /**/    .cap = x.n, .n = x.n };
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value + char_add]; *written += 1;
+        str[i] = _DIGIT_[numeric_value + char_add]; *written++;
     }
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
@@ -484,7 +484,7 @@ dnml_status __BIGINT_TTO_STRF__(
     return STR_SUCCESS;
 }
 /* Safe BigInt --> String */
-dnml_status __BIGINT_TO_STR__(char* str, const bigInt x, size_t *written) {
+dnml_status bigInt_to_str(char* str, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_SET_STRING_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
@@ -493,7 +493,7 @@ dnml_status __BIGINT_TO_STR__(char* str, const bigInt x, size_t *written) {
     if (str_length <= sign_space) return STR_INVALID_CAP;
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (str_length < digit_needed + sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(&_DASI_SET_STRING_ARENA);
     limb_t *tmp_limbs = arena_galloc(&_DASI_SET_STRING_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -504,13 +504,13 @@ dnml_status __BIGINT_TO_STR__(char* str, const bigInt x, size_t *written) {
 
     for (size_t i = str_length - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, 10);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(&_DASI_SET_STRING_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TO_STRB__(char* str, const bigInt x, uint8_t base, size_t *written) {
+dnml_status bigInt_to_strb(char* str, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_SET_BASE_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
@@ -519,7 +519,7 @@ dnml_status __BIGINT_TO_STRB__(char* str, const bigInt x, uint8_t base, size_t *
     if (str_length <= sign_space) return STR_INVALID_CAP;
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (str_length < digit_needed + sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_SET_BASE_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SET_BASE_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -530,13 +530,13 @@ dnml_status __BIGINT_TO_STRB__(char* str, const bigInt x, uint8_t base, size_t *
 
     for (size_t i = str_length - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(_DASI_SET_BASE_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TO_STRNLEN__(char* str, size_t len, const bigInt x, size_t *written) {
+dnml_status bigInt_to_strn(char* str, size_t len, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_SET_STRNLEN_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
@@ -544,7 +544,7 @@ dnml_status __BIGINT_TO_STRNLEN__(char* str, size_t len, const bigInt x, size_t 
     if (len <= sign_space) return STR_INVALID_CAP;
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (len < digit_needed + sign_space) return STR_INVALID_CAP;
-    if (sign_space) str[0] = '-';
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_SET_STRNLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SET_STRNLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -555,13 +555,13 @@ dnml_status __BIGINT_TO_STRNLEN__(char* str, size_t len, const bigInt x, size_t 
 
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, 10);
-        str[i] = _DIGIT_[numeric_value];
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_SET_STRNLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_t base, size_t *written) {
+dnml_status bigInt_to_strnb(char* str, size_t len, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_SET_BASENLEN_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
@@ -569,7 +569,7 @@ dnml_status __BIGINT_TO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_
     if (len <= sign_space) return STR_INVALID_CAP;
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (len < digit_needed + sign_space) return STR_INVALID_CAP;
-    if (sign_space) { str[0] = '-'; *written += 1; }
+    if (sign_space) { str[0] = '-'; *written++; }
     size_t tmp_mark = arena_mark(_DASI_SET_BASENLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SET_BASENLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
@@ -580,13 +580,13 @@ dnml_status __BIGINT_TO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_
 
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value]; *written += 1;
+        str[i] = _DIGIT_[numeric_value]; *written++;
     }
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_SET_BASENLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TO_STRF__(
+dnml_status bigInt_to_strf(
     char* str, size_t len, 
     const bigInt x, uint8_t base, 
     bool uppercase, size_t *written
@@ -607,14 +607,14 @@ dnml_status __BIGINT_TO_STRF__(
             case 8:  str[1 + sign_space] = 'o' + prefix_add; break;
             case 16: str[1 + sign_space] = 'x' + prefix_add; break;
         }
-    } *written += prefix_space + sign_space; 
+    } *written += sign_space + prefix_space;
     size_t tmp_mark = arena_mark(_DASI_SET_BASENLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SET_BASENLEN_ARENA, x.n * BYTES_IN_UINT64_T);
     memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
     bigInt tmp_buf = { .limbs = tmp_limbs, .sign = x.sign,  /**/    .cap = x.n, .n = x.n};
     for (size_t i = len - 1; i >= sign_space; --i) {
         uint8_t numeric_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-        str[i] = _DIGIT_[numeric_value + char_add]; *written += 1;
+        str[i] = _DIGIT_[numeric_value + char_add]; *written++;
     }
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_SET_BASENLEN_ARENA, tmp_mark);
@@ -1494,7 +1494,7 @@ dnml_status __BIGINT_SGET_BASENLEN__(bigInt *x, const char *str, size_t len, uin
 
 //todo ======================================== 3. INPUT & OUTPUT ======================================= *//
 /* --------- Decimal Instant OUTPUT ---------  */
-void __BIGINT_PUT__(const bigInt x) {
+void bigInt_put(const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0');
     else if (x.n == 1) {
@@ -1515,7 +1515,7 @@ void __BIGINT_PUT__(const bigInt x) {
         } arena_reset(_DASI_PUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_PUTB__(const bigInt x, uint8_t base) {
+void bigInt_putb(const bigInt x, uint8_t base) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0');
     else if (x.n == 1) {
@@ -1551,7 +1551,7 @@ void __BIGINT_PUTB__(const bigInt x, uint8_t base) {
         } arena_reset(_DASI_PUTB_ARENA, tmp_mark);
     }
 }
-void __BIGINT_PUTF__(const bigInt x, uint8_t base, bool uppercase) {
+void bigInt_putf(const bigInt x, uint8_t base, bool uppercase) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0');
     else if (x.n == 1) {
@@ -1592,7 +1592,7 @@ void __BIGINT_PUTF__(const bigInt x, uint8_t base, bool uppercase) {
         } arena_reset(_DASI_PUTF_ARENA, tmp_mark);
     }
 }
-void __BIGINT_FPUT__(FILE *stream, const bigInt x) {
+void bigInt_fput(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) fputc('0', stream);
     else if (x.n == 1) {
@@ -1613,7 +1613,7 @@ void __BIGINT_FPUT__(FILE *stream, const bigInt x) {
         } arena_reset(_DASI_FPUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_FPUTB__(FILE *stream, const bigInt x, uint8_t base) {
+void bigInt_fputb(FILE *stream, const bigInt x, uint8_t base) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0');
     else if (x.n == 1) {
@@ -1649,14 +1649,15 @@ void __BIGINT_FPUTB__(FILE *stream, const bigInt x, uint8_t base) {
         } arena_reset(_DASI_FPUTB_ARENA, tmp_mark);
     }
 }
-void __BIGINT_FPUTF__(FILE *stream, const bigInt x, uint8_t base, bool uppercase) {
+void bigInt_fputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0');
     else if (x.n == 1) {
         if (x.sign == -1) fputc('-', stream);
         if (base == 10)         fprintf(stream, "%" PRIu64, x.limbs[0]);
         else if (base == 8)     fprintf(stream, "%#%" PRIo64, x.limbs[0]);
-        else if (base == 16)    fprintf(stream, "%#%" PRIX64, x.limbs[0]);
+        else if (base == 16)    fprintf(stream, "%#%" PRIx64, x.limbs[0]);
+        else if (base == 16 && uppercase) fprintf(stream, "%#%" PRIX64, x.limbs[0]);
         else if (base == 2) {
             fputs("0b", stream); uint64_t tmp_copy = x.limbs[0];
             while (tmp_copy > 0) {
@@ -1665,9 +1666,10 @@ void __BIGINT_FPUTF__(FILE *stream, const bigInt x, uint8_t base, bool uppercase
             }
         } else {
             fprintf(stream, "0{%" PRIu8 "}", base); 
+            uint8_t add_val = (uppercase) ? 16 : 0;
             uint64_t tmp_copy = x.limbs[0];
             while (tmp_copy > 0) {
-                char c = _DIGIT_[tmp_copy % base];
+                char c = _DIGIT_[tmp_copy % base + add_val];
                 fputc(c, stream); tmp_copy /= base;
             }
         }
@@ -1692,7 +1694,7 @@ void __BIGINT_FPUTF__(FILE *stream, const bigInt x, uint8_t base, bool uppercase
     }
 }
 /* --------- Decimal Buffered OUTPUT ---------  */
-void __BIGINT_SPUT__(const bigInt x) {
+void bigInt_sput(const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0\n');
     else if (x.n == 1) printf("%s %" PRIu64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
@@ -1716,7 +1718,7 @@ void __BIGINT_SPUT__(const bigInt x) {
         arena_reset(_DASI_SPUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_SPUTB__(const bigInt x, uint8_t base) {
+void bigInt_sputb(const bigInt x, uint8_t base) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0\n');
     else if (x.n == 1) {
@@ -1762,7 +1764,7 @@ void __BIGINT_SPUTB__(const bigInt x, uint8_t base) {
         arena_reset(_DASI_PUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_SPUTF__(const bigInt x, uint8_t base) {
+void bigInt_sputf(const bigInt x, uint8_t base) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) putchar('0\n');
     else if (x.n == 1) {
@@ -1819,7 +1821,7 @@ void __BIGINT_SPUTF__(const bigInt x, uint8_t base) {
         arena_reset(_DASI_PUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_SFPUT__(FILE *stream, const bigInt x) {
+void bigInt_sfput(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) fputc('0\n', stream);
     else if (x.n == 1) fprintf(stream, "%s %" PRIu64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
@@ -1843,7 +1845,7 @@ void __BIGINT_SFPUT__(FILE *stream, const bigInt x) {
         arena_reset(_DASI_SPUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_SFPUTB__(FILE *stream, const bigInt x, uint8_t base) {
+void bigInt_sfputb(FILE *stream, const bigInt x, uint8_t base) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) fputc('0\n', stream);
     else if (x.n == 1) {
@@ -1889,14 +1891,16 @@ void __BIGINT_SFPUTB__(FILE *stream, const bigInt x, uint8_t base) {
         arena_reset(_DASI_PUT_ARENA, tmp_mark);
     }
 }
-void __BIGINT_SFPUTF__(FILE *stream, const bigInt x, uint8_t base) {
+void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     if (x.n == 0) fputc('0\n', stream);
     else if (x.n == 1) {
         if (base == 10)         fprintf(stream, "%s %" PRIu64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
         else if (base == 8)     fprintf(stream, "%s %#%" PRIo64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
-        else if (base == 16)    fprintf(stream, "%s %#%" PRIX64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
-        else if (base == 2) {
+        else if (base == 16)    fprintf(stream, "%s %#%" PRIx64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
+        else if (base == 16 && uppercase) {
+            fprintf(stream, "%s %#%" PRIX64 "\n", (x.sign == -1) ? "-" : "", x.limbs[0]);
+        } else if (base == 2) {
             uint64_t tmp_copy = x.limbs[0];
             uint8_t len = __BASEN_DCOUNT__(tmp_copy, 2); char c[len];
             for (uint8_t i = len - 1; i >= 0 && tmp_copy > 0; --i) {
@@ -1904,34 +1908,34 @@ void __BIGINT_SFPUTF__(FILE *stream, const bigInt x, uint8_t base) {
                 tmp_copy >>= 1;
             } fprintf(stream, "%s0b%.*s\n", (x.sign == -1) ? "-" : "", len, c);
         } else {
-            uint64_t tmp_copy = x.limbs[0];
-            uint8_t len = __BASEN_DCOUNT__(tmp_copy, base); char c[len];
+            uint64_t tmp_copy = x.limbs[0]; uint8_t add_val = (uppercase) ? 16 : 0,
+            len = __BASEN_DCOUNT__(tmp_copy, base); char c[len];
             for (uint8_t i = len - 1; i >= 0 && tmp_copy > 0; --i) {
-                c[i] = _DIGIT_[tmp_copy % base];
+                c[i] = _DIGIT_[tmp_copy % base + add_val];
                 tmp_copy /= base;
             } fprintf(stream, "%s0{%" PRIu8 "}%.*s\n", (x.sign == -1) ? "-" : "", base, len, c);
         }
     } else {
-        uint8_t sign_space = (x.sign == -1) ? 1 : 0;
+        uint8_t sign_space = (x.sign == -1) ? 1 : 0, 
+        add_val = (uppercase) ? 16 : 0, prefix_add = (uppercase) ? 32 : 0;
         uint8_t prefix_space = (base == 10) ? 0 : (base == 16 || base == 8 || base == 2) ? 2 : 5;
         size_t str_len = __BIGINT_COUNTDB__(&x, base) + sign_space + prefix_space;
         char c[str_len];
         if (sign_space) c[0] = '-';
-        if (prefix_space) {
-            c[sign_space] = '0';
+        if (prefix_space) { c[sign_space] = '0';
             switch (base) {
-                case 16:        c[sign_space + 1] = 'x'; break;
-                case 2:         c[sign_space + 1] = 'b'; break;
-                case 8:         c[sign_space + 1] = 'o'; break;
-                default:
+                case 16:    c[sign_space + 1] = (char)('x' + prefix_add); break;
+                case 2:     c[sign_space + 1] = (char)('b' + prefix_add); break;
+                case 8:     c[sign_space + 1] = (char)('o' + prefix_add); break;
+                default: { 
                     uint8_t temp_base = base;
                     c[sign_space + 1] = '{';
                     c[sign_space + 3] = (char)(temp_base % 10); base /= 10;
                     c[sign_space + 2] = (char)(temp_base % 10);
                     c[sign_space + 4] = '}'; break;
+                } break;
             }
-        }
-        dnml_arena *_DASI_PUT_ARENA = _USE_ARENA();
+        } dnml_arena *_DASI_PUT_ARENA = _USE_ARENA();
         size_t tmp_mark = arena_mark(_DASI_PUT_ARENA);
         limb_t *tmp_limbs = arena_galloc(_DASI_PUT_ARENA, x.n * BYTES_IN_UINT64_T);
         bigInt tmp_buf = {
@@ -1940,7 +1944,7 @@ void __BIGINT_SFPUTF__(FILE *stream, const bigInt x, uint8_t base) {
         }; memcpy(tmp_limbs, x.limbs, x.n * BYTES_IN_UINT64_T);
         for (size_t i = str_len - 1; i >= sign_space + prefix_space; --i) {
             uint8_t numerical_value = __BIGINT_INTERNAL_DIVMOD_UI64__(&tmp_buf, base);
-            c[i] = _DIGIT_[numerical_value];
+            c[i] = _DIGIT_[numerical_value + add_val];
         }
         fprintf(stream, "%.*s\n", str_len, c); 
         arena_reset(_DASI_PUT_ARENA, tmp_mark);
@@ -2661,19 +2665,19 @@ dnml_status __BIGINT_FTGETB__(FILE *stream, bigInt *x, uint8_t base) {
 
 //todo ================================= 4. SERIALIZATION & DESERIALIZATION ============================== *//
 /* --------- Binary INPUT/OUTPUT ---------  */
-void __BIGINT_FWRITE__(FILE *stream, const bigInt x) {}
+void bigInt_fwrite(FILE *stream, const bigInt x) {}
 dnml_status __BIGINT_FREAD__(FILE *stream, bigInt *x) {}
 dnml_status __BIGINT_FSREAD__(FILE *stream, bigInt *x) {}
 dnml_status __BIGINT_FTREAD__(FILE *stream, bigInt *x) {}
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
-void __BIGINT_SERIALIZE__(char *buf, size_t len, const bigInt x, size_t *written) {}
+dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x) {}
 bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_status *err) {}
 
 
 
 
 //todo ====================================== 5. GENERAL UTILITIES ===================================== *//
-void __BIGINT_LIMB_DUMP__(FILE *stream, const bigInt x) {
+void bigInt_limb_dump(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
     fputs  (        "--- DECIMAL LIMB DUMP --------------------------------------\n", stream);
     fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
@@ -2686,7 +2690,7 @@ void __BIGINT_LIMB_DUMP__(FILE *stream, const bigInt x) {
     } fputc('\n', stream);
     fputs(          "--------------------------------------------------------\n", stream);
 }
-void __BIGINT_HEX_DUMP__(FILE *stream, const bigInt x, bool uppercase) {
+void bigInt_hexdump(FILE *stream, const bigInt x, bool uppercase) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
     fputs  (        "--- HEX LIMB DUMP --------------------------------------\n", stream);
     fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
@@ -2699,7 +2703,7 @@ void __BIGINT_HEX_DUMP__(FILE *stream, const bigInt x, bool uppercase) {
     } fputc('\n', stream);
     fputs(          "--------------------------------------------------------\n", stream);
 }
-void __BIGINT_BIN_DUMP__(FILE *stream, const bigInt x) {
+void bigInt_bindump(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
     fputs  (        "--- BINARY LIMB DUMP ----------------------------------------------------------------------------------------\n", stream);
     fprintf(stream, "Limbs' starting location: %p\n", (void*)(x.limbs));
@@ -2718,7 +2722,7 @@ void __BIGINT_BIN_DUMP__(FILE *stream, const bigInt x) {
     } fputc('\n', stream);
     fputs(          "-------------------------------------------------------------------------------------------------------------\n", stream);
 } 
-void __BIGINT_INFO__(FILE *stream, const bigInt x) {
+void bigInt_info(FILE *stream, const bigInt x) {
     assert(__BIGINT_INTERNAL_PVALID__(&x));
     fputs    (        "-------- [ BIGINT DEBUG INFO ] --------\n", stream);
     fprintf  (stream, "Adress:       %p\n", x.limbs);

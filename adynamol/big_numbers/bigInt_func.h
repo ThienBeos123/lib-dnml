@@ -220,62 +220,6 @@ uint8_t __BIGINT_LESS_OR_EQUAL__(const bigInt a, const bigInt b);
 uint8_t __BIGINT_MORE_OR_EQUAL__(const bigInt a, const bigInt b);
 
 
-
-//* ------------------ MAGNITUDE MATHEMATICA -------------------- */
-/* - IMPORTANT NOTE / CLARIFICATION
-*       +) This arithmetic layer exclusively handles pure,
-*          magnituded arithmetic (|a| with |b|)
-*       +) This function assumes the average, normal case, 
-*          and ignores special cases (handled by their signed counterparts)
-*       +) Therefore, it assumes inputs to be automatically:
-*           o) non-negative
-*           o) non-zero or value coincide with a fast-path
-*           o) normalized
-*           o) no invalid/illegal operations (eg: division by 0)
-*           o) the output integer (res) is capable of storing the output
-*       -----> +) These functions are not aliased in bigInt.h with a more user-friendly name, 
-*                 as they are never meant to be used on the surface level
-*       +) Note: 
-*           These functions also follows the "Functional" model API, 
-*           which means it copies the final output, and pastes it into a different, newly created bigInt
-*
-*       -----> WARNING!: 
-*               THESE FUNCTION (IF EVER USED ON THE SURFACE) ARE TO BE USED WITH 
-*               THE UTMOST CAUTION TO PREVENT FATAL ERRORS OR MEMORY LEAKS 
-*/
-/* ------- Magnitude Arithmetic ------- */
-// static void __BIGINT_MAGNITUDED_MUL_UI64__(bigInt *__outputted_bigInteger, const bigInt *__x__, const uint64_t __I64VAL);
-// static void __BIGINT_MAGNITUDED_DIVMOD_UI64__
-//     (bigInt *__outputted_bigInteger_quotient, 
-//     uint64_t *__outputted_I64_remainder, 
-//     const bigInt *__x__, const uint64_t val);
-// static void __BIGINT_MAGNITUDED_ADD__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
-// static void __BIGINT_MAGNITUDED_SUB__(bigInt *__outputted_bigInteger, const bigInt *__a__, const bigInt *__b__);
-// static inline void __BIGINT_MAGNITUDED_MUL__(
-//     bigInt *__outputted_bigInteger, 
-//     const bigInt *__a__, 
-//     const bigInt *__b__);
-// static inline void __BIGINT_MAGNITUDED_DIVMOD__
-//     (bigInt *__outputted_bigInteger_quotient, 
-//     bigInt *__outputted_bigInteger_remainder, 
-//     const bigInt *__a__, const bigInt *__b__);
-/* ------- Magnituded Core Number-Theoretic ------- */
-// uint64_t ___GCD_UI64___(uint64_t a, uint64_t b);
-// static void __BIGINT_MAGNITUDED_GCD__(bigInt *res, const bigInt *a, const bigInt *b);
-// static void __BIGINT_MAGNITUDED_LCM__(bigInt *res, const bigInt *a, const bigInt *b);
-// static void __BIGINT_MAGNITUDED_EUCMOD_UI64__(uint64_t *res, const bigInt *a, uint64_t modulus);
-// static void __BIGINT_MAGNITUDED_EUCMOD__(bigInt *res, const bigInt *a, const bigInt *modulus);
-// /* ------- Magnituded Modular Arithmetic ------- */
-// static void __BIGINT_MAGNITUDED_MODADD__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODSUB__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODMUL__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODDIV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODEXP__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODSQR__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-// static void __BIGINT_MAGNITUDED_MODINV__(bigInt *res, const bigInt *a, const bigInt *b, const bigInt *mod);
-
-
-
 //* -------------------- SIGNED ARITHMETIC --------------------- */
 /*  - These arithmetic functions handles:
 *       +) Special/Edge cases
@@ -427,25 +371,33 @@ inline uint8_t __BIGINT_PVALIDATE__(bigInt *x);
 
 //todo ======================================= I/O FUNCTIONALITIES ======================================= todo//
 //* -------------------- CONSTRUCTORS --------------------- */
-dnml_status __BIGINT_STRING_INIT__(bigInt *x, const char* str);
-dnml_status __BIGINT_BASE_INIT__(bigInt *x, const char* str, uint8_t base);
-dnml_status __BIGINT_STRNLEN_INIT__(bigInt *x, const char* str, size_t len);
-dnml_status __BIGINT_BASENLEN_INIT__(bigInt *x, const char* str, size_t len, uint8_t base);
+dnml_status bigInt_strinit(bigInt *x, const char* str);
+dnml_status bigInt_strbinit(bigInt *x, const char* str, uint8_t base);
+dnml_status bigInt_strninit(bigInt *x, const char* str, size_t len);
+dnml_status bigInt_strnbinit(bigInt *x, const char* str, size_t len, uint8_t base);
 
 
 //* ------------------------------ ASSIGNMENTS ------------------------------- */
 /* Truncative BigInt --> String */
-dnml_status __BIGINT_TTO_STR__(char* str, const bigInt x);
-dnml_status __BIGINT_TTO_STRB__(char* str, const bigInt x, uint8_t base);
-dnml_status __BIGINT_TTO_STRNLEN__(char* str, size_t len, const bigInt x);
-dnml_status __BIGINT_TTO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_t base);
-dnml_status __BIGINT_TTO_STRF__(char* str, size_t len, const bigInt x, uint8_t base, bool uppercase);
+dnml_status bigInt_tto_str(char* str, const bigInt x, size_t *written);
+dnml_status bigInt_tto_strb(char* str, const bigInt x, uint8_t base, size_t *written);
+dnml_status bigInt_tto_strn(char* str, size_t len, const bigInt x, size_t *written);
+dnml_status bigInt_tto_strnb(char* str, size_t len, const bigInt x, uint8_t base, size_t *written);
+dnml_status bigInt_tto_strf(
+    char* str, size_t len, 
+    const bigInt x, uint8_t base, 
+    bool uppercase, size_t *written
+);
 /* Safe BigInt --> String */
-dnml_status __BIGINT_TO_STR__(char* str, const bigInt x);
-dnml_status __BIGINT_TO_STRB__(char* str, const bigInt x, uint8_t base);
-dnml_status __BIGINT_TO_STRNLEN__(char* str, size_t len, const bigInt x);
-dnml_status __BIGINT_TO_STRBNLEN__(char* str, size_t len, const bigInt x, uint8_t base);
-dnml_status __BIGINT_TO_STRF(char* str, size_t len, const bigInt x, uint8_t base, bool uppercase);
+dnml_status bigInt_to_str(char* str, const bigInt x, size_t *written);
+dnml_status bigInt_to_strb(char* str, const bigInt x, uint8_t base, size_t *written);
+dnml_status bigInt_to_strn(char* str, size_t len, const bigInt x, size_t *written);
+dnml_status bigInt_to_strnb(char* str, size_t len, const bigInt x, uint8_t base, size_t *written);
+dnml_status bigInt_to_strf(
+    char* str, size_t len, 
+    const bigInt x, uint8_t base, 
+    bool uppercase, size_t *written
+);
 //* -------------------------- BigInt Conversions -------------------------- *//
 bigInt __BIGINT_FROM_STRING__(const char* str, dnml_status *err);
 bigInt __BIGINT_FROM_BASE__(const char* str, uint8_t base, dnml_status *err);
@@ -472,19 +424,19 @@ dnml_status __BIGINT_SGET_BASENLEN__(bigInt *x, const char *str, size_t len, uin
 
 //* -------------------- DECIMAL INPUTS/OUTPUTS --------------------- */
 /* --------- Decimal Instant OUTPUT ---------  */
-void __BIGINT_PUT__(const bigInt x);
-void __BIGINT_PUTB__(const bigInt x, uint8_t base);
-void __BIGINT_PUTF__(const bigInt x, uint8_t base, bool uppercase);
-void __BIGINT_FPUT__(FILE *stream, const bigInt x);
-void __BIGINT_FPUTB__(FILE *stream, const bigInt x, uint8_t base);
-void __BIGINT_FPUTF__(FILE *stream, const bigInt x, uint8_t base, bool uppercase);
+void bigInt_put(const bigInt x);
+void bigInt_putb(const bigInt x, uint8_t base);
+void bigInt_putf(const bigInt x, uint8_t base, bool uppercase);
+void bigInt_fput(FILE *stream, const bigInt x);
+void bigInt_fputb(FILE *stream, const bigInt x, uint8_t base);
+void bigInt_fputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase);
 /* --------- Decimal Buffered OUTPUT ---------  */
-void __BIGINT_SPUT__(const bigInt x);
-void __BIGINT_SPUTB__(const bigInt x, uint8_t base);
-void __BIGINT_SPUTF__(const bigInt x, uint8_t base);
-void __BIGINT_SFPUT__(FILE *stream, const bigInt x);
-void __BIGINT_SFPUTB__(FILE *stream, const bigInt x, uint8_t base);
-void __BIGINT_SFPUTF__(FILE *stream, const bigInt x, uint8_t base);
+void bigInt_sput(const bigInt x);
+void bigInt_sputb(const bigInt x, uint8_t base);
+void bigInt_sputf(const bigInt x, uint8_t base);
+void bigInt_sfput(FILE *stream, const bigInt x);
+void bigInt_sfputb(FILE *stream, const bigInt x, uint8_t base);
+void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase);
 /* --------- Standard Stream (stdin) INPUT ---------  */
 dnml_status __BIGINT_GET__(bigInt *x);
 dnml_status __BIGINT_GETB__(bigInt *x, uint8_t base);
@@ -504,21 +456,21 @@ dnml_status __BIGINT_FTGETB__(FILE *stream, bigInt *x, uint8_t base);
 
 //* -------------------- BINARY INPUTS/OUTPUTS --------------------- */
 /* --------- Binary INPUT/OUTPUT ---------  */
-void __BIGINT_FWRITE__(FILE *stream, const bigInt x);
+void bigInt_fwrite(FILE *stream, const bigInt x);
 dnml_status __BIGINT_FREAD__(FILE *stream, bigInt *x);
 dnml_status __BIGINT_FSREAD__(FILE *stream, bigInt *x);
 dnml_status __BIGINT_FTREAD__(FILE *stream, bigInt *x);
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
-void __BIGINT_SERIALIZE__(char *buf, size_t len, const bigInt x, size_t *written);
+dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x);
 bigInt __BIGINT_DESERIALIZE__(FILE *stream, const char* str, size_t len, dnml_status *err);
 
 
 
 //* -------------------- GENERAL UTILITIES --------------------- */
-void __BIGINT_LIMB_DUMP__(const bigInt x);
-void __BIGINT_HEX_DUMP__(const bigInt x, bool uppercase);
-void __BIGINT_BIN_DUMP__(const bigInt x); 
-void __BIGINT_INFO__(const bigInt x);
+void bigInt_limb_dump(FILE *stream, const bigInt x);
+void bigInt_hexdump(FILE *stream, const bigInt x, bool uppercase);
+void bigInt_bindump(FILE *stream, const bigInt x); 
+void bigInt_info(FILE *stream, const bigInt x);
 
 
 

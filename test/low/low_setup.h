@@ -1,5 +1,5 @@
-#ifndef _LMACRO_H
-#define _LMACRO_H
+#ifndef _LOW_SETUP_H
+#define _LOW_SETUP_H
 
 
 #include "../../test_ui/lowui.h"
