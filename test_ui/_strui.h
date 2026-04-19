@@ -139,36 +139,41 @@ typedef struct _libdnml_str_suite {
 
     // Edge cases storage
     _libdnml_scase *edge;
-    uint8_t ecount;     uint8_t ecorrect;
-    str_res *fail_eres; str_res *fail_eexp;
+    uint8_t ecount;     uint8_t ecorrect;   uint16_t *fail_enums;
+    void** *fail_ein;   str_res *fail_eres; str_res *fail_eexp;
 
     // Random cases storage
-    _libdnml_scase *rand;   uint8_t rnin;
-    uint16_t rcount;        uint16_t rcorrect;
-    void** *fail_rin;        str_res *fail_rres; void* *fail_rrecons;
+    _libdnml_scase *rand;
+    uint16_t rcount;        uint16_t rcorrect;  uint16_t *fail_rnums;
+    void** *fail_rin;       str_res *fail_rres; void* *fail_rrecons;
 } _libdnml_str_suite;
 
 static inline void create_str_suite(
     _libdnml_str_suite *curr_suite, const char *name,
-    uint8_t ecount, uint16_t rcorrect, uint8_t rnin,
+    uint8_t ecount, uint16_t rcorrect,
     _libdnml_scase *ebank, _libdnml_scase *rbank,
-    void** *fail_rinbuf, str_res *fail_resbuf,
+    uint16_t *fail_nums,
+    void** *fail_inbuf, str_res *fail_resbuf,
     void* *fail_rrecons, const char *log_path
 ) {
     curr_suite->suite_name = name;
     curr_suite->ecount = ecount;
     curr_suite->rcorrect = rcorrect;
-    curr_suite->rnin = rnin;
     curr_suite->log_path = log_path;
     // Filling in the banks
     curr_suite->edge = ebank;
     curr_suite->rand = rbank;
-    // Assigning result storage
-    curr_suite->fail_eres = &fail_resbuf[0];
+    // Assigning edge-case failure storage
+    curr_suite->fail_ein  = fail_inbuf;
+    curr_suite->fail_eres = fail_resbuf;
     curr_suite->fail_eexp = &fail_resbuf[ecount];
-    curr_suite->fail_rin  = fail_rinbuf;
+    // Assigning random-case failure storage
+    curr_suite->fail_rin  = &fail_inbuf[ecount];
     curr_suite->fail_rres = &fail_resbuf[2 * ecount];
     curr_suite->fail_rrecons = fail_rrecons;
+    // Assigning failure case numbering storage
+    curr_suite->fail_enums = fail_nums;
+    curr_suite->fail_rnums = &fail_nums[ecount];
 }
 static inline void create_str_session(
     _libdnml_session *curr_session,
@@ -189,14 +194,17 @@ static inline void create_str_session(
 //* ============== FULL SUITES/SESSIONS RENDER FUNCTIONS ============== *//
 static inline void _dnml_run_suite(_libdnml_str_suite *s) {
     //* ======== 1. EDGE CASE TESTING ======== *//
+    uint16_t enum_i = 0, rnum_i = 0;
     for (uint8_t i = 0; i < s->ecount; ++i) {
         _libdnml_scase *c = &s->edge[i];
         run_case(c, s->fn_test, s->ctx);
 
         if (_comp_str_res(&c->res, &c->exp)) s->ecorrect++;
         else { uint8_t findex = (i + 1) - s->ecorrect;
+            s->fail_ein[findex] = c->in;
             s->fail_eres[findex] = c->res;
             s->fail_eexp[findex] = c->exp;
+            s->fail_enums[enum_i] = i; ++enum_i;
         }
     } if (s->ecorrect == s->ecount) return;
 
@@ -210,6 +218,7 @@ static inline void _dnml_run_suite(_libdnml_str_suite *s) {
             s->fail_rin[findex] = c->in;
             s->fail_rres[findex] = c->res;
             s->fail_rrecons[findex] = c->recons;
+            s->fail_rnums[rnum_i] = i; ++rnum_i;
         }
     }
 }
@@ -286,51 +295,97 @@ static inline void _dnml_render_csuite(_libdnml_str_suite *s) { // Render a "COM
 static inline void _dnml_render_esuite(_libdnml_str_suite *s, uint8_t suite_num, uint32_t delay_ms, int bw) {
     _dnml_box_top(s->suite_name, bw); _dnml_box_divider(bw); _dnml_delay_ms(delay_ms);
     // ------ edge cases line ------
-    char edge_line[BOX_WIDTH]; snprintf(
+    char edge_line[bw]; snprintf(
         edge_line, sizeof(edge_line), "Edge case: %d/%d",
         s->ecorrect, s->ecount
     ); _dnml_box_line(edge_line, bw);
     _dnml_delay_ms(delay_ms);
 
     // print failed edge cases
+    /* Example:
+            o) Case 5:
+                - Expected: < -- STR_RES -- 
+                    +) Status: ...
+                    +) Data: ...
+                >
+                - Got: < -- STR_RES --
+                    +) Status ...
+                    +) Data: ...
+                >
+    */
     int fail_edge = s->ecount - s->ecorrect;
-    char curr_index[10], fail_line[BOX_WIDTH];
-    for (int i = 0; i < fail_edge; ++i) { fail_line[BOX_WIDTH];
+    char curr_index[10], fail_line[bw]; FILE *tmp = tmpfile(); 
+    if (tmp == NULL) { perror("Failed to open a tmpfile(), Terminating..."); abort(); }
+    for (int i = 0; i < fail_edge; ++i) { 
+        fail_line[bw] = {1};
         int curri_len = (i, curr_index, sizeof(curr_index));
-        snprintf( fail_line, sizeof(fail_line),
-            "o) Case %.*s: Expected: <0x%016" PRIx64 ", 0x%016" PRIx64 "> | Got: <0x%016" PRIx64 ", 0x%016 " PRIx64 ">",
-            curri_len, curr_index,
-            s->fail_eexp[i].first,
-            s->fail_eexp[i].second,
-            s->fail_eres[i].first,
-            s->fail_eres[i].second
-        ); _dnml_box_line(fail_line, bw);
+        snprintf(fail_line, sizeof(fail_line), "Case %" PRIu16 ": \n", s->fail_enums[i]);
+        _dnml_box_line(fail_line, bw);
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Input: ", tmp);
+        (*s->typefmt_fn)(tmp, s->fail_ein[i]);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Expected: ", tmp);
+        _print_str_res(&s->fail_eexp[i], tmp, 1, false);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Got: ", tmp);
+        _print_str_res(&s->fail_eres[i], tmp, 1, false);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
         _dnml_delay_ms(delay_ms);
     } fflush(stdout);
 }
 static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num, uint32_t delay_ms, int bw) {
     _dnml_box_divider(bw);
     // ------ random cases line ------
-    char rand_line[BOX_WIDTH];
+    char rand_line[bw];
     snprintf(rand_line, sizeof(rand_line), "Random case: %d/%d",
              s->rcorrect, s->rcount);
     _dnml_box_line(rand_line, bw);
     _dnml_delay_ms(delay_ms);
 
     // print failed random cases
+    /* Example:
+            o) Case 5:
+                - Expected: < -- STR_RES -- 
+                    +) Status: ...
+                    +) Data: ...
+                >
+                - Got: < -- STR_RES --
+                    +) Status ...
+                    +) Data: ...
+                >
+    */
     int fail_rand = s->rcount - s->rcorrect;
-    char curr_index[10], fail_line[BOX_WIDTH];
+    char curr_index[10], fail_line[bw]; FILE *tmp = tmpfile(); 
+    if (tmp == NULL) { perror("Failed to open a tmpfile(), Terminating..."); abort(); }
     for (int i = 0; i < fail_rand; i++) {
+        fail_line[bw] = {1}; // Resetting buffer to ASCII 1
         int ilen = _itosn(i, curr_index, sizeof(curr_index));
-        snprintf(
-            fail_line, sizeof(fail_line),
-            "o Case %.*s: Expected: <0x%016" PRIx64 ", 0x%016" PRIx64 "> | Got: <0x%016" PRIx64 ", 0x%016" PRIx64 ">",
-            ilen, curr_index,
-            s->fail_rexp[i].first,
-            s->fail_rexp[i].second,
-            s->fail_rres[i].first,
-            s->fail_rres[i].second
-        ); _dnml_box_line(fail_line, bw);
+        snprintf(fail_line, sizeof(fail_line), "Case %" PRIu16 ": \n", s->fail_rnums[i]);
+        _dnml_box_line(fail_line, bw);
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Input: ", tmp);
+        (*s->typefmt_fn)(tmp, s->fail_rin[i]);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Output: ", tmp);
+        _print_str_res(&s->fail_rres[i], tmp, 1, false);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
+        freopen(NULL, "w", tmp);
+        fputs("    - Reconstruction: ", tmp);
+        void *idk[1] = { s->fail_rrecons[i] };
+        (*s->typefmt_fn)(tmp, idk);
+        _dnml_box_fmultiline(tmp, bw); putchar('\n');
+
         _dnml_delay_ms(delay_ms);
     } _dnml_box_bottom(bw);
     putchar('\n');

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <string.h>
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
 #elif defined(__unix__) || defined(__APPLE__)
@@ -56,6 +57,29 @@ static inline void _dnml_box_line(const char *text, int bw) {
     int pad = bw - len;
     if (pad < 0) pad = 0;
     printf(BOX_V " %.*s%*s" BOX_V "\n", bw - 1, text, pad - 1, "");
+}
+static inline void _dnml_box_multiline(const char *text, int bw) {
+    char line[bw];
+    while (*text != '\0') {
+        const char *endl_char = strchr(text, '\n');
+        size_t len = (endl_char) ? (size_t)(endl_char - text) : strlen(text);
+        if (len >= bw) len = bw - 1;
+
+        strncpy(line, text, len);
+        line[len] = '\0';
+        _dnml_box_line(line, bw);
+        if (endl_char) text = endl_char + 1;
+        else break;
+    }
+}
+static inline void _dnml_box_fmultiline(FILE *f, int bw) {
+    rewind(f);
+    char line[BOX_WIDTH];
+    while (fgets(line, sizeof(line), f)) {
+        size_t len = strlen(line);
+        if (len && line[len - 1] == '\n') line[len - 1] = '\0';
+        _dnml_box_line(line, bw);
+    }
 }
 //* ============== SESSION PROGRESS/FEATURES FUNCTIONS ============== *//
 static inline void _dnml_delay_ms(uint32_t ms) {

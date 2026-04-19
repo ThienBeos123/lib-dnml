@@ -221,7 +221,7 @@ static inline void _dnml_render_esuite(_libdnml_lsuite *s, uint8_t suite_num, ui
     char curr_index[10], fail_line[BOX_WIDTH];
     for (int i = 0; i < fail_edge; ++i) { fail_line[BOX_WIDTH];
         int curri_len = (i, curr_index, sizeof(curr_index));
-        snprintf( fail_line, sizeof(fail_line),
+        snprintf(fail_line, sizeof(fail_line),
             "o) Case %.*s: Expected: <0x%016" PRIx64 ", 0x%016" PRIx64 "> | Got: <0x%016" PRIx64 ", 0x%016 " PRIx64 ">",
             curri_len, curr_index,
             s->fail_edge_exp[i].first,
