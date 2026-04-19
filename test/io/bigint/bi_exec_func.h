@@ -11,13 +11,16 @@
 
 
 //* ===================== INPUT STRUCT DEFINITION ===================== *//
+// BITOS Input Structs
 typedef struct { size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv_in;
 typedef struct { const bigInt x; uint8_t base; bool uppercase; } bitos_print_in;
 typedef struct { const bigInt x } bitos_fwrite_in;
 typedef struct { size_t len; const bigInt x; } bitos_serialize_in;
 typedef struct { const bigInt x; bool uppercase; } bitos_util_in;
-
+// STOBI Input Structs
 typedef struct { const char *str; size_t len; uint8_t base; } stobi_init_in;
+typedef struct { const char *str; size_t len; uint8_t base; } stobi_conv_in;
+typedef struct { const char *str; size_t len; uint8_t base; } stobi_assign_in;
 
 
 
@@ -310,7 +313,90 @@ static inline void exec_stobi_strnbinit(const void *vin, str_res *out, void *ctx
     out->type = BIGINT;
     out->status = bigInt_strnbinit(&out->data.bi, in->str, in->len, in->base);
 }
-
+// Conversions - from_str
+static inline void exec_stobi_from_str(const void *vin, str_res *out, void *ctx) {
+    const stobi_conv_in *in = vin;
+    out->type = BIGINT;
+    out->data.bi = bigInt_from_str(in->str, &out->status);
+}
+static inline void exec_stobi_from_strb(const void *vin, str_res *out, void *ctx) {
+    const stobi_conv_in *in = vin;
+    out->type = BIGINT;
+    out->data.bi = bigInt_from_strb(in->str, in->base, &out->status);
+}
+static inline void exec_stobi_from_strn(const void *vin, str_res *out, void *ctx) {
+    const stobi_conv_in *in = vin;
+    out->type = BIGINT;
+    out->data.bi = bigInt_from_strn(in->str, in->len, &out->status);
+}
+static inline void exec_stobi_from_strnb(const void *vin, str_res *out, void *ctx) {
+    const stobi_conv_in *in = vin;
+    out->type = BIGINT;
+    out->data.bi = bigInt_from_strnb(in->str, in->len, in->base, &out->status);
+}
+// Default Assignments - get_str - GROWS
+static inline void exec_stobi_get_str(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_get_str(&out->data.bi, in->str);
+}
+static inline void exec_stobi_get_strb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_get_strb(&out->data.bi, in->str, in->base);
+}
+static inline void exec_stobi_get_strn(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_get_strn(&out->data.bi, in->str, in->len);
+}
+static inline void exec_stobi_get_strnb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_get_strnb(&out->data.bi, in->str, in->len, in->base);
+}
+// Truncative Assignments - tget_str - TRUNCATE
+static inline void exec_stobi_tget_str(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_tget_str(&out->data.bi, in->str);
+}
+static inline void exec_stobi_tget_strb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_tget_strb(&out->data.bi, in->str, in->base);
+}
+static inline void exec_stobi_tget_strn(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_tget_strn(&out->data.bi, in->str, in->len);
+}
+static inline void exec_stobi_tget_strnb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_tget_strnb(&out->data.bi, in->str, in->len, in->base);
+}
+// Safe / Strict Assignments - sget_str - RETURNS AN ERROR
+static inline void exec_stobi_sget_str(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_sget_str(&out->data.bi, in->str);
+}
+static inline void exec_stobi_sget_strb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_sget_strb(&out->data.bi, in->str, in->base);
+}
+static inline void exec_stobi_sget_strn(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_sget_strn(&out->data.bi, in->str, in->len);
+}
+static inline void exec_stobi_sget_strnb(const void *vin, str_res *out, void *ctx) {
+    const stobi_assign_in *in = vin;
+    out->type = BIGINT;
+    out->status = bigInt_sget_strnb(&out->data.bi, in->str, in->len, in->base);
+}
 
 
 

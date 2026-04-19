@@ -621,7 +621,7 @@ dnml_status bigInt_to_strf(
     return STR_SUCCESS;
 }
 //* -------------------------- BigInt Conversions -------------------------- *//
-bigInt __BIGINT_FROM_STRING__(const char* str, dnml_status *err) {
+bigInt bigInt_from_str(const char* str, dnml_status *err) {
     assert(err); if (!str) { *err = STR_NULL; return __BIGINT_ERROR_VALUE__(); }
     if (*str == '\0') { *err = STR_EMPTY; return __BIGINT_ERROR_VALUE__(); }
     bigInt res;
@@ -681,7 +681,7 @@ bigInt __BIGINT_FROM_STRING__(const char* str, dnml_status *err) {
         __BIGINT_INTERNAL_ADD_UI64__(&res, _VALUE_LOOKUP_[lookup_index]);
     } return res;
 }
-bigInt __BIGINT_FROM_BASE__(const char* str, uint8_t base, dnml_status *err) {
+bigInt bigInt_from_strb(const char* str, uint8_t base, dnml_status *err) {
     assert(err); if (!str) { *err = STR_NULL; return __BIGINT_ERROR_VALUE__(); }
     if (*str == '\0') { *err = STR_EMPTY; return __BIGINT_ERROR_VALUE__(); }
     bigInt res;
@@ -726,7 +726,7 @@ bigInt __BIGINT_FROM_BASE__(const char* str, uint8_t base, dnml_status *err) {
         __BIGINT_INTERNAL_ADD_UI64__(&res, _VALUE_LOOKUP_[lookup_index]);
     } return res;
 }
-bigInt __BIGINT_FROM_STRNLEN__(const char* str, size_t len, dnml_status *err) {
+bigInt bigInt_from_strn(const char* str, size_t len, dnml_status *err) {
     assert(err); if (!str) { *err = STR_NULL; return __BIGINT_ERROR_VALUE__(); }
     if (*str == '\0') { *err = STR_EMPTY; return __BIGINT_ERROR_VALUE__(); }
     bigInt res;
@@ -789,7 +789,7 @@ bigInt __BIGINT_FROM_STRNLEN__(const char* str, size_t len, dnml_status *err) {
         __BIGINT_INTERNAL_ADD_UI64__(&res, _VALUE_LOOKUP_[lookup_index]);
     } return res;
 }
-bigInt __BIGINT_FROM_BASENLEN__(const char* str, size_t len, uint8_t base, dnml_status *err) {
+bigInt bigInt_from_strnb(const char* str, size_t len, uint8_t base, dnml_status *err) {
     assert(err); if (!str) { *err = STR_NULL; return __BIGINT_ERROR_VALUE__(); }
     if (*str == '\0') { *err = STR_EMPTY; return __BIGINT_ERROR_VALUE__(); }
     bigInt res;
@@ -838,8 +838,8 @@ bigInt __BIGINT_FROM_BASENLEN__(const char* str, size_t len, uint8_t base, dnml_
     } return res;
 }
 //* -------------------------- BigInt Assignments -------------------------- *//
-/* Default String --> BigInt */
-dnml_status __BIGINT_GET_STRING__(bigInt *x, const char *str) {
+/* Default String --> BigInt */ /* Grows */
+dnml_status bigInt_get_str(bigInt *x, const char *str) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -895,7 +895,7 @@ dnml_status __BIGINT_GET_STRING__(bigInt *x, const char *str) {
     arena_reset(_DASI_GET_STRING_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_GET_BASE__(bigInt *x, const char *str, uint8_t base) {
+dnml_status bigInt_get_strb(bigInt *x, const char *str, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -943,7 +943,7 @@ dnml_status __BIGINT_GET_BASE__(bigInt *x, const char *str, uint8_t base) {
     arena_reset(_DASI_GET_BASE_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_GET_STRNLEN__(bigInt *x, const char *str, size_t len) {
+dnml_status bigInt_get_strn(bigInt *x, const char *str, size_t len) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1002,7 +1002,7 @@ dnml_status __BIGINT_GET_STRNLEN__(bigInt *x, const char *str, size_t len) {
     arena_reset(_DASI_GET_STRNLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_GET_BASENLEN__(bigInt *x, const char *str, size_t len, uint8_t base) {
+dnml_status bigInt_get_strnb(bigInt *x, const char *str, size_t len, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1051,8 +1051,8 @@ dnml_status __BIGINT_GET_BASENLEN__(bigInt *x, const char *str, size_t len, uint
     arena_reset(_DASI_GET_BASENLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-/* Truncative String --> BigInt */
-dnml_status __BIGINT_TGET_STRING__(bigInt *x, const char *str) {
+/* Truncative String --> BigInt */ /* Truncates */
+dnml_status bigInt_tget_str(bigInt *x, const char *str) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1110,7 +1110,7 @@ dnml_status __BIGINT_TGET_STRING__(bigInt *x, const char *str) {
     arena_reset(_DASI_TGET_STRING_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TGET_BASE__(bigInt *x, const char *str, uint8_t base) {
+dnml_status bigInt_tget_strb(bigInt *x, const char *str, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1159,7 +1159,7 @@ dnml_status __BIGINT_TGET_BASE__(bigInt *x, const char *str, uint8_t base) {
     arena_reset(_DASI_TGET_BASE_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TGET_STRNLEN__(bigInt *x, const char *str, size_t len) {
+dnml_status bigInt_tget_strn(bigInt *x, const char *str, size_t len) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1220,7 +1220,7 @@ dnml_status __BIGINT_TGET_STRNLEN__(bigInt *x, const char *str, size_t len) {
     arena_reset(_DASI_TGET_STRNLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_TGET_BASENLEN__(bigInt *x, const char *str, size_t len, uint8_t base) {
+dnml_status bigInt_tget_strnb(bigInt *x, const char *str, size_t len, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1271,8 +1271,8 @@ dnml_status __BIGINT_TGET_BASENLEN__(bigInt *x, const char *str, size_t len, uin
     arena_reset(_DASI_TGET_BASENLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-/* Safe String --> BigInt */
-dnml_status __BIGINT_SGET_STRING__(bigInt *x, const char *str) {
+/* Safe String --> BigInt */ /* Return an Error */
+dnml_status bigInt_sget_str(bigInt *x, const char *str) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1329,7 +1329,7 @@ dnml_status __BIGINT_SGET_STRING__(bigInt *x, const char *str) {
     arena_reset(_DASI_SGET_STRING_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_SGET_BASE__(bigInt *x, const char *str, uint8_t base) {
+dnml_status bigInt_sget_strb(bigInt *x, const char *str, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1378,7 +1378,7 @@ dnml_status __BIGINT_SGET_BASE__(bigInt *x, const char *str, uint8_t base) {
     arena_reset(_DASI_SGET_BASE_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_SGET_STRNLEN__(bigInt *x, const char *str, size_t len) {
+dnml_status bigInt_sget_strn(bigInt *x, const char *str, size_t len) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
@@ -1438,7 +1438,7 @@ dnml_status __BIGINT_SGET_STRNLEN__(bigInt *x, const char *str, size_t len) {
     arena_reset(_DASI_SGET_STRNLEN_ARENA, tmp_mark);
     return STR_SUCCESS;
 }
-dnml_status __BIGINT_SGET_BASENLEN__(bigInt *x, const char *str, size_t len, uint8_t base) {
+dnml_status bigInt_sget_strnb(bigInt *x, const char *str, size_t len, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
     if (!str) return STR_NULL;
     if (*str == '\0') return STR_EMPTY;
