@@ -203,10 +203,20 @@ static inline void exec_bitos_fwrite(const void *vin, str_res *out, void *ctx) {
     } out->str[len] = '\0'; 
     out->data.len = len; fclose(tmp);
 }
-static inline void exec_bitos_serialize(const void *vin, str_res *out, void *ctx) {
+static inline void exec_bitos_serial(const void *vin, str_res *out, void *ctx) {
     const bitos_serialize_in *in = vin;
     out->type = STRING;
-    out->status = bigInt_serialize(out->str, in->len, in->x);
+    out->status = bigInt_serialize(out->str, in->len, in->x, &out->data.len);
+}
+static inline void exec_bitos_tserial(const void *vin, str_res *out, void *ctx) {
+    const bitos_serialize_in *in = vin;
+    out->type = STRING;
+    out->status = bigInt_tserialize(out->str, in->len, in->x, &out->data.len);
+}
+static inline void exec_bitos_sserial(const void *vin, str_res *out, void *ctx) {
+    const bitos_serialize_in *in = vin;
+    out->type = STRING;
+    out->status = bigInt_sserialize(out->str, in->len, in->x, &out->data.len);
 }
 // Utilities
 static inline void exec_bitos_ldump(const void *vin, str_res *out, void *ctx) {
@@ -426,7 +436,7 @@ static inline void exec_stobi_fread(const void *vin, str_res *out, void *ctx) {
 static inline void exec_stobi_deserialize(const void *vin, str_res *out, void *ctx) {
     stobi_deserialize_in *in = vin;
     out->type = BIGINT;
-    out->data.bi = bigInt_deserialize(in->str, in->len, &out->status);
+    out->status = bigInt_deserialize(&out->data.bi, in->str, in->len);
 }
 
 

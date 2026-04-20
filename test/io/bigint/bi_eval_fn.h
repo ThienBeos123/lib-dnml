@@ -33,8 +33,9 @@
 *               outputs a bigInt based on the user's base input
 
 *   +) Lossless functions, functions in which full input information
-*      might be lost, will NOT have an inverse, since the input
-*      is unrecoverable autonomously, and therefore resorts to EVALUATION (see Note 2)
+*      might be lost, will NOT have an inverse, for the input
+*      is unrecoverable autonomously, and therefore, 
+*      such functions resort to EVALUATION (see Note 2)
 *      ------> Truncative Variants do NOT have inverses
 */
 
@@ -49,8 +50,8 @@
 
 
 //* ========================= BITOS EVALUATION WRAPPERS ======================= *//
-// BITOS Conversions Inverses
-static inline void inv_bitos_to_str_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+// BITOS Conversions Inverses & Evaluators
+static inline void inv_bitos_tostr_det(const void *vin, const str_res *out, void *recon, void *vctx) {
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
@@ -59,7 +60,7 @@ static inline void inv_bitos_to_str_det(const void *vin, const str_res *out, voi
     bigInt_get_strn(&tmp, out->str, out->data.len);
     *(bigInt*)recon = tmp;
 }
-static inline void inv_bitos_to_str_indet(const void *vin, const str_res *out, void *recon, void *vctx) {
+static inline void inv_bitos_tostr_indet(const void *vin, const str_res *out, void *recon, void *vctx) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
@@ -69,7 +70,6 @@ static inline void inv_bitos_to_str_indet(const void *vin, const str_res *out, v
     bigInt_get_strnb(&tmp, out->str, out->data.len, in->base);
     *(bigInt*)recon = tmp;
 }
-// BITOS Evaluators
 static inline void eval_bitos_tto_str(const void *vin, const str_res *out, void *vctx) {
     // For: tto_str, tto_strn
     const bitos_conv_in *in = (bitos_conv_in*)in;
@@ -94,8 +94,35 @@ static inline void eval_bitos_tto_strf(const void *vin, const str_res *out, void
     char *full = (char*)dratch_alloc(ctx->buf, needed + 1);
     bigInt_to_strf(full, needed + 1, in->x, in->base, in->uppercase, &needed);
 }
-
-
+// BITOS Printing Inverses
+static inline void inv_bitos_fput_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+    io_ctx *ctx = (io_ctx*)vctx;
+    size_t bcount = __BITCOUNT___(out->data.len, 10);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
+    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
+    bigInt_get_strn(&tmp, out->str, out->data.len);
+    *(bigInt*)recon = tmp;
+}
+static inline void inv_bitos_fput_indet(const void *vin, const str_res *out, void *recon, void *vctx) {
+    bitos_print_in *in = (bitos_print_in*)vin;
+    io_ctx *ctx = (io_ctx*)vctx;
+    size_t bcount = __BITCOUNT___(out->data.len, in->base);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
+    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
+    bigInt_get_strnb(&tmp, out->str, out->data.len, in->base);
+    *(bigInt*)recon = tmp;
+}
+// BITOS Raw Output Inverses
+static inline void inv_bitos_serial_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+    io_ctx *ctx = (io_ctx*)vctx;
+    size_t lsize = bigInt_deserial_size(out->str, out->data.len);
+    limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lsize * BYTES_IN_UINT64_T);
+    bigInt tmp = { .limbs = tmp_limb, .n = 0, .cap = lsize, .sign = 0 };
+    bigInt_deserialize(&tmp, out->str, out->data.len);
+    *(bigInt*)recon = tmp;
+}
 
 
 #endif

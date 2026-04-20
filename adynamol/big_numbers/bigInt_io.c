@@ -2675,8 +2675,11 @@ dnml_status bigInt_fread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_fsread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_ftread(FILE *stream, bigInt *x) {}
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
-dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x) {}
-bigInt bigInt_deserialize(const char* str, size_t len, dnml_status *err) {}
+dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x, size_t *written) {}
+dnml_status bigInt_tserialize(char *buf, size_t len, const bigInt x, size_t *written) {}
+dnml_status bigInt_sserialize(char *buf, size_t len, const bigInt x, size_t *written) {}
+size_t bigInt_deserial_size(const char *str, size_t len) {}
+dnml_status bigInt_deserialize(bigInt *x, const char* str, size_t len) {}
 
 
 

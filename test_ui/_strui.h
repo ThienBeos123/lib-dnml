@@ -20,7 +20,7 @@
 //* =========== TYPE DEFINITIONS =========== *//
 // Small, supporting types
 typedef enum res_type { BIGINT, STRING } operated_types;
-typedef enum { CHECK_INVERSE, CHECK_PROP } rcheck_mode;
+typedef enum { INVERSE, EVAL, PROPRETY, NONE } rcheck_mode;
 typedef struct str_res {
     /* Notes:
         Instead of using a union to store
@@ -109,6 +109,7 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool
 
 //* =================== FUNCTION-GENERALIZATION DISPATCHER =================== *//
 typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
+typedef bool (*dnml_prop_fn)(const void *in, str_res *out);
 // Evaluators & Inverses
 typedef void (*dnml_eval_fn)(const void *in, str_res *out, void *ctx);
 typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstructed, void *ctx);
@@ -140,13 +141,17 @@ static inline void *run_inverse(_libdnml_scase *c, dnml_inv_fn *fn, void *ctx) {
 //* =================== TEST CREATION FUNFCTIONS =================== *//
 typedef struct _libdnml_str_suite {
     const char *suite_name;
+    void *ctx;
+    const char *log_path;
     rcheck_mode func_mode;
+
     dnml_exec_fn *fn_test; 
+    // Random-based Oracle Functions
     dnml_inv_fn *fn_inv;        dnml_eval_fn *fn_eval;
     dnml_cmp_inv_fn *inv_cmp;   dnml_cmp_eval_fn *eval_cmp;
     dnml_fmt_in_fn *fmtin_fn;   dnml_fmt_recon_fn *fmtrecon_fn; 
-    void *ctx;
-    const char *log_path;
+    // Property-based Functions
+    dnml_prop_fn *fn_prop;
 
     // Edge cases storage
     _libdnml_scase *edge;
@@ -155,17 +160,18 @@ typedef struct _libdnml_str_suite {
 
     // Random cases storage
     _libdnml_scase *rand;
-    uint16_t rcount;        uint16_t rcorrect;
+    uint16_t rcount;       uint16_t rcorrect;
     void* *fail_rin;       str_res *fail_rres; void* *fail_rrecons;
 
     int fail_enums[];
 } _libdnml_str_suite;
 
+
 static inline void create_str_suite(
     _libdnml_str_suite *curr_suite, const char *name,
     uint8_t ecount, uint16_t rcorrect,
     _libdnml_scase *ebank, _libdnml_scase *rbank,
-    int *fail_nums,
+    rcheck_mode mode,
     void** *fail_inbuf, str_res *fail_resbuf,
     void* *fail_rrecons, const char *log_path
 ) {
@@ -184,7 +190,11 @@ static inline void create_str_suite(
     curr_suite->fail_rres = &fail_resbuf[2 * ecount];
     curr_suite->fail_rrecons = fail_rrecons;
 }
-static inline void fill_strsuite_func(
+
+static inline void fill_suite_prop(_libdnml_str_suite *curr_suite, bool *prop_fn) {
+    curr_suite->fn_prop = prop_fn;
+}
+static inline void fill_suite_rand(
     _libdnml_str_suite *curr_suite, void *fn_test, 
     void *fn_inv,   void *fn_eval,
     bool *cmp_inv,  bool *cmp_eval,   
@@ -201,6 +211,7 @@ static inline void fill_strsuite_func(
     curr_suite->fmtin_fn = (dnml_fmt_in_fn*)(fmtin_fn);
     curr_suite->fmtrecon_fn = (dnml_fmt_recon_fn*)(fmtrecon_fn);
 }
+
 static inline void create_str_session(
     _libdnml_session *curr_session,
     const char *session_name, uint8_t cli_delay,
@@ -217,9 +228,8 @@ static inline void create_str_session(
 
 
 
-//* ============== FULL SUITES/SESSIONS RENDER FUNCTIONS ============== *//
-static inline void _dnml_run_suite(_libdnml_str_suite *s) {
-    //* ======== 1. EDGE CASE TESTING ======== *//
+//* ================= SUITE RUNNER FUNCTIONS ================= *//
+static inline void _dnml_run_edge(_libdnml_str_suite *s) {
     int enum_i = 0;
     for (uint8_t i = 0; i < s->ecount; ++i) {
         _libdnml_scase *c = &s->edge[i];
@@ -230,13 +240,13 @@ static inline void _dnml_run_suite(_libdnml_str_suite *s) {
             s->fail_eexp[findex] = c->exp;
             s->fail_enums[enum_i] = i + 1; ++enum_i;
         }
-    } if (s->ecorrect == s->ecount) return;
-
-    //* ======== 2. RAND CASE TESTING ======== *//
+    }
+}
+static inline void _dnml_run_rand(_libdnml_str_suite *s) {
     for (uint16_t i = 0; i < s->rcorrect; ++i) {
         _libdnml_scase *c = &s->rand[i]; str_res ref;
         run_case(c, s->fn_test, s->ctx); uint8_t correct = 0;
-        if (c->mode = CHECK_INVERSE && s->fn_inv) {
+        if (c->mode = INVERSE && s->fn_inv) {
             run_inverse(c, s->fn_inv, s->ctx);
             if ((*s->inv_cmp)(c->in, c->recons)) correct = 1;
         } else {
@@ -251,6 +261,14 @@ static inline void _dnml_run_suite(_libdnml_str_suite *s) {
         }
     }
 }
+static inline void _dnml_run_prop(_libdnml_str_suite *s) {}
+static inline void _dnml_run_suite(_libdnml_str_suite *s) {
+    _dnml_run_edge(s); if (s->ecorrect == s->ecount) return;
+    if (s->func_mode == INVERSE || s->func_mode == EVAL) _dnml_run_rand(s);
+    else if (s->func_mode == PROPRETY) _dnml_run_prop(s);
+    else;
+}
+//* ========= FULL SUITES/SESSIONS RENDER FUNCTIONS ========== *//
 static inline void _dnml_log_suite(_libdnml_str_suite *s) {
     uint16_t fail_edge = s->ecount - s->ecorrect;
     uint16_t fail_rand = s->rcorrect - s->rcorrect;
