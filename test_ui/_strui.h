@@ -20,6 +20,7 @@
 //* =========== TYPE DEFINITIONS =========== *//
 // Small, supporting types
 typedef enum res_type { BIGINT, STRING } operated_types;
+typedef enum { CHECK_INVERSE, CHECK_PROP } rcheck_mode;
 typedef struct str_res {
     /* Notes:
         Instead of using a union to store
@@ -42,7 +43,7 @@ typedef struct str_res {
 
 // Cases & Suites
 typedef struct _libdnml_scase {
-    uint8_t inc;
+    rcheck_mode mode;
     void* in;
     str_res exp;
     str_res res;
@@ -108,9 +109,15 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool
 
 //* =================== FUNCTION-GENERALIZATION DISPATCHER =================== *//
 typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
-typedef void (*dnml_inverse_fn)(const str_res out, void *reconstructed, void *ctx);
-typedef bool (*dnml_cmp_fn)(const void *original, const void *reconstructed);
+// Evaluators & Inverses
+typedef void (*dnml_eval_fn)(const void *in, str_res *out, void *ctx);
+typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstructed, void *ctx);
+// Comparisons
+typedef bool (*dnml_cmp_inv_fn)(const void *original, const void *recon);
+typedef bool (*dnml_cmp_eval_fn)(const str_res *full, const str_res *out);
+// Printing & Formatting
 typedef void (*dnml_fmt_in_fn)(FILE *f, const void *in);
+typedef void (*dnml_fmt_recon_fn)(FILE *f, const void* recon);
 
 static str_res *alloc_res(dnml_dratch *a, size_t len) {
     str_res *r = (str_res*)(dratch_alloc(a, sizeof(str_res) + len + 1));
@@ -121,8 +128,11 @@ static str_res *alloc_res(dnml_dratch *a, size_t len) {
 static inline void *run_case(_libdnml_scase *c, dnml_exec_fn *fn, void *ctx) {
     (*fn)(c->in, &c->res, ctx);
 }
-static inline void *run_inverse(_libdnml_scase *c, dnml_inverse_fn *fn, void *ctx) {
-    (*fn)(c->res, &c->recons, ctx);
+static inline void *run_eval(_libdnml_scase *c, dnml_eval_fn *fn, void *ctx) {
+    (*fn)(c->in, &c->exp, ctx);
+}
+static inline void *run_inverse(_libdnml_scase *c, dnml_inv_fn *fn, void *ctx) {
+    (*fn)(c->in, c->res, &c->recons, ctx);
 }
 
 
@@ -130,10 +140,11 @@ static inline void *run_inverse(_libdnml_scase *c, dnml_inverse_fn *fn, void *ct
 //* =================== TEST CREATION FUNFCTIONS =================== *//
 typedef struct _libdnml_str_suite {
     const char *suite_name;
-    dnml_exec_fn *fn_test;
-    dnml_inverse_fn *fn_inverse;
-    dnml_cmp_fn *cmp_fn;
-    dnml_fmt_in_fn *typefmt_fn;
+    rcheck_mode func_mode;
+    dnml_exec_fn *fn_test; 
+    dnml_inv_fn *fn_inv;        dnml_eval_fn *fn_eval;
+    dnml_cmp_inv_fn *inv_cmp;   dnml_cmp_eval_fn *eval_cmp;
+    dnml_fmt_in_fn *fmtin_fn;   dnml_fmt_recon_fn *fmtrecon_fn; 
     void *ctx;
     const char *log_path;
 
@@ -173,6 +184,23 @@ static inline void create_str_suite(
     curr_suite->fail_rres = &fail_resbuf[2 * ecount];
     curr_suite->fail_rrecons = fail_rrecons;
 }
+static inline void fill_strsuite_func(
+    _libdnml_str_suite *curr_suite, void *fn_test, 
+    void *fn_inv,   void *fn_eval,
+    bool *cmp_inv,  bool *cmp_eval,   
+    void *fmtin_fn, void *fmtrecon_fn
+) {
+    curr_suite->fn_test = (dnml_exec_fn*)(fn_test);
+    // Evaluators
+    curr_suite->fn_inv = (dnml_inv_fn*)(fn_inv);
+    curr_suite->fn_eval = (dnml_eval_fn*)(fn_eval);
+    // Comparisons
+    curr_suite->inv_cmp = (dnml_cmp_inv_fn*)(cmp_inv);
+    curr_suite->eval_cmp = (dnml_cmp_eval_fn*)(cmp_eval);
+    // Priting & Formatting
+    curr_suite->fmtin_fn = (dnml_fmt_in_fn*)(fmtin_fn);
+    curr_suite->fmtrecon_fn = (dnml_fmt_recon_fn*)(fmtrecon_fn);
+}
 static inline void create_str_session(
     _libdnml_session *curr_session,
     const char *session_name, uint8_t cli_delay,
@@ -196,7 +224,6 @@ static inline void _dnml_run_suite(_libdnml_str_suite *s) {
     for (uint8_t i = 0; i < s->ecount; ++i) {
         _libdnml_scase *c = &s->edge[i];
         run_case(c, s->fn_test, s->ctx);
-
         if (_comp_str_res(&c->res, &c->exp)) s->ecorrect++;
         else { uint8_t findex = (i + 1) - s->ecorrect;
             s->fail_eres[findex] = c->res;
@@ -208,9 +235,15 @@ static inline void _dnml_run_suite(_libdnml_str_suite *s) {
     //* ======== 2. RAND CASE TESTING ======== *//
     for (uint16_t i = 0; i < s->rcorrect; ++i) {
         _libdnml_scase *c = &s->rand[i]; str_res ref;
-        run_case(c, s->fn_test, s->ctx);
-        run_inverse(c, s->fn_inverse, s->ctx);
-        if ((*s->cmp_fn)(c->in, c->recons)) s->rcorrect += 1;
+        run_case(c, s->fn_test, s->ctx); uint8_t correct = 0;
+        if (c->mode = CHECK_INVERSE && s->fn_inv) {
+            run_inverse(c, s->fn_inv, s->ctx);
+            if ((*s->inv_cmp)(c->in, c->recons)) correct = 1;
+        } else {
+            run_eval(c, s->fn_eval, s->ctx);
+            if ((*s->eval_cmp)(&c->exp, &c->res)) correct = 1;
+        }
+        if (correct) s->rcorrect++;
         else { uint16_t findex = (i + 1) - s->rcorrect;
             s->fail_rin[findex] = c->in;
             s->fail_rres[findex] = c->res;
@@ -241,7 +274,7 @@ static inline void _dnml_log_suite(_libdnml_str_suite *s) {
         */
         fprintf(f,  "o) Edge case %d:\n", s->fail_enums[i]);
         fputs(      "   - Input: ", f);
-        if (s->typefmt_fn) (*s->typefmt_fn)(f, s->fail_rin[i]);
+        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i]);
         else fputs("<ERROR: NO-FORMATTER>", f);
         fputc('\n', f);
         fputs(      "   - Expected: ", f);
@@ -266,14 +299,14 @@ static inline void _dnml_log_suite(_libdnml_str_suite *s) {
         */
         fprintf(f, "o) Rand case %" PRIu16 ":\n", i + 1);
         fputs(      "   - Input: ", f);
-        if (s->typefmt_fn) (*s->typefmt_fn)(f, s->fail_rin[i]);
+        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i]);
         else fputs("<ERROR: NO-FORMATTER>", f);
         fputc('\n', f);
         fputs(      "   - Output: ", f);
         _print_str_res(&s->fail_rres[i], f, 1, false); fputc('\n', f);
         fputs(      "   - Reconstructed: ", f);
         void *idk[1] = { s->fail_rrecons[i] };
-        if (s->typefmt_fn) (*s->typefmt_fn)(f, idk);
+        if (s->fmtrecon_fn) (*s->fmtrecon_fn)(f, idk);
         else fputs("<ERROR: NO-FORMATTER>", f);
     } fclose(f);
 }
@@ -361,7 +394,7 @@ static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num,
 
         freopen(NULL, "w", tmp);
         fputs("    - Input: ", tmp);
-        (*s->typefmt_fn)(tmp, s->fail_rin[i]);
+        (*s->fmtin_fn)(tmp, s->fail_rin[i]);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         freopen(NULL, "w", tmp);
@@ -371,7 +404,7 @@ static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num,
 
         freopen(NULL, "w", tmp);
         fputs("    - Reconstruction: ", tmp);
-        (*s->typefmt_fn)(tmp, s->fail_rrecons[i]);
+        (*s->fmtrecon_fn)(tmp, s->fail_rrecons[i]);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         _dnml_delay_ms(delay_ms);

@@ -375,7 +375,8 @@ dnml_status bigInt_tto_str(char* str, const bigInt x, size_t *written) {
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(_DASI_TSET_STRING_ARENA, tmp_mark);
-    return STR_SUCCESS;
+    if (digit_needed >= str_length) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tto_strb(char* str, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
@@ -400,7 +401,8 @@ dnml_status bigInt_tto_strb(char* str, const bigInt x, uint8_t base, size_t *wri
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < str_length) memset(&str[sign_space], '0', str_length - digit_needed);
     arena_reset(_DASI_TSET_BASE_ARENA, tmp_mark);
-    return STR_SUCCESS;
+    if (digit_needed >= str_length) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tto_strn(char* str, size_t len, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
@@ -424,7 +426,8 @@ dnml_status bigInt_tto_strn(char* str, size_t len, const bigInt x, size_t *writt
     size_t digit_needed = __BIGINT_COUNTDB__(&x, 10);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_TSET_STRNLEN_ARENA, tmp_mark);
-    return STR_SUCCESS;
+    if (digit_needed >= len) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tto_strnb(char* str, size_t len, const bigInt x, uint8_t base, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
@@ -448,7 +451,8 @@ dnml_status bigInt_tto_strnb(char* str, size_t len, const bigInt x, uint8_t base
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_TSET_BASENLEN_ARENA, tmp_mark);
-    return STR_SUCCESS;
+    if (digit_needed > len) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tto_strf(
     char* str, size_t len, 
@@ -481,7 +485,8 @@ dnml_status bigInt_tto_strf(
     size_t digit_needed = __BIGINT_COUNTDB__(&x, base);
     if (digit_needed < len) memset(&str[sign_space], '0', len - digit_needed);
     arena_reset(_DASI_TSET_BASENLEN_ARENA, tmp_mark);
-    return STR_SUCCESS;
+    if (digit_needed >= len) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 /* Safe BigInt --> String */
 dnml_status bigInt_to_str(char* str, const bigInt x, size_t *written) {

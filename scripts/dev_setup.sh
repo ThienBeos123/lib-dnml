@@ -1,11 +1,11 @@
 #!/bin/bash
-# Dynamol developer setup — run once after cloning
+# lib-dnml developer setup — run once after cloning
 set -e
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
-echo "=== Dynamol dev setup: $OS / $ARCH ==="
+echo "=== lib-dnml dev setup: $OS / $ARCH ==="
 
 if [ "$OS" = "Linux" ]; then
     sudo apt-get update -q

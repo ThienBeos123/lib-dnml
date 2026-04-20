@@ -1,0 +1,38 @@
+#ifndef _BIGINT_INPUT_DEFINITION_H
+#define _BIGINT_INPUT_DEFINITION_H
+
+
+
+#include <stdint.h>
+#include <stdio.h>
+#include "../../../test_ui/_strui.h"
+#include "../../../sconfigs/memory/_scratch.h"
+#include "../../../adynamol/big_numbers/bigNums.h"
+
+//* ===================== BUFFER CONTEXT DEFINITION ===================== *//
+typedef struct { dnml_dratch* buf; } io_ctx;
+
+//* ===================== INPUT STRUCT DEFINITION ===================== *//
+// BITOS Input Structs
+typedef struct { size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv_in;
+typedef struct { const bigInt x; uint8_t base; bool uppercase; } bitos_print_in;
+typedef struct { const bigInt x; } bitos_fwrite_in;
+typedef struct { size_t len; const bigInt x; } bitos_serialize_in;
+typedef struct { const bigInt x; bool uppercase; } bitos_util_in;
+// STOBI Input Structs
+typedef struct { const char *str; size_t len; uint8_t base; } stobi_init_in;
+typedef struct { const char *str; size_t len; uint8_t base; } stobi_conv_in;
+typedef struct { const char *str; size_t len; uint8_t base; size_t bi_size; } stobi_assign_in;
+typedef struct { FILE *stream; uint8_t base; size_t bi_size; } stobi_scan_in;
+typedef struct { FILE *stream; size_t bi_size; } stobi_fread_in;
+typedef struct { const char* str; size_t len; } stobi_deserialize_in;
+
+
+//* ===================== RECONSTRUCTION STRUCT DEFINITION ===================== *//
+typedef struct { const bigInt x; } bitos_recon;
+typedef struct { const char *str; } stobi_recon;
+
+
+
+
+#endif
