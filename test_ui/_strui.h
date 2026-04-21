@@ -55,14 +55,14 @@ typedef struct _libdnml_scase {
 #define BIGINT_PREVIEW 4
 
 static inline bool _comp_str_res(const str_res *a, const str_res *b) {
-    if (a->type != b->type) return false;
     if (a->status != b->status) return false;
-    if (a->type == STRING) {
-        return strcmp(a->str, b->str) == 0;
-    } else if (a->type == BIGINT) {
-        return (__BIGINT_INTERNAL_COMP__(&a->data.bi, &b->data.bi) == 0);
-    }
-    return true;
+    if (a->status != BIGINT_SUCCESS || a->status != STR_SUCCESS) return true;
+    if (a->type != b->type) return false;
+    switch (a->type) {
+        case STRING: return strcmp(a->str, b->str) == 0; break;
+        case BIGINT: return (__BIGINT_INTERNAL_COMP__(&a->data.bi, &b->data.bi) == 0); break;
+        default: return true; break;
+    };
 }
 static inline void print_str(FILE *f, const char *s, size_t len) {
     if (len <= STR_PREVIEW) {
@@ -78,10 +78,10 @@ static inline void print_str(FILE *f, const char *s, size_t len) {
 static inline void print_bigint(FILE *f, const bigInt *x) {
     fprintf(f, " < Sign = %c | Limb Count = %zu | ", x->sign < 0 ? '-' : '+', x->n);
     if (x->n <= BIGINT_PREVIEW) {
-        fprintf(f, "[");
+        fputc('[', f);
         for (size_t i = 0; i < x->n; ++i) {
             fprintf(f, "%016" PRIx64 " ", x->limbs[i]);
-        } fprintf(f, "]");
+        } fputc(']', f);
     } else {
         fprintf(f, "low=[");
         for (size_t i = 0; i < BIGINT_PREVIEW/2; ++i) {
@@ -89,7 +89,7 @@ static inline void print_bigint(FILE *f, const bigInt *x) {
         } fprintf(f, "] high=[");
         for (size_t i = x->n - BIGINT_PREVIEW/2; i < x->n; ++i) {
             fprintf(f, "%016" PRIx64 " ", x->limbs[i]);
-        } fprintf(f, "]");
+        } fputc(']', f);
     } fputs(" >", f);
 }
 static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool top_tab) {
@@ -111,7 +111,7 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool
 typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
 typedef bool (*dnml_prop_fn)(const void *in, str_res *out);
 // Evaluators & Inverses
-typedef void (*dnml_eval_fn)(const void *in, str_res *out, void *ctx);
+typedef void (*dnml_eval_fn)(const void *in, str_res *exp, void *ctx);
 typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstructed, void *ctx);
 // Comparisons
 typedef bool (*dnml_cmp_inv_fn)(const void *original, const void *recon);

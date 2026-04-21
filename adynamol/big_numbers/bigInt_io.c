@@ -2671,10 +2671,12 @@ dnml_status bigInt_ftscanb(FILE *stream, bigInt *x, uint8_t base) {
 //todo ================================= 4. SERIALIZATION & DESERIALIZATION ============================== *//
 /* --------- Binary INPUT/OUTPUT ---------  */
 void bigInt_fwrite(FILE *stream, const bigInt x) {}
+size_t bigInt_fscan_size(FILE *stream) {}
 dnml_status bigInt_fread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_fsread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_ftread(FILE *stream, bigInt *x) {}
 /* --------- SERIALIZATION / DESERIALIZATION ---------  */
+size_t bigInt_serial_size(const bigInt x) {}
 dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x, size_t *written) {}
 dnml_status bigInt_tserialize(char *buf, size_t len, const bigInt x, size_t *written) {}
 dnml_status bigInt_sserialize(char *buf, size_t len, const bigInt x, size_t *written) {}

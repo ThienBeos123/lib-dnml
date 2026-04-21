@@ -51,7 +51,7 @@
 
 //* ========================= BITOS EVALUATION WRAPPERS ======================= *//
 // BITOS Conversions Inverses & Evaluators
-static inline void inv_bitos_tostr_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+static inline void inv_bitos_conv_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
@@ -60,7 +60,7 @@ static inline void inv_bitos_tostr_det(const void *vin, const str_res *out, void
     bigInt_get_strn(&tmp, out->str, out->data.len);
     *(bigInt*)recon = tmp;
 }
-static inline void inv_bitos_tostr_indet(const void *vin, const str_res *out, void *recon, void *vctx) {
+static inline void inv_bitos_conv_b(const void *vin, const str_res *out, void *recon, void *vctx) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
@@ -70,32 +70,37 @@ static inline void inv_bitos_tostr_indet(const void *vin, const str_res *out, vo
     bigInt_get_strnb(&tmp, out->str, out->data.len, in->base);
     *(bigInt*)recon = tmp;
 }
-static inline void eval_bitos_tto_str(const void *vin, const str_res *out, void *vctx) {
+static inline void eval_bitos_tto_str(const void *vin, str_res *exp, void *vctx) {
     // For: tto_str, tto_strn
     const bitos_conv_in *in = (bitos_conv_in*)in;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, 10);
-    char *full = (char*)dratch_alloc(ctx->buf, needed + 1);
-    bigInt_to_strn(full, needed + 1, in->x, &needed);
+    exp->status = bigInt_to_strn(exp->str, needed + 1, in->x, &needed);
+    exp->data.len = needed;
 }
-static inline void eval_bitos_tto_strb(const void *vin, const str_res *out, void *vctx) {
+static inline void eval_bitos_tto_strb(const void *vin, str_res *exp, void *vctx) {
     // For: tto_strb, tto_strnb
     const bitos_conv_in *in = (bitos_conv_in*)in;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, in->base);
-    char *full = (char*)dratch_alloc(ctx->buf, needed + 1);
-    bigInt_to_strnb(full, needed + 1, in->x, in->base, &needed);
+    exp->status = bigInt_to_strnb(
+        exp->str, needed + 1, in->x, 
+        in->base, &needed
+    ); exp->data.len = needed;
 }
-static inline void eval_bitos_tto_strf(const void *vin, const str_res *out, void *vctx) {
+static inline void eval_bitos_tto_strf(const void *vin, str_res *exp, void *vctx) {
     // For: tto_strf
     const bitos_conv_in *in = (bitos_conv_in*)in;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, in->base);
-    char *full = (char*)dratch_alloc(ctx->buf, needed + 1);
-    bigInt_to_strf(full, needed + 1, in->x, in->base, in->uppercase, &needed);
+    exp->status = bigInt_to_strf(
+        exp->str, needed + 1, 
+        in->x, in->base, 
+        in->uppercase, &needed
+    ); exp->data.len = needed;
 }
-// BITOS Printing Inverses
-static inline void inv_bitos_fput_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+// BITOS Printing & Raw Output Inverses
+static inline void inv_bitos_fput_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
@@ -104,7 +109,7 @@ static inline void inv_bitos_fput_det(const void *vin, const str_res *out, void 
     bigInt_get_strn(&tmp, out->str, out->data.len);
     *(bigInt*)recon = tmp;
 }
-static inline void inv_bitos_fput_indet(const void *vin, const str_res *out, void *recon, void *vctx) {
+static inline void inv_bitos_fput_b(const void *vin, const str_res *out, void *recon, void *vctx) {
     bitos_print_in *in = (bitos_print_in*)vin;
     io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, in->base);
@@ -114,8 +119,7 @@ static inline void inv_bitos_fput_indet(const void *vin, const str_res *out, voi
     bigInt_get_strnb(&tmp, out->str, out->data.len, in->base);
     *(bigInt*)recon = tmp;
 }
-// BITOS Raw Output Inverses
-static inline void inv_bitos_serial_det(const void *vin, const str_res *out, void *recon, void *vctx) {
+static inline void inv_bitos_serial(const void *vin, const str_res *out, void *recon, void *vctx) {
     io_ctx *ctx = (io_ctx*)vctx;
     size_t lsize = bigInt_deserial_size(out->str, out->data.len);
     limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lsize * BYTES_IN_UINT64_T);
@@ -123,6 +127,163 @@ static inline void inv_bitos_serial_det(const void *vin, const str_res *out, voi
     bigInt_deserialize(&tmp, out->str, out->data.len);
     *(bigInt*)recon = tmp;
 }
+static inline void eval_bitos_tserialize(const void *vin, str_res *exp, void *vctx) {
+    // For: bigInt_tserialize()
+    const bitos_serialize_in *in = (bitos_serialize_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    needed = bigInt_serial_size(in->x);
+    exp->status = bigInt_serialize(exp->str, needed, in->x, &tmp);
+    exp->data.len = needed;
+}
+
+
+
+//* ========================= STOBI EVALUATION WRAPPERS ======================= *//
+// STOBI Initialization Inverses
+static inline void inv_stobi_init_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for bigInt_strint & bigInt_strninit
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strn(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void inv_stobi_init_b(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for bigInt_strbint & bigInt_strnbinit
+    stobi_init_in *in = (stobi_init_in*)vin;
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp);
+    *(char**)recon = idk;
+}
+// STOBI Conversion Inverses
+static inline void inv_stobi_conv_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for bigInt_from_str & bigInt_from_strn
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strn(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void inv_stobi_conv_b(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for bigInt_from_strb & bigInt_from_strnb
+    stobi_conv_in *in = (stobi_conv_in*)vin;
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp);
+    *(char**)recon = idk;
+}
+// STOBI Assignment Inverses & Evaluators
+static inline void inv_stobi_assign_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for:
+    //  - GROWS: bigInt_get_str & bigInt_get_strn
+    //  - SAFE: bigInt_sget_str & bigInt_sget_strn
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strn(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void inv_stobi_assign_b(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for:
+    //  - GROWS: bigInt_get_strb & bigInt_get_strnb
+    //  - SAFE: bigInt_sget_strb & bigInt_sget_strnb
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp);
+    *(char**)recon = idk;
+}
+static inline void eval_stobi_tget_str(const void *vin, str_res *exp, void *vctx) {
+    // For bigInt_tget_str() & bigInt_tget_strn()
+    const stobi_assign_in *in = (stobi_assign_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t slen = strnlen(in->str, in->len);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(slen, 10));
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->status = bigInt_get_strn(&exp->data.bi, in->str, in->len);
+}
+static inline void eval_stobi_tget_strb(const void *vin, str_res *exp, void *vctx) {
+    // For bigInt_tget_strb() & bigInt_tget_strnb()
+    const stobi_assign_in *in = (stobi_assign_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t slen = strnlen(in->str, in->len);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(slen, in->base));
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->status = bigInt_get_strnb(&exp->data.bi, in->str, in->len, in->base);
+}
+// STOBI Scanning Inversese & Evaluators
+static inline void inv_stobi_scan_nob(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for: bigInt_fscan & bigInt_fsscan
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strn(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void inv_stobi_scan_b(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for: bigInt_fscanb & bigInt_fsscanb
+    stobi_scan_in *in = (stobi_scan_in*)vin;
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp);
+    *(char**)recon = idk;
+}
+static inline void eval_stobi_ftscan(const void *vin, str_res *exp, void *vctx) {
+    // For bigInt_ftscan()
+    const stobi_scan_in *in = (stobi_scan_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t slen = 0;
+    while (1) { char tmpbuf[1024];
+        slen += fread(tmpbuf, sizeof(char), 1024, in->stream);
+        if (feof(in->stream)) break;
+    } size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(slen, 10));
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->status = bigInt_fscan(in->stream, &exp->data.bi);
+}
+static inline void eval_stobi_ftscanb(const void *vin, str_res *exp, void *vctx) {
+    // For bigInt_ftscanb()
+    const stobi_scan_in *in = (stobi_scan_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t slen = 0;
+    while (1) { char tmpbuf[1024];
+        slen += fread(tmpbuf, sizeof(char), 1024, in->stream);
+        if (feof(in->stream)) break;
+    } size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(slen, in->base));
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->status = bigInt_fscanb(in->stream, &exp->data.bi, in->base);
+}
+// STOBI Raw / Serial Input Inverses & Evaluators
+static inline void inv_stobi_fread(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for: bigInt_fread & bigInt_fsread
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_serialize(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void inv_stobi_deserial(const void *vin, const str_res *out, void *recon, void *vctx) {
+    // for: bigInt_deserialize()
+    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    len = bigInt_serial_size(out->data.bi);
+    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    bigInt_serialize(idk, len, out->data.bi, &tmp);
+    *(char**)recon = idk;
+}
+static inline void eval_stobi_ftread(const void *vin, str_res *exp, void *vctx) {
+    // For bigInt_ftread()
+    const stobi_fread_in *in = (stobi_fread_in*)in;
+    io_ctx *ctx = (io_ctx*)vctx; size_t slen = bigInt_fscan_size(in->stream),
+    lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(slen, 10));
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->status = bigInt_fread(in->stream, &exp->data.bi);
+}
+
 
 
 #endif
