@@ -13,6 +13,32 @@
 
 
 
+/* Note 1 - Allocation:
+*   1) Most of the evaluation and inverse wrappers in bi_exec_func.h
+*      utilizes scratch allocation seeded from vctx/ctx.
+*   -----> Entails tester and main testing units, when seeding
+*          temporary scratch spaces for testing, to always:
+
+            1. Mark the initial offset:
+
+                    size_t unit_start = dratch_mark(&ctx_);
+
+            2. Reset towards that initial offset at
+               the end of the testing unit:
+
+                    dratch_reset(&ctx_, unit_start);
+
+*   2) Due to there being a lot of functions to test, with a
+*      wide variety of function categories, testers may implement
+*      either a single universal scratch buffer for every functions,
+*      a buffer for each category, or a buffer for each function. The choice
+*      depends on the amount of functions being tested
+
+*   3) For every scratch buffers initialized, its setup and cleanup
+*      MUST follow (sub-note 1) to ensure memory-safe and efficient test runs
+*/
+
+
 //* ========================= BITOS EXECUTION WRAPPERS ======================= *//
 // Truncative Conversions - tto_str
 static inline void exec_bitos_tto_str(const void *vin, str_res *out, void *ctx) {
