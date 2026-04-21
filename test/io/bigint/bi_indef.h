@@ -9,6 +9,14 @@
 #include "../../../sconfigs/memory/_scratch.h"
 #include "../../../adynamol/big_numbers/bigNums.h"
 
+
+#define DNML_UNFINISHED() do { \
+    fputs("Unfinished / Unimplemented feature\n", stderr); \
+    fputs("Unimplemented testing abstractions\n", stderr); \
+    fputs("Terminating Session...", stderr); abort(); \
+} while(0)
+
+
 //* ===================== BUFFER CONTEXT DEFINITION ===================== *//
 typedef struct { dnml_dratch* buf; } io_ctx;
 

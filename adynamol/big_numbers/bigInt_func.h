@@ -370,6 +370,8 @@ inline uint8_t __BIGINT_PVALIDATE__(bigInt *x);
 
 
 //todo ======================================= I/O FUNCTIONALITIES ======================================= todo//
+size_t _finval_char(const char *str, size_t len, uint8_t *base_out);
+size_t _finval_charb(const char *str, size_t len, uint8_t base);
 //* -------------------- CONSTRUCTORS --------------------- */
 dnml_status bigInt_strinit(bigInt *x, const char* str);
 dnml_status bigInt_strbinit(bigInt *x, const char* str, uint8_t base);
@@ -457,7 +459,7 @@ dnml_status bigInt_ftscanb(FILE *stream, bigInt *x, uint8_t base);
 //* -------------------- BINARY INPUTS/OUTPUTS --------------------- */
 /* --------- Binary INPUT/OUTPUT ---------  */
 void bigInt_fwrite(FILE *stream, const bigInt x);
-size_t bigInt_fscan_size(FILE *stream);
+size_t bigInt_fread_size(FILE *stream);
 dnml_status bigInt_fread(FILE *stream, bigInt *x);
 dnml_status bigInt_fsread(FILE *stream, bigInt *x);
 dnml_status bigInt_ftread(FILE *stream, bigInt *x);

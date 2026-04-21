@@ -24,7 +24,8 @@ extern "C" {
 /* str_parse.c */
 /* ---------------------- */
 uint8_t is_numeric(char c);
-uint16_t _skip_whitespace__(FILE *stream);
+uint16_t _fskip_whitespace__(FILE *stream);
+void _skip_whitespace(const char *str, size_t len, size_t *pos);
 uint8_t _is_valid_digit__(uint16_t *curr_char);
 uint8_t _sign_handle_(const char *str, size_t *curr_pos, uint8_t *sign);
 uint8_t _sign_handle_nlen_(const char *str, size_t *curr_pos, uint8_t *sign, size_t len);
@@ -61,6 +62,7 @@ inline void __BIGINT_INTERNAL_TRIM_LZ__(bigInt *x);
 inline void __BIGINT_INTERNAL_ZSET__(bigInt *x);
 inline void __BIGINT_INTERNAL_SWAP__(bigInt *x, bigInt *y);
 size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base);
+size_t __BIGINT_MAXCDB__(size_t lcnt, uint8_t base);
 size_t __BIGINT_LIMBS_NEEDED__(size_t bits);
 uint8_t __BIGINT_WILL_OVERFLOW__(const bigInt *x, uint64_t threshold);
 size_t __BIGINT_CTZ__(const bigInt *x);

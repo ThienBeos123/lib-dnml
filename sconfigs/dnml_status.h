@@ -4,10 +4,11 @@
 
 typedef enum ___44594E414D4F4C_737461747573___ {
     BIGINT_SUCCESS = 0,         // 0
-    BIGINT_NULL,                // 1
-    BIGINT_ERR_INVAL,           // 2
-    BIGINT_ERR_RANGE,           // 3
-    BIGINT_ERR_DOMAIN,          // 4
+    BIGINT_TRUNC_SUCCESS,       // 1
+    BIGINT_NULL,                // 2
+    BIGINT_ERR_INVAL,           // 3
+    BIGINT_ERR_RANGE,           // 4
+    BIGINT_ERR_DOMAIN,          // 5
 
     STR_SUCCESS = 100,          // 100
     STR_TRUNC_SUCCESS,          // 101
@@ -27,11 +28,12 @@ typedef enum ___44594E414D4F4C_737461747573___ {
 
 static inline void _print_dnml_status(dnml_status a, FILE *f) {
     switch (a) {
-        case BIGINT_SUCCESS:    fputs("BIGINT_SUCCESS", f);     break;
-        case BIGINT_NULL:       fputs("BIGINT_NULL", f);        break;
-        case BIGINT_ERR_INVAL:  fputs("BIGINT_ERR_INVAL", f);   break;
-        case BIGINT_ERR_RANGE:  fputs("BIGINT_ERR_RANGE", f);   break;
-        case BIGINT_ERR_DOMAIN: fputs("BIGINT_ERR_DOMAIN", f);  break;
+        case BIGINT_SUCCESS:        fputs("BIGINT_SUCCESS", f);     break;
+        case BIGINT_TRUNC_SUCCESS:  fputs("BIGINT_TRUNC_SUCCESS", f); break;
+        case BIGINT_NULL:           fputs("BIGINT_NULL", f);        break;
+        case BIGINT_ERR_INVAL:      fputs("BIGINT_ERR_INVAL", f);   break;
+        case BIGINT_ERR_RANGE:      fputs("BIGINT_ERR_RANGE", f);   break;
+        case BIGINT_ERR_DOMAIN:     fputs("BIGINT_ERR_DOMAIN", f);  break;
 
         case STR_SUCCESS:               fputs("STR_SUCCESS", f);            break;
         case STR_TRUNC_SUCCESS:         fputs("STR_TRUNC_SUCCESS", f);      break;
