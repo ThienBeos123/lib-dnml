@@ -57,49 +57,49 @@ static inline dnml_arena* _USE_ARENA(void) {
 //todo ===================================== 0. LOW-LEVEL ENGINEs ===================================== *//
 size_t _finval_char(const char *str, size_t len, uint8_t *base_out) {
     size_t curr_pos = 0; uint8_t sign = 1;
-    _skip_whitespace(str, len, &curr_pos);
+    size_t whspace = _skip_whitespace(str, len, &curr_pos);
     unsigned char sign_op_res = _sign_handle_nlen_(str, &curr_pos, &sign, len);
-    if (sign_op_res == 4 || sign_op_res == 3) { *base_out = 2; return curr_pos; }
+    if (sign_op_res == 4 || sign_op_res == 3) { *base_out = 2; return curr_pos - whspace; }
 
     //* ====== 2. Prefix Handling ====== *//
     uint8_t base = 10;
     unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
-    if (prefix_op_res != 1) { *base_out = base; return curr_pos; }
+    if (prefix_op_res != 1) { *base_out = base; return curr_pos - whspace; }
 
     //* ====== 3. Leading-Zeros Handling ====== *//
     // Skipping all leading zeros
-    while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
+    size_t lzeros = _skip_leading_zeros(str, len, &curr_pos);
     // String full of zeros
-    if (str[curr_pos] == '\0') { *base_out = base; return curr_pos; }
-    else if (curr_pos == len) { *base_out = base; return curr_pos; }
+    if (str[curr_pos] == '\0') { *base_out = base; return curr_pos - whspace - lzeros; }
+    else if (curr_pos == len) { *base_out = base; return curr_pos - whspace - lzeros; }
 
     //* ====== 4. Numerical Part Handling ====== *//
     for (size_t i = curr_pos; i < len; ++i) {
         uint8_t val = _VALUE_LOOKUP_['0' + str[i]];
-        if (val > base) { *base_out = base; return i; }
-    } *base_out = base; return len;
+        if (val > base) { *base_out = base; return i - whspace; }
+    } *base_out = base; return len - whspace;
 }
 size_t _finval_charb(const char *str, size_t len, uint8_t base) {
     //* ====== 1. Sign Handling ====== *//
     size_t curr_pos = 0; uint8_t sign = 1;
-    _skip_whitespace(str, len, &curr_pos);
+    size_t whspace = _skip_whitespace(str, len, &curr_pos);
     if (str[curr_pos] == '-') { sign = -1; ++curr_pos; }
     else if (str[curr_pos] == '+') ++curr_pos;
-    if (str[curr_pos] == '\0') return curr_pos;
-    if (curr_pos == len - 1) return curr_pos;
+    if (str[curr_pos] == '\0') return curr_pos - whspace;
+    if (curr_pos == len - 1) return curr_pos - whspace;
 
     //* ====== 2. Leading-Zeros Handling ====== *//
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return curr_pos;
-    else if (curr_pos == len) return curr_pos;
+    if (str[curr_pos] == '\0') return curr_pos - whspace;
+    else if (curr_pos == len) return curr_pos - whspace;
 
     //* ====== 3. Numerical Part Handling ====== *//
     for (size_t i = curr_pos; i < len; ++i) {
         uint8_t val = _VALUE_LOOKUP_['0' + str[i]];
-        if (val > base) return i;
-    } return len;
+        if (val > base) return i - whspace;
+    } return len - whspace;
 }
 static inline void _HORNER_PARSE__() {}
 static inline void _DC_PARSE__() {}
@@ -406,7 +406,7 @@ dnml_status bigInt_tto_str(char* str, const bigInt x, size_t *written) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
     dnml_arena *_DASI_TSET_STRING_ARENA = _USE_ARENA();
     if (!str) return STR_NULL;
-    size_t str_length = strlen(str); // Early segfauly if no NULL-Terminator found
+    size_t str_length = strlen(str); // Early segfault if no NULL-Terminator found
     uint8_t sign_space = (x.sign == -1) ? 1 : 0;
     if (str_length <= sign_space) return STR_INVALID_CAP;
     if (sign_space) { str[0] = '-'; *written++; }
@@ -684,7 +684,7 @@ bigInt bigInt_from_str(const char* str, dnml_status *err) {
     size_t curr_pos = 0; uint8_t sign = 1;
     _skip_whitespace(str, strlen(str), &curr_pos);
     unsigned char sign_op_res = _sign_handle_(str, &curr_pos, &sign);
-    if (sign_op_res == 4) { *err = STR_INVALID_SIGN; return __BIGINT_ERROR_VALUE__(); }
+    if (sign_op_res == 4) { *err = STR_INVALID_DIGIT; return __BIGINT_ERROR_VALUE__(); }
     else if (sign_op_res == 3) { *err = STR_INCOMPLETE; return __BIGINT_ERROR_VALUE__(); }
 
     //* ====== 2. Prefix Handling ====== *//
@@ -797,8 +797,7 @@ bigInt bigInt_from_strn(const char* str, size_t len, dnml_status *err) {
     //* ====== 2. Prefix Handling ====== *//
     uint8_t base = 10;
     unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
-    if (prefix_op_res == 0) { *err = STR_INVALID_BASE_PREFIX; return __BIGINT_ERROR_VALUE__(); }
-    else if (prefix_op_res == 3) {
+    if (prefix_op_res == 0) {
         if (sign == -1) { *err = STR_INVALID_SIGN; return __BIGINT_ERROR_VALUE__(); }
         limb_t *tmp = malloc(BYTES_IN_UINT64_T);
         if (!tmp) abort();
@@ -897,6 +896,66 @@ bigInt bigInt_from_strnb(const char* str, size_t len, uint8_t base, dnml_status 
     } return res;
 }
 //* -------------------------- BigInt Assignments -------------------------- *//
+size_t bigInt_get_size(const char *str, size_t len, uint8_t *baseout, dnml_status *err) {
+    size_t curr_pos = 0, res = 0; uint8_t sign = 1;
+    _skip_whitespace(str, len, &curr_pos);
+    unsigned char sign_op_res = _sign_handle_nlen_(str, &curr_pos, &sign, len);
+    if (sign_op_res == 4) { *err = STR_INVALID_SIGN; return 0; }
+    else if (sign_op_res == 3) { *err = STR_INCOMPLETE; return 0; }
+
+    //* ====== 2. Prefix Handling ====== *//
+    uint8_t base = 10;
+    unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
+    if (prefix_op_res == 0) {
+        if (sign == -1) { *err = STR_INVALID_SIGN; return 0; }
+        { *err = STR_SUCCESS; return 0; }
+    } else if (prefix_op_res == 2) { *err = STR_INVALID_BASE_PREFIX; return 0; }
+    // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
+
+    //* ====== 3. Leading-Zeros Handling ====== *//
+    // Skipping all leading zeros
+    while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
+    // String full of zeros
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
+        // -0 is INVALID
+        if (sign == -1) { *err = STR_INVALID_SIGN; return 0; }
+        { *err = STR_SUCCESS; return 0; }
+    }
+
+    //* ====== 4. Numerical Digit Segment Handling ====== *//
+    for (size_t i = len - 1; i >= curr_pos; --i) {
+        uint8_t lookup_index = (uint8_t)(str[i] - '\0');
+        if (_VALUE_LOOKUP_[lookup_index] > base) { 
+            *err = STR_INVALID_DIGIT; *baseout = base; return res; 
+        } ++res;
+    } *err = STR_SUCCESS; *baseout = base; return res;
+} 
+size_t bigInt_get_sizeb(const char *str, size_t len, uint8_t base, dnml_status *err) {
+    //* ====== 1. Sign Handling ====== *//
+    size_t curr_pos = 0, res = 0; uint8_t sign = 1;
+    _skip_whitespace(str, len, &curr_pos);
+    if (str[curr_pos] == '-') { sign = -1; ++curr_pos; }
+    else if (str[curr_pos] == '+') ++curr_pos;
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) { *err = STR_INCOMPLETE; return 0; }
+
+    //* ====== 2. Leading-Zeros Handling ====== *//
+    // Skipping all leading zeros
+    while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
+    // String full of zeros
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
+        // -0 is INVALID
+        if (sign = -1) { *err = STR_INVALID_SIGN; return 0; }
+        *err = STR_SUCCESS; return 0;
+    }
+
+    //* ====== 3. Numerical Digit Segment Handling ====== *//
+    for (size_t i = len - 1; i >= curr_pos; --i) {
+        uint8_t lookup_index = (uint8_t)(str[i] - '\0');
+        if (_VALUE_LOOKUP_[lookup_index] > base) { 
+            *err = STR_INVALID_DIGIT; return res; 
+        } ++res;
+    } return res;
+}
 /* Default String --> BigInt */ /* Grows */
 dnml_status bigInt_get_str(bigInt *x, const char *str) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
@@ -907,7 +966,7 @@ dnml_status bigInt_get_str(bigInt *x, const char *str) {
     size_t curr_pos = 0; uint8_t sign = 1;
     _skip_whitespace(str, strlen(str), &curr_pos);
     unsigned char sign_op_res = _sign_handle_(str, &curr_pos, &sign);
-    if (sign_op_res == 4) return STR_INVALID_SIGN;
+    if (sign_op_res == 4) return STR_INVALID_DIGIT;
     else if (sign_op_res == 3) return STR_INCOMPLETE;
 
     //* ====== 2. Prefix Handling ====== *//
@@ -915,7 +974,7 @@ dnml_status bigInt_get_str(bigInt *x, const char *str) {
     unsigned char prefix_op_res = _prefix_handle_(str, &curr_pos, &base);
     if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -973,8 +1032,7 @@ dnml_status bigInt_get_strb(bigInt *x, const char *str, uint8_t base) {
     if (str[curr_pos] == '\0') {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 3. Initiating Resulting BigInt ======= *//
@@ -1019,11 +1077,9 @@ dnml_status bigInt_get_strn(bigInt *x, const char *str, size_t len) {
     //* ====== 2. Prefix Handling ====== *//
     uint8_t base = 10;
     unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
-    if (prefix_op_res == 0) return STR_INVALID_BASE_PREFIX;
-    else if (prefix_op_res == 3) {
+    if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -1031,8 +1087,7 @@ dnml_status bigInt_get_strn(bigInt *x, const char *str, size_t len) {
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign == -1) return STR_INVALID_SIGN;
         x->n = 0; x->sign = 1;
@@ -1074,19 +1129,16 @@ dnml_status bigInt_get_strnb(bigInt *x, const char *str, size_t len, uint8_t bas
     _skip_whitespace(str, len, &curr_pos);
     if (str[curr_pos] == '-') { sign = -1; ++curr_pos; }
     else if (str[curr_pos] == '+') ++curr_pos;
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    if (curr_pos == len - 1) return STR_INCOMPLETE;
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) return STR_INVALID_DIGIT;
 
     //* ====== 2. Leading-Zeros Handling ====== *//
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 3. Initiating Resulting BigInt ======= *//
@@ -1124,7 +1176,7 @@ dnml_status bigInt_tget_str(bigInt *x, const char *str) {
     size_t curr_pos = 0; uint8_t sign = 1;
     _skip_whitespace(str, strlen(str), &curr_pos);
     unsigned char sign_op_res = _sign_handle_(str, &curr_pos, &sign);
-    if (sign_op_res == 4) return STR_INVALID_SIGN;
+    if (sign_op_res == 4) return STR_INVALID_DIGIT;
     else if (sign_op_res == 3) return STR_INCOMPLETE;
 
     //* ====== 2. Prefix Handling ====== *//
@@ -1132,7 +1184,7 @@ dnml_status bigInt_tget_str(bigInt *x, const char *str) {
     unsigned char prefix_op_res = _prefix_handle_(str, &curr_pos, &base);
     if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -1142,8 +1194,7 @@ dnml_status bigInt_tget_str(bigInt *x, const char *str) {
     if (str[curr_pos] == '\0') {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 4. Initiating Resulting BigInt ======= *//
@@ -1193,8 +1244,7 @@ dnml_status bigInt_tget_strb(bigInt *x, const char *str, uint8_t base) {
     if (str[curr_pos] == '\0') {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 3. Initiating Resulting BigInt ======= *//
@@ -1235,17 +1285,15 @@ dnml_status bigInt_tget_strn(bigInt *x, const char *str, size_t len) {
     size_t curr_pos = 0; uint8_t sign = 1;
     _skip_whitespace(str, len, &curr_pos);
     unsigned char sign_op_res = _sign_handle_nlen_(str, &curr_pos, &sign, len);
-    if (sign_op_res == 4) return STR_INVALID_SIGN;
+    if (sign_op_res == 4) return STR_INVALID_DIGIT;
     else if (sign_op_res == 3) return STR_INCOMPLETE;
 
     //* ====== 2. Prefix Handling ====== *//
     uint8_t base = 10;
     unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
-    if (prefix_op_res == 0) return STR_INVALID_BASE_PREFIX;
-    else if (prefix_op_res == 3) {
+    if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -1253,12 +1301,10 @@ dnml_status bigInt_tget_strn(bigInt *x, const char *str, size_t len) {
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 4. Initiating Resulting BigInt ======= *//
@@ -1299,15 +1345,13 @@ dnml_status bigInt_tget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
     _skip_whitespace(str, len, &curr_pos);
     if (str[curr_pos] == '-') { sign = -1; ++curr_pos; }
     else if (str[curr_pos] == '+') ++curr_pos;
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    if (curr_pos == len - 1) return STR_INCOMPLETE;
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) return STR_INCOMPLETE;
 
     //* ====== 2. Leading-Zeros Handling ====== *//
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
         x->n = 0; x->sign = 1;
@@ -1352,7 +1396,7 @@ dnml_status bigInt_sget_str(bigInt *x, const char *str) {
     size_t curr_pos = 0; uint8_t sign = 1;
     _skip_whitespace(str, strlen(str), &curr_pos);
     unsigned char sign_op_res = _sign_handle_(str, &curr_pos, &sign);
-    if (sign_op_res == 4) return STR_INVALID_SIGN;
+    if (sign_op_res == 4) return STR_INVALID_DIGIT;
     else if (sign_op_res == 3) return STR_INCOMPLETE;
 
     //* ====== 2. Prefix Handling ====== *//
@@ -1360,7 +1404,7 @@ dnml_status bigInt_sget_str(bigInt *x, const char *str) {
     unsigned char prefix_op_res = _prefix_handle_(str, &curr_pos, &base);
     if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -1378,7 +1422,7 @@ dnml_status bigInt_sget_str(bigInt *x, const char *str) {
     size_t d = strlen(&str[curr_pos]);
     size_t bits = __BITCOUNT___(d - curr_pos, base);
     size_t cap = __BIGINT_LIMBS_NEEDED__(bits);
-    if (x->cap < cap) return BIGINT_ERR_DOMAIN;
+    if (x->cap < cap) return BIGINT_ERR_RANGE;
     size_t tmp_mark = arena_mark(_DASI_SGET_STRING_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SGET_STRING_ARENA, cap * BYTES_IN_UINT64_T);
     bigInt tmp_buf = {
@@ -1419,15 +1463,14 @@ dnml_status bigInt_sget_strb(bigInt *x, const char *str, uint8_t base) {
     if (str[curr_pos] == '\0') {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 3. Initiating Resulting BigInt ======= *//
     size_t d = strlen(&str[curr_pos]);
     size_t bits = __BITCOUNT___(d - curr_pos, base);
     size_t cap = __BIGINT_LIMBS_NEEDED__(bits);
-    if (x->cap < cap) return BIGINT_ERR_DOMAIN;
+    if (x->cap < cap) return BIGINT_ERR_RANGE;
     size_t tmp_mark = arena_mark(_DASI_SGET_BASE_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SGET_BASE_ARENA, cap * BYTES_IN_UINT64_T);
     bigInt tmp_buf = {
@@ -1466,11 +1509,9 @@ dnml_status bigInt_sget_strn(bigInt *x, const char *str, size_t len) {
     //* ====== 2. Prefix Handling ====== *//
     uint8_t base = 10;
     unsigned char prefix_op_res = _prefix_handle_nlen_(str, &curr_pos, &base, len);
-    if (prefix_op_res == 0) return STR_INVALID_BASE_PREFIX;
-    else if (prefix_op_res == 3) {
+    if (prefix_op_res == 0) {
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     } else if (prefix_op_res == 2) return STR_INVALID_BASE_PREFIX;
     // The remaining case (prefix_op_res == 1) indicates we have a decimal string with 1+ leading zero
 
@@ -1478,18 +1519,16 @@ dnml_status bigInt_sget_strn(bigInt *x, const char *str, size_t len) {
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign == -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 4. Initiating Resulting BigInt ======= *//
     size_t bits = __BITCOUNT___(len - curr_pos, base);
     size_t cap = __BIGINT_LIMBS_NEEDED__(bits);
-    if (x->cap < cap) return BIGINT_ERR_DOMAIN;
+    if (x->cap < cap) return BIGINT_ERR_RANGE;
     size_t tmp_mark = arena_mark(_DASI_SGET_STRNLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SGET_STRNLEN_ARENA, cap * BYTES_IN_UINT64_T);
     bigInt tmp_buf = {
@@ -1522,25 +1561,22 @@ dnml_status bigInt_sget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
     _skip_whitespace(str, len, &curr_pos);
     if (str[curr_pos] == '-') { sign = -1; ++curr_pos; }
     else if (str[curr_pos] == '+') ++curr_pos;
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    if (curr_pos == len - 1) return STR_INCOMPLETE;
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) return STR_INCOMPLETE;
 
     //* ====== 2. Leading-Zeros Handling ====== *//
     // Skipping all leading zeros
     while (str[curr_pos] == '0' && (str[curr_pos] != '\0' || curr_pos < len)) ++curr_pos;
     // String full of zeros
-    if (str[curr_pos] == '\0') return STR_INVALID_DIGIT;
-    else if (curr_pos == len) {
+    if (str[curr_pos] == '\0' || curr_pos == len - 1) {
         // -0 is INVALID
         if (sign = -1) return STR_INVALID_SIGN;
-        x->n = 0; x->sign = 1;
-        return STR_SUCCESS;
+        x->n = 0; x->sign = 1; return STR_SUCCESS;
     }
 
     //* ======= 3. Initiating Resulting BigInt ======= *//
     size_t bits = __BITCOUNT___(len - curr_pos, base);
     size_t cap = __BIGINT_LIMBS_NEEDED__(bits);
-    if (x->cap < cap) return BIGINT_ERR_DOMAIN;
+    if (x->cap < cap) return BIGINT_ERR_RANGE;
     size_t tmp_mark = arena_mark(_DASI_SGET_BASENLEN_ARENA);
     limb_t *tmp_limbs = arena_galloc(_DASI_SGET_BASENLEN_ARENA, cap * BYTES_IN_UINT64_T);
     bigInt tmp_buf = {
@@ -1568,6 +1604,80 @@ dnml_status bigInt_sget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
 
 
 //todo ======================================== 3. INPUT & OUTPUT ======================================= *//
+size_t bigInt_fscan_size(FILE *stream, uint8_t *baseout, dnml_status *err) {
+    char lexical_comp[3]; size_t res = 0;
+    while (isspace(fgetc(stream))) fseek(stream, 1, SEEK_CUR); // Whitespace
+    size_t parse_res = fread(lexical_comp, sizeof(char), 3, stream);
+    if (ferror(stream)) { *err = FILE_ERR_PARSE; return res; }
+    long offset_set = 0;
+    uint8_t sign = 1, base = 10, curr_lexpos = 0;
+    if (lexical_comp[curr_lexpos] == '-') { 
+        sign = -1; ++curr_lexpos; 
+        if (curr_lexpos >= parse_res) { *err =  STR_INCOMPLETE; return res; }
+    } else if (lexical_comp[curr_lexpos] == '+') { 
+        ++curr_lexpos;
+        if (curr_lexpos >= parse_res) { *err = STR_INCOMPLETE; return res; }
+    } else if (!is_numeric(lexical_comp[curr_lexpos])) { *err = STR_INVALID_SIGN; return res; }
+
+    //* Prefix & leading zeros *//
+    if (is_numeric(lexical_comp[curr_lexpos]) // The string is currently "9.."
+    && lexical_comp[curr_lexpos] != '0') offset_set = -(parse_res - curr_lexpos - 1);
+    else {
+        ++curr_lexpos;
+        if (curr_lexpos >= parse_res) {
+            // The string is just 1 singular 0 ('0' or '-0', etc)
+            if (sign == -1) { *err = STR_INVALID_SIGN; return res; }
+            *err = STR_SUCCESS; return res;
+        } else if (is_numeric(lexical_comp[curr_lexpos])) {
+            // The string is base-10 with leading zeros ('09' or '00', etc)
+            offset_set = (-parse_res - curr_lexpos - 1);
+        } else {
+            switch (lexical_comp[curr_lexpos]) {
+                // Hexadecimal (Base-16)
+                case 'x':       base = 16; break;
+                case 'X':       base = 16; break;
+                // Binary (Base-2)
+                case 'b':       base = 2; break;
+                case 'B':       base = 2; break;
+                // Octal (Base-8)
+                case 'o':       base = 8; break;
+                case 'O':       base = 8; break;
+                //! INVALID BASE PREFIX
+                default:        *err = STR_INVALID_BASE_PREFIX; *baseout = base; return res; break;
+            } offset_set = (-parse_res - curr_lexpos - 1);
+        }
+    } fseek(stream, offset_set, SEEK_CUR);
+    int curr_char = fgetc(stream);
+    while (curr_char != EOF && curr_char == '0') curr_char = fgetc(stream);
+    if (curr_char == EOF) {
+        if (sign == -1) { *err = STR_INVALID_SIGN; *baseout = base; return res; }
+        *err = STR_SUCCESS; *baseout = base; return res;
+    }
+
+    //* Main accumalator loop *//
+    size_t i; uint8_t index_lookup, numerical_val;
+    while (1) {
+        parse_res = fread(___DASI_IO_CHUNKBUF_, sizeof(char), ___DASI_IO_BUFSIZE, stream);
+        //* THE ACTUAL ACCUMALATION
+        if (parse_res > 0) {
+            for (i = 0; i < parse_res; ++i) {
+                index_lookup = (uint8_t)(___DASI_IO_CHUNKBUF_[i] - '\0');
+                numerical_val = _VALUE_LOOKUP_[index_lookup];
+                if (numerical_val >= base) { 
+                    *err = STR_INVALID_DIGIT; 
+                    *baseout = base;
+                    return res; 
+                } ++res;
+            }
+        }
+        //* ENDING CONDITION
+        if (parse_res < ___DASI_IO_BUFSIZE) {
+            if (ferror(stream)) { *err = FILE_ERR_PARSE; return res; }
+            else if (feof(stream)) break;
+        }
+    } *err = STR_SUCCESS; *baseout = base; return res;
+}
+size_t bigInt_fscanb_size(FILE *stream, uint8_t base, dnml_status *err) {}
 /* --------- Decimal Instant OUTPUT ---------  */
 void bigInt_put(const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
@@ -2515,7 +2625,7 @@ dnml_status bigInt_fsscan(FILE *stream, bigInt *x) {
                     tmp_limbs = NULL; return STR_INVALID_DIGIT; 
                 } if (__BIGINT_WILL_OVERFLOW__(&tmp_buf, threshold)) {
                     arena_reset(_DASI_FSGET, tmp_mark);
-                    tmp_limbs = NULL; return BIGINT_ERR_DOMAIN;
+                    tmp_limbs = NULL; return BIGINT_ERR_RANGE;
                 }
                 __BIGINT_INTERNAL_MUL_UI64__(&tmp_buf, base);
                 __BIGINT_INTERNAL_ADD_UI64__(&tmp_buf, numerical_val);
@@ -2573,7 +2683,7 @@ dnml_status bigInt_fsscanb(FILE *stream, bigInt *x, uint8_t base) {
                     tmp_limbs = NULL; return STR_INVALID_DIGIT; 
                 } if (__BIGINT_WILL_OVERFLOW__(&tmp_buf, threshold)) {
                     arena_reset(_DASI_FSGETB, tmp_mark); 
-                    tmp_limbs = NULL; return BIGINT_ERR_DOMAIN; 
+                    tmp_limbs = NULL; return BIGINT_ERR_RANGE; 
                 }
                 __BIGINT_INTERNAL_MUL_UI64__(&tmp_buf, base);
                 __BIGINT_INTERNAL_ADD_UI64__(&tmp_buf, numerical_val);
@@ -2757,11 +2867,12 @@ size_t bigInt_fread_size(FILE *stream) {}
 dnml_status bigInt_fread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_fsread(FILE *stream, bigInt *x) {}
 dnml_status bigInt_ftread(FILE *stream, bigInt *x) {}
-/* --------- SERIALIZATION / DESERIALIZATION ---------  */
+/* --------- SERIALIZATION ---------  */
 size_t bigInt_serial_size(const bigInt x) {}
 dnml_status bigInt_serialize(char *buf, size_t len, const bigInt x, size_t *written) {}
 dnml_status bigInt_tserialize(char *buf, size_t len, const bigInt x, size_t *written) {}
 dnml_status bigInt_sserialize(char *buf, size_t len, const bigInt x, size_t *written) {}
+/* -------- DESERIALIZATION --------  */
 size_t bigInt_deserial_size(const char *str, size_t len) {}
 dnml_status bigInt_deserialize(bigInt *x, const char* str, size_t len) {}
 

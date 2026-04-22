@@ -6,8 +6,17 @@ uint16_t _fskip_whitespace__(FILE *stream) {
     while ((c = fgetc(stream)) != EOF && isspace(c));
     return c;
 }
-void _skip_whitespace(const char *str, size_t len, size_t *pos) {
-    while (*pos < len && isspace(str[*pos])) *pos++;
+size_t _skip_whitespace(const char *str, size_t len, size_t *pos) {
+    size_t total_whitespace = 0;
+    while (*pos < len && isspace(str[*pos])) { 
+        *pos++; ++total_whitespace; 
+    } return total_whitespace;
+}
+size_t _skip_leading_zeros(const char *str, size_t len, size_t *pos) {
+    size_t lzeros = 0;
+    while ( str[*pos] == '0' 
+        && (str[*pos] != '\0' || pos < len)
+    ) { *pos++; ++lzeros; } return lzeros;
 }
 uint8_t _is_valid_digit__(uint16_t *curr_char) { 
     return (*curr_char != EOF && !isspace(*curr_char)); 
@@ -30,6 +39,7 @@ uint8_t _sign_handle_(const char *str, size_t *curr_pos, uint8_t *sign) {
     }
     // This case forces the next character to be 0->9 for the prefix/a decimal
     else if (str[*curr_pos] && !is_numeric(str[*curr_pos])) return 4;
+    return 0;
 }
 uint8_t _prefix_handle_(const char *str, size_t *curr_pos, uint8_t *base) {
     *base = 10;
@@ -80,7 +90,7 @@ uint8_t _prefix_handle_nlen_(const char *str, size_t *curr_pos, uint8_t *base, s
     if (is_numeric(str[*curr_pos]) && str[*curr_pos] != '0') return 1; // A decimal (eg: 9...)
     else { // The string is currently "0..."
         if (str[*curr_pos + 1] == '\0') return 0; // The string currently is "0\null"
-        else if (*curr_pos == len - 1) return 3; // The string ended as "0"
+        else if (*curr_pos == len - 1) return 0; // The string ended as "0"
         else if (is_numeric(str[*curr_pos + 1])) { // The string currently is "0(numerical)" (eg: 0942)
             *curr_pos += 1; // A leading zero --> Decimal
             return 1;

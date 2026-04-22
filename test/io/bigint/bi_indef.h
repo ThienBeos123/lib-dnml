@@ -9,7 +9,9 @@
 #include "../../../sconfigs/memory/_scratch.h"
 #include "../../../adynamol/big_numbers/bigNums.h"
 
-
+#define stinl static inline
+#define cvoid const void
+#define csres const str_res
 #define DNML_UNFINISHED() do { \
     fputs("Unfinished / Unimplemented feature\n", stderr); \
     fputs("Unimplemented testing abstractions\n", stderr); \
@@ -22,7 +24,7 @@ typedef struct { dnml_dratch* buf; } io_ctx;
 
 //* ===================== INPUT STRUCT DEFINITION ===================== *//
 // BITOS Input Structs
-typedef struct { size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv_in;
+typedef struct { size_t len; const bigInt x; uint8_t base; bool uppercase; size_t imp_cap } bitos_conv_in;
 typedef struct { const bigInt x; uint8_t base; bool uppercase; } bitos_print_in;
 typedef struct { const bigInt x; } bitos_fwrite_in;
 typedef struct { size_t len; const bigInt x; } bitos_serialize_in;

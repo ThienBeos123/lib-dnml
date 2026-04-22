@@ -25,7 +25,8 @@ extern "C" {
 /* ---------------------- */
 uint8_t is_numeric(char c);
 uint16_t _fskip_whitespace__(FILE *stream);
-void _skip_whitespace(const char *str, size_t len, size_t *pos);
+size_t _skip_whitespace(const char *str, size_t len, size_t *pos);
+size_t _skip_leading_zeros(const char *str, size_t len, size_t *pos);
 uint8_t _is_valid_digit__(uint16_t *curr_char);
 uint8_t _sign_handle_(const char *str, size_t *curr_pos, uint8_t *sign);
 uint8_t _sign_handle_nlen_(const char *str, size_t *curr_pos, uint8_t *sign, size_t len);

@@ -38,6 +38,7 @@ typedef struct str_res {
     operated_types type;
     dnml_status status;
     union { bigInt bi; size_t len; } data;
+    size_t cap;
     char str[];
 } str_res;
 
@@ -111,10 +112,11 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool
 typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
 typedef bool (*dnml_prop_fn)(const void *in, str_res *out);
 // Evaluators & Inverses
+typedef void (*dnml_stat_fn)(const void *in, dnml_status res_stat);
 typedef void (*dnml_eval_fn)(const void *in, str_res *exp, void *ctx);
 typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstructed, void *ctx);
 // Comparisons
-typedef bool (*dnml_cmp_inv_fn)(const void *original, const void *recon);
+typedef bool (*dnml_cmp_inv_fn)(const void *original, const str_res *out, const void *recon, void *ctx);
 typedef bool (*dnml_cmp_eval_fn)(const str_res *full, const str_res *out);
 // Printing & Formatting
 typedef void (*dnml_fmt_in_fn)(FILE *f, const void *in);
@@ -147,8 +149,8 @@ typedef struct _libdnml_str_suite {
 
     dnml_exec_fn *fn_test; 
     // Random-based Oracle Functions
-    dnml_inv_fn *fn_inv;        dnml_eval_fn *fn_eval;
-    dnml_cmp_inv_fn *inv_cmp;   dnml_cmp_eval_fn *eval_cmp;
+    dnml_inv_fn *fn_inv;        dnml_eval_fn *fn_eval;          dnml_stat_fn *fn_stat;
+    dnml_cmp_inv_fn *inv_cmp;   dnml_cmp_eval_fn *eval_cmp;     
     dnml_fmt_in_fn *fmtin_fn;   dnml_fmt_recon_fn *fmtrecon_fn; 
     // Property-based Functions
     dnml_prop_fn *fn_prop;
@@ -246,9 +248,14 @@ static inline void _dnml_run_rand(_libdnml_str_suite *s) {
     for (uint16_t i = 0; i < s->rcorrect; ++i) {
         _libdnml_scase *c = &s->rand[i]; str_res ref;
         run_case(c, s->fn_test, s->ctx); uint8_t correct = 0;
+        // HARD GATE - DO NOT ALLOW ERROR CASES TO GO TO EVALUATION
+        if (c->res.status != STR_SUCCESS || c->res.status != BIGINT_SUCCESS) {
+            (*s->fn_stat)(c->in, c->res.status); return;
+        } 
+        // ACTUAL EVALUATION WORK
         if (c->mode = INVERSE && s->fn_inv) {
             run_inverse(c, s->fn_inv, s->ctx);
-            if ((*s->inv_cmp)(c->in, c->recons)) correct = 1;
+            if ((*s->inv_cmp)(c->in, &c->res, c->recons, s->ctx)) correct = 1;
         } else {
             run_eval(c, s->fn_eval, s->ctx);
             if ((*s->eval_cmp)(&c->exp, &c->res)) correct = 1;
