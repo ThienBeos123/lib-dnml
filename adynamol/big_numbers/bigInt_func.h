@@ -427,6 +427,8 @@ dnml_status bigInt_sget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
 
 
 //* -------------------- DECIMAL INPUTS/OUTPUTS --------------------- */
+size_t bigInt_fscan_size(FILE *stream, uint8_t *baseout, dnml_status *err);
+size_t bigInt_fscanb_size(FILE *stream, uint8_t base, dnml_status *err);
 /* --------- Decimal Instant OUTPUT ---------  */
 void bigInt_put(const bigInt x);
 void bigInt_putb(const bigInt x, uint8_t base);

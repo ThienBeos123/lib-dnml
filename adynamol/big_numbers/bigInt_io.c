@@ -1223,8 +1223,8 @@ dnml_status bigInt_tget_str(bigInt *x, const char *str) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->n = ranged_cap; // For safety measures
     arena_reset(_DASI_TGET_STRING_ARENA, tmp_mark);
-    if (cap > x->cap) return BIGINT_TRUNC_SUCCESS;
-    else return BIGINT_SUCCESS;
+    if (cap > x->cap) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tget_strb(bigInt *x, const char *str, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
@@ -1273,8 +1273,8 @@ dnml_status bigInt_tget_strb(bigInt *x, const char *str, uint8_t base) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->n = ranged_cap; // For safety measures
     arena_reset(_DASI_TGET_BASE_ARENA, tmp_mark);
-    if (cap > x->cap) return BIGINT_TRUNC_SUCCESS;
-    else return BIGINT_SUCCESS;
+    if (cap > x->cap) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tget_strn(bigInt *x, const char *str, size_t len) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
@@ -1332,8 +1332,8 @@ dnml_status bigInt_tget_strn(bigInt *x, const char *str, size_t len) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->n = ranged_cap; // For safety measures
     arena_reset(_DASI_TGET_STRNLEN_ARENA, tmp_mark);
-    if (cap > x->cap) return BIGINT_TRUNC_SUCCESS;
-    else return BIGINT_SUCCESS;
+    if (cap > x->cap) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 dnml_status bigInt_tget_strnb(bigInt *x, const char *str, size_t len, uint8_t base) {
     assert(__BIGINT_INTERNAL_PVALID__(x));
@@ -1383,8 +1383,8 @@ dnml_status bigInt_tget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->n = ranged_cap; // For safety measures
     arena_reset(_DASI_TGET_BASENLEN_ARENA, tmp_mark);
-    if (cap > x->cap) return BIGINT_TRUNC_SUCCESS;
-    else return BIGINT_SUCCESS;
+    if (cap > x->cap) return STR_TRUNC_SUCCESS;
+    else return STR_SUCCESS;
 }
 /* Safe String --> BigInt */ /* Return an Error */
 dnml_status bigInt_sget_str(bigInt *x, const char *str) {
@@ -1604,20 +1604,43 @@ dnml_status bigInt_sget_strnb(bigInt *x, const char *str, size_t len, uint8_t ba
 
 
 //todo ======================================== 3. INPUT & OUTPUT ======================================= *//
+/* Note - GROW API:
+*   +) Functions:
+*
+*       - bigInt_scan()     - bigInt_fscan()
+*       - bigInt_scanb()    - bigInt_fscanb()
+*
+*      Internally utilizes heap-allocation for its temporaries instead
+*      of the traditionally "preferred" arena allocation from ___DASI_IO_ARENA_
+*      due to its "growth" API. 
+*
+*      It contracts the growth of the mutated input "x" to hold the potentially 
+*      larger string parsed from a STREAM (stdin or custom).
+*      Since such API is stream-based, meaning we can't know in advance the true
+*      size of the input string to precalculate the appropriate buffer size, we
+*      resort to on-the-fly checks for imminent overflow.
+*
+*      Since our arena model DOES NOT safely enables reallocation for growth,
+*      for either its capacity nor a pointer's scope, trying to grow using
+*      the dnml_arena model is not reentrant-safe since reallocation renders
+*      out-of-scoped pointers to point to invalid memory.
+*
+*      --------> Heap-allocation for size-owning buffers that can be easily grown.
+*/
 size_t bigInt_fscan_size(FILE *stream, uint8_t *baseout, dnml_status *err) {
     char lexical_comp[3]; size_t res = 0;
     while (isspace(fgetc(stream))) fseek(stream, 1, SEEK_CUR); // Whitespace
     size_t parse_res = fread(lexical_comp, sizeof(char), 3, stream);
-    if (ferror(stream)) { *err = FILE_ERR_PARSE; return res; }
+    if (ferror(stream)) { *err = FILE_ERR_PARSE; *baseout = 10; return res; }
     long offset_set = 0;
     uint8_t sign = 1, base = 10, curr_lexpos = 0;
     if (lexical_comp[curr_lexpos] == '-') { 
         sign = -1; ++curr_lexpos; 
-        if (curr_lexpos >= parse_res) { *err =  STR_INCOMPLETE; return res; }
+        if (curr_lexpos >= parse_res) { *err =  STR_INCOMPLETE; *baseout = base; return res; }
     } else if (lexical_comp[curr_lexpos] == '+') { 
         ++curr_lexpos;
-        if (curr_lexpos >= parse_res) { *err = STR_INCOMPLETE; return res; }
-    } else if (!is_numeric(lexical_comp[curr_lexpos])) { *err = STR_INVALID_SIGN; return res; }
+        if (curr_lexpos >= parse_res) { *err = STR_INCOMPLETE; *baseout = base; return res; }
+    } else if (!is_numeric(lexical_comp[curr_lexpos])) { *err = STR_INVALID_SIGN; *baseout = base; return res; }
 
     //* Prefix & leading zeros *//
     if (is_numeric(lexical_comp[curr_lexpos]) // The string is currently "9.."
@@ -1626,8 +1649,8 @@ size_t bigInt_fscan_size(FILE *stream, uint8_t *baseout, dnml_status *err) {
         ++curr_lexpos;
         if (curr_lexpos >= parse_res) {
             // The string is just 1 singular 0 ('0' or '-0', etc)
-            if (sign == -1) { *err = STR_INVALID_SIGN; return res; }
-            *err = STR_SUCCESS; return res;
+            if (sign == -1) { *err = STR_INVALID_SIGN; *baseout = base; return res; }
+            *err = STR_SUCCESS; *baseout = 10; return res;
         } else if (is_numeric(lexical_comp[curr_lexpos])) {
             // The string is base-10 with leading zeros ('09' or '00', etc)
             offset_set = (-parse_res - curr_lexpos - 1);
@@ -1677,7 +1700,45 @@ size_t bigInt_fscan_size(FILE *stream, uint8_t *baseout, dnml_status *err) {
         }
     } *err = STR_SUCCESS; *baseout = base; return res;
 }
-size_t bigInt_fscanb_size(FILE *stream, uint8_t base, dnml_status *err) {}
+size_t bigInt_fscanb_size(FILE *stream, uint8_t base, dnml_status *err) {
+    //* Whitespace -> Signs -> Leading Zeros *//
+    uint8_t sign = 1; int curr_char; size_t res = 0;
+    while (isspace(fgetc(stream))) fseek(stream, 1, SEEK_CUR); // Whitespace
+    curr_char = fgetc(stream);
+    if (curr_char == '-' || curr_char == '+') {
+        if (curr_char == '-') sign = -1;
+        if (fgetc(stream) == EOF) { *err = STR_INCOMPLETE; return res; }
+    }
+    else if (!is_numeric(curr_char)) { *err = STR_INVALID_DIGIT; return res; }
+    else ungetc(curr_char, stream); // Rewind back if curr_char is numeric (0-9)
+    // Skipping Leading Zeros
+    do { curr_char = fgetc(stream); }
+    while (curr_char != EOF && curr_char == '0');
+    if (curr_char == EOF && sign == -1) { *err = STR_INVALID_SIGN; return res; }
+
+    //* Main accumalator loop *//
+    uint8_t index_lookup, numerical_val, i; size_t parse_res;
+    while (1) {
+        parse_res = fread(___DASI_IO_CHUNKBUF_, sizeof(char), ___DASI_IO_BUFSIZE, stream);
+        //* THE ACTUAL ACCUMALATION
+        if (parse_res > 0) {
+            for (i = 0; i < parse_res; ++i) {
+                index_lookup = (uint8_t)(___DASI_IO_CHUNKBUF_[i] - '\0');
+                numerical_val = _VALUE_LOOKUP_[index_lookup];
+                if (numerical_val >= base) { 
+                    *err = STR_INVALID_DIGIT; return res; 
+                } ++res;
+            }
+        }
+        //* ENDING CONDITION
+        if (parse_res < ___DASI_IO_BUFSIZE) {
+            if (ferror(stream)) {
+                *err = FILE_ERR_PARSE;
+                return res;
+            } else if (feof(stream)) break;
+        }
+    } *err = STR_SUCCESS; return res;
+}
 /* --------- Decimal Instant OUTPUT ---------  */
 void bigInt_put(const bigInt x) {
     assert(__BIGINT_INTERNAL_VALID__(&x));
@@ -2136,7 +2197,7 @@ void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase) {
     }
 }
 /* --------- Standard Stream (stdin) INPUT ---------  */
-dnml_status bigInt_scan(bigInt *x) {
+dnml_status bigInt_scan(bigInt *x) {                            //* Heap-allocated Temporary
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace & Sign *//
     uint16_t current_char = _fskip_whitespace__(stdin); uint8_t sign = 1;
@@ -2182,7 +2243,7 @@ dnml_status bigInt_scan(bigInt *x) {
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
     return STR_SUCCESS;
 }
-dnml_status bigInt_scanb(bigInt *x, uint8_t base) {
+dnml_status bigInt_scanb(bigInt *x, uint8_t base) {             //* Heap-allocated Temporary
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace, Sign, & Leading zeros *//
     uint16_t current_char = _fskip_whitespace__(stdin); uint8_t sign = 1;
@@ -2415,7 +2476,7 @@ dnml_status bigInt_tscanb(bigInt *x, uint8_t base) {
     tmp_limbs = NULL; return ret;
 }
 /* --------- Custom Stream INPUT ---------  */
-dnml_status bigInt_fscan(FILE *stream, bigInt *x) {
+dnml_status bigInt_fscan(FILE *stream, bigInt *x) {                     //* Heap-allocated Temporary
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace -> Setup -> Signs *//
     char lexical_comp[3];
@@ -2498,9 +2559,9 @@ dnml_status bigInt_fscan(FILE *stream, bigInt *x) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->sign = sign;
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
-    return BIGINT_SUCCESS;
+    return STR_SUCCESS;
 }
-dnml_status bigInt_fscanb(FILE *stream, bigInt *x, uint8_t base) {
+dnml_status bigInt_fscanb(FILE *stream, bigInt *x, uint8_t base) {      //* Heap-allocated Temporary
     assert(__BIGINT_INTERNAL_SVALID__(x));
     //* Whitespace -> Signs -> Leading Zeros *//
     uint8_t sign = 1; int curr_char;
@@ -2550,7 +2611,7 @@ dnml_status bigInt_fscanb(FILE *stream, bigInt *x, uint8_t base) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->sign = sign;
     __BIGINT_INTERNAL_FREE__(&tmp_buf);
-    return BIGINT_SUCCESS;
+    return STR_SUCCESS;
 }
 dnml_status bigInt_fsscan(FILE *stream, bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
@@ -2641,7 +2702,7 @@ dnml_status bigInt_fsscan(FILE *stream, bigInt *x) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->sign = sign;
     arena_reset(_DASI_FSGET, tmp_mark);
-    tmp_limbs = NULL; return BIGINT_SUCCESS;
+    tmp_limbs = NULL; return STR_SUCCESS;
 }
 dnml_status bigInt_fsscanb(FILE *stream, bigInt *x, uint8_t base) {
     assert(__BIGINT_INTERNAL_SVALID__(x));
@@ -2699,7 +2760,7 @@ dnml_status bigInt_fsscanb(FILE *stream, bigInt *x, uint8_t base) {
     }
     __BIGINT_INTERNAL_COPY__(x, &tmp_buf); x->sign = sign;
     arena_reset(_DASI_FSGETB, tmp_mark);
-    tmp_limbs = NULL; return BIGINT_SUCCESS;
+    tmp_limbs = NULL; return STR_SUCCESS;
 }
 dnml_status bigInt_ftscan(FILE *stream, bigInt *x) {
     assert(__BIGINT_INTERNAL_SVALID__(x));

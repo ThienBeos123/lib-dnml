@@ -528,34 +528,64 @@ static inline void exec_stobi_sget_strnb(const void *vin, str_res *out, void *vc
 }
 // Stream-based Input Scanning - fscan
 static inline void exec_stobi_fscan(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_fscan(in->stream, &out->data.bi);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx;
+    out->type = BIGINT; uint8_t base = 10; dnml_status prestat;
+    size_t digits = bigInt_fscan_size(in->stream, &base, &prestat);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digits, base));
+    if (prestat != STR_SUCCESS) {
+        limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, 1 * BYTES_IN_UINT64_T);
+        bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = 1};
+        tmp.limbs[0] = 0;
+    } else {
+        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
+        bigInt_fscan(in->stream, &temp); out->data.bi = temp;
+    } out->status = prestat;
 }
 static inline void exec_stobi_fscanb(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_fscanb(in->stream, &out->data.bi, in->base);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx;
+    out->type = BIGINT; dnml_status prestat;
+    size_t digits = bigInt_fscanb_size(in->stream, in->base, &prestat);
+    size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digits, in->base));
+    if (prestat != STR_SUCCESS) {
+        limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, 1 * BYTES_IN_UINT64_T);
+        bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = 1};
+        tmp.limbs[0] = 0;
+    } else {
+        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
+        bigInt_fscanb(in->stream, &temp, in->base); out->data.bi = temp;
+    } out->status = prestat;
 }
 static inline void exec_stobi_fsscan(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_fsscan(in->stream, &out->data.bi);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
+    out->status = bigInt_fsscan(in->stream, &tmp); out->data.bi = tmp;
 }
 static inline void exec_stobi_fsscanb(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_fsscanb(in->stream, &out->data.bi, in->base);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
+    out->status = bigInt_fsscanb(in->stream, &tmp, in->base); out->data.bi = tmp;
 }
 static inline void exec_stobi_ftscan(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_ftscan(in->stream, &out->data.bi);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
+    out->status = bigInt_ftscan(in->stream, &tmp); out->data.bi = tmp;
 }
 static inline void exec_stobi_ftscanb(const void *vin, str_res *out, void *vctx) {
-    stobi_scan_in *in = vin;
-    out->type = BIGINT; bigInt_linit(&out->data.bi, in->bi_size);
-    out->status = bigInt_ftscanb(in->stream, &out->data.bi, in->base);
+    const stobi_scan_in *in = vin;
+    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
+    out->status = bigInt_ftscanb(in->stream, &tmp, in->base); out->data.bi = tmp;
 }
 // Stream-based Raw Input - fread
 static inline void exec_stobi_fread(const void *vin, str_res *out, void *vctx) { DNML_UNFINISHED(); }
