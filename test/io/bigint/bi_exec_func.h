@@ -9,6 +9,7 @@
 #include "../../../test_ui/_strui.h"
 #include "../../../adynamol/big_numbers/bigNums.h"
 #include "../../../adynamol/big_numbers/bigInt_func.h"
+#include "../_ioconv.h"
 #include "bi_indef.h"
 
 
@@ -40,6 +41,11 @@
 
 
 //* ========================= BITOS EXECUTION WRAPPERS ======================= *//
+/* BITOS Subnote 1 - Conversions:
+    - All BITOS conversion functions (to_str, tto_str, and subsequent variants)
+      mandates the setup of the buffer length inside *vin and allocate enough
+      arena/heap space for such self-contained str_res headers with FAM strings
+*/
 // Truncative Conversions - tto_str
 static inline void exec_bitos_tto_str(const void *vin, str_res *out, void *vctx) {
     const bitos_conv_in *in = vin;

@@ -9,6 +9,7 @@
 #include "bi_indef.h"
 #include "../../../test_ui/_strui.h"
 #include "../../../adynamol/big_numbers/bigNums.h"
+#include "../_ioconv.h"
 
 
 //* ========================= COMPARISONS WRAPPERS ======================= *//
@@ -161,6 +162,10 @@ stinl bool cmp_eval_stobi(csres *exp, csres *res) {
             +) Input 4 - <bool>: NULL - <NON-UTILIZED-PARAMETER>
         >
 */
+stinl void fmt_recon_bitos(FILE *f, cvoid *vrecon, int tab_depth) {
+    const bigInt *recon = (bigInt*)vrecon;
+    _print_bigint(f, &recon, tab_depth);
+}
 // Inverse Formatter - BITOS_CONV
 stinl void fmt_in_to_str(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_conv_in *in = (bitos_conv_in*)vin;
@@ -178,7 +183,6 @@ stinl void fmt_in_to_str(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_to_str(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_to_strb(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_conv_in *in = (bitos_conv_in*)vin;
     fputs("< -- BITOS_CONV --\n", f);
@@ -195,7 +199,6 @@ stinl void fmt_in_to_strb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_to_strb(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_to_strn(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_conv_in *in = (bitos_conv_in*)vin;
     fputs("< -- BITOS_CONV --\n", f);
@@ -212,7 +215,6 @@ stinl void fmt_in_to_strn(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_to_strn(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_to_strnb(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_conv_in *in = (bitos_conv_in*)vin;
     fputs("< -- BITOS_CONV --\n", f);
@@ -229,7 +231,6 @@ stinl void fmt_in_to_strnb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_to_strnb(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_to_strf(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_conv_in *in = (bitos_conv_in*)vin;
     fputs("< -- BITOS_CONV --\n", f);
@@ -249,7 +250,6 @@ stinl void fmt_in_to_strf(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_to_strf(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - BITOS_PRINT
 stinl void fmt_in_fput(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_print_in *in = (bitos_print_in*)vin;
@@ -265,7 +265,6 @@ stinl void fmt_in_fput(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_fput(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_fputb(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_print_in *in = (bitos_print_in*)vin;
     fputs("< -- BITOS_PRINT --\n", f);
@@ -280,7 +279,6 @@ stinl void fmt_in_fputb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_fputb(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_fputf(FILE *f, cvoid *vin, int tab_depth) {
     const bitos_print_in *in = (bitos_print_in*)vin;
     fputs("< -- BITOS_PRINT --\n", f);
@@ -298,12 +296,9 @@ stinl void fmt_in_fputf(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_fputf(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - BITOS_FWRITE & BITOS_SERIALIZE
 stinl void fmt_in_fwrite(FILE *f, cvoid *vin, int tab_depth) { DNML_UNFINISHED(); }
-stinl void fmt_recon_fwrite(FILE *f, cvoid *vrecon, int tab_depth) { DNML_UNFINISHED(); }
 stinl void fmt_in_serial(FILE *f, cvoid *vin, int tab_depth) { DNML_UNFINISHED(); }
-stinl void fmt_recon_serial(FILE *f, cvoid *vrecon, int tab_depth) { DNML_UNFINISHED(); }
 
 
 //* ========================= INVERSE STOBI FORMATTERS ======================= *//
@@ -318,6 +313,11 @@ stinl void fmt_recon_serial(FILE *f, cvoid *vrecon, int tab_depth) { DNML_UNFINI
             +) Input 3 - <uint8_t>: 16 - HEXADECIMAL
         >
 */
+stinl void fmt_recon_stobi(FILE *f, cvoid *vrecon, int tab_depth) {
+    char **precon = (char**)vrecon;
+    const char *recon = *precon;
+    _print_str(f, recon, strlen(recon), tab_depth);
+}
 // Inverse Formatter - STOBI_INIT
 stinl void fmt_in_strinit(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_init_in *in = (stobi_init_in*)vin;
@@ -333,7 +333,6 @@ stinl void fmt_in_strinit(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_strinit(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_strbinit(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_init_in *in = (stobi_init_in*)vin;
     fputs("< -- STOBI_INIT --\n", f);
@@ -348,7 +347,6 @@ stinl void fmt_in_strbinit(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_strbinit(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_strninit(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_init_in *in = (stobi_init_in*)vin;
     fputs("< -- STOBI_INIT --\n", f);
@@ -363,7 +361,6 @@ stinl void fmt_in_strninit(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_strninit(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_strnbinit(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_init_in *in = (stobi_init_in*)vin;
     fputs("< -- STOBI_INIT --\n", f);
@@ -378,7 +375,6 @@ stinl void fmt_in_strnbinit(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_strnbinit(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - STOBI_CONV
 stinl void fmt_in_from_str(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_conv_in *in = (stobi_conv_in*)vin;
@@ -394,7 +390,6 @@ stinl void fmt_in_from_str(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_from_str(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_from_strb(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_conv_in *in = (stobi_conv_in*)vin;
     fputs("< -- STOBI_CONV --\n", f);
@@ -409,7 +404,6 @@ stinl void fmt_in_from_strb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_from_strb(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_from_strn(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_conv_in *in = (stobi_conv_in*)vin;
     fputs("< -- STOBI_CONV --\n", f);
@@ -424,7 +418,6 @@ stinl void fmt_in_from_strn(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_from_strn(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_from_strnb(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_conv_in *in = (stobi_conv_in*)vin;
     fputs("< -- STOBI_CONV --\n", f);
@@ -439,7 +432,6 @@ stinl void fmt_in_from_strnb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_from_strnb(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - STOBI_ASSIGN
 stinl void fmt_in_get_str(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_assign_in *in = (stobi_assign_in*)vin;
@@ -475,7 +467,6 @@ stinl void fmt_in_get_sstr(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_get_str(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_get_strb(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_assign_in *in = (stobi_assign_in*)vin;
     fputs("< -- STOBI_ASSIGN --\n", f);
@@ -508,7 +499,6 @@ stinl void fmt_in_get_sstrb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_get_strb(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_get_strn(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_assign_in *in = (stobi_assign_in*)vin;
     fputs("< -- STOBI_ASSIGN --\n", f);
@@ -541,7 +531,6 @@ stinl void fmt_in_get_sstrn(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_get_strn(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_get_strnb(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_assign_in *in = (stobi_assign_in*)vin;
     fputs("< -- STOBI_ASSIGN --\n", f);
@@ -574,7 +563,6 @@ stinl void fmt_in_get_strnb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_get_strnb(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - STOBI_SCAN
 stinl void fmt_in_fscan(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_scan_in *in = (stobi_scan_in*)vin;
@@ -604,7 +592,6 @@ stinl void fmt_in_fsscan(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_fscan(FILE *f, cvoid *vrecon, int tab_depth) {}
 stinl void fmt_in_fscanb(FILE *f, cvoid *vin, int tab_depth) {
     const stobi_scan_in *in = (stobi_scan_in*)vin;
     fputs("< -- STOBI_SCAN --\n", f);
@@ -634,17 +621,9 @@ stinl void fmt_in_fsscanb(FILE *f, cvoid *vin, int tab_depth) {
     for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
-stinl void fmt_recon_fscanb(FILE *f, cvoid *vrecon, int tab_depth) {}
 // Inverse Formatter - STOBI_FREAD && STOBI_DESERIALIZE
 stinl void fmt_in_fread(FILE *f, cvoid *vin, int tab_depth) { DNML_UNFINISHED(); }
-stinl void fmt_recon_fread(FILE *f, cvoid *vrecon, int tab_depth) { DNML_UNFINISHED(); }
 stinl void fmt_in_deserial(FILE *f, cvoid *vin, int tab_depth) { DNML_UNFINISHED(); }
-stinl void fmt_recon_deserial(FILE *f, cvoid *vrecon, int tab_depth) { DNML_UNFINISHED(); }
-
-
-//* ========================= EVALUATION FORMATTERS ======================= *//
-// Evaluation Formatter
-stinl void fmt_eval_bitos() {}
 
 
 

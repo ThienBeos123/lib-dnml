@@ -148,10 +148,10 @@ static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth) {
 typedef void (*dnml_exec_fn)(const void *in, str_res *out, void *ctx);
 typedef bool (*dnml_prop_fn)(const void *in, str_res *out);
 // Evaluators & Inverses
-typedef void (*dnml_stat_fn)(const void *in, dnml_status res_stat);
 typedef void (*dnml_eval_fn)(const void *in, str_res *exp, void *ctx);
 typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstructed, void *ctx);
 // Comparisons
+typedef bool (*dnml_stat_fn)(const void *in, dnml_status res_stat);
 typedef bool (*dnml_cmp_inv_fn)(const void *original, const str_res *out, const void *recon, void *ctx);
 typedef bool (*dnml_cmp_eval_fn)(const str_res *full, const str_res *out);
 // Printing & Formatting
@@ -185,9 +185,10 @@ typedef struct _libdnml_str_suite {
 
     dnml_exec_fn *fn_test; 
     // Random-based Oracle Functions
-    dnml_inv_fn *fn_inv;        dnml_eval_fn *fn_eval;          dnml_stat_fn *fn_stat;
-    dnml_cmp_inv_fn *inv_cmp;   dnml_cmp_eval_fn *eval_cmp;     
-    dnml_fmt_in_fn *fmtin_fn;   dnml_fmt_recon_fn *fmtrecon_fn; 
+    dnml_inv_fn *fn_inv;                dnml_eval_fn *fn_eval;          dnml_stat_fn *fn_stat;
+    dnml_cmp_inv_fn *inv_cmp;           dnml_cmp_eval_fn *eval_cmp;     
+    dnml_fmt_in_fn *fmtin_fn;   
+    dnml_fmt_recon_fn *fmtrecon_fn; 
     // Property-based Functions
     dnml_prop_fn *fn_prop;
 
@@ -233,16 +234,18 @@ static inline void fill_suite_prop(_libdnml_str_suite *curr_suite, bool *prop_fn
     curr_suite->fn_prop = prop_fn;
 }
 static inline void fill_suite_rand(
-    _libdnml_str_suite *curr_suite, void *fn_test, 
-    void *fn_inv,   void *fn_eval,
-    bool *cmp_inv,  bool *cmp_eval,   
-    void *fmtin_fn, void *fmtrecon_fn
+    _libdnml_str_suite *curr_suite, void *fn_test,
+    void *fn_inv,       void *fn_eval,      bool *fn_stat,
+    bool *cmp_inv,      bool *cmp_eval,   
+    void *fmtin_fn, 
+    void *fmtrecon_fn
 ) {
     curr_suite->fn_test = (dnml_exec_fn*)(fn_test);
     // Evaluators
     curr_suite->fn_inv = (dnml_inv_fn*)(fn_inv);
     curr_suite->fn_eval = (dnml_eval_fn*)(fn_eval);
     // Comparisons
+    curr_suite->fn_stat = (dnml_stat_fn*)(fn_stat);
     curr_suite->inv_cmp = (dnml_cmp_inv_fn*)(cmp_inv);
     curr_suite->eval_cmp = (dnml_cmp_eval_fn*)(cmp_eval);
     // Priting & Formatting
@@ -286,7 +289,8 @@ static inline void _dnml_run_rand(_libdnml_str_suite *s) {
         run_case(c, s->fn_test, s->ctx); uint8_t correct = 0;
         // HARD GATE - DO NOT ALLOW ERROR CASES TO GO TO EVALUATION
         if (c->res.status != STR_SUCCESS || c->res.status != BIGINT_SUCCESS) {
-            (*s->fn_stat)(c->in, c->res.status); return;
+            if ((*s->fn_stat)(c->in, c->res.status)) correct = 1;
+            return;
         } 
         // ACTUAL EVALUATION WORK
         if (c->mode = INVERSE && s->fn_inv) {

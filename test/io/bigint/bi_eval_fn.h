@@ -10,6 +10,7 @@
 #include "../../../test_ui/_strui.h"
 #include "../../../adynamol/big_numbers/bigNums.h"
 #include "../../../adynamol/big_numbers/bigInt_func.h"
+#include "../_ioconv.h"
 #include "bi_indef.h"
 
 
@@ -76,6 +77,26 @@
 
 
 //* ========================= BITOS EVALUATION WRAPPERS ======================= *//
+// BITOS Status Checkers
+stinl bool stat_bitos_conv_nob(cvoid *vin, dnml_status res_status) {
+    bitos_conv_in *in = (bitos_conv_in*)vin;
+    uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
+    if (in->len <= sign_space) return STR_INVALID_CAP;
+    size_t digit_needed = __BIGINT_COUNTDB__(&in->x, 10);
+    if (in->len < digit_needed + sign_space) return STR_INVALID_CAP;
+}
+stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status) {
+    bitos_conv_in *in = (bitos_conv_in*)vin;
+    uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
+    if (in->len <= sign_space) return STR_INVALID_CAP;
+    size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
+    if (in->len < digit_needed + sign_space) return STR_INVALID_CAP;
+}
+stinl bool stat_bitos_tconv(cvoid *vin, dnml_status res_status) {
+    bitos_conv_in *in = (bitos_conv_in*)vin;
+    uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
+    if (in->len <= sign_space) return STR_INVALID_CAP;
+}
 // BITOS Conversions Inverses & Evaluators
 stinl void inv_bitos_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
     io_ctx *ctx = (io_ctx*)vctx;
@@ -159,6 +180,8 @@ stinl void eval_bitos_tserialize(cvoid *vin, str_res *exp, void *vctx) { DNML_UN
 
 
 //* ========================= STOBI EVALUATION WRAPPERS ======================= *//
+// STOBI Status Checkers
+
 // STOBI Initialization Inverses
 stinl void inv_stobi_init_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for bigInt_strint & bigInt_strninit
