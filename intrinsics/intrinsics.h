@@ -1,6 +1,8 @@
 #ifndef __DNML_INTRINSICS_H
 #define __DNML_INTRINSICS_H
 
+// True Neovim Larp starts from here 😝
+// Larping lazyvim is crazyyyyyyyyyi
 
 #include <math.h>
 #include <stdint.h>

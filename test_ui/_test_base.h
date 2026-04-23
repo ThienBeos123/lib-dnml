@@ -26,6 +26,7 @@ typedef struct _libdnml_session {
 
 
 //* =================== INTERFACE/UI TEXT =================== *//
+#define TAB         "    "
 #define BOX_TL      "┌"
 #define BOX_TR      "┐"
 #define BOX_BL      "└"

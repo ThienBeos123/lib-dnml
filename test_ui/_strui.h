@@ -52,7 +52,7 @@ typedef struct _libdnml_scase {
 } _libdnml_scase;
 
 //* =========== TYPE-SPEECIFIC UTILITIES =========== *//
-#define STR_PREVIEW 32
+#define STR_PREVIEW 64
 #define BIGINT_PREVIEW 4
 
 static inline bool _comp_str_res(const str_res *a, const str_res *b) {
@@ -65,45 +65,81 @@ static inline bool _comp_str_res(const str_res *a, const str_res *b) {
         default: return true; break;
     };
 }
-static inline void print_str(FILE *f, const char *s, size_t len) {
+static inline void _print_str(FILE *f, const char *s, size_t len, int tab_depth) {
+    /* Example:
+        - Input: <
+            +) Input 1 - <char*>: "123456789abcdef...123456789abcdef" (Length = 2048)
+            +) Random Text ....
+            +) Random Text ....
+        >
+    */
     if (len <= STR_PREVIEW) {
-        fprintf(f, "< \"%.*s\">" , (int)len, s);
+        fprintf(f, "< \"%.*s\">" , len, s);
     } else {
-        fprintf(f, "< \"%.*s...%.*s\" (Length = %zu) >",
-            STR_PREVIEW/2, s,
-            STR_PREVIEW/2, s + len - STR_PREVIEW/2,
-            len
-        );
+        fputs("<\n", f); char buf[STR_PREVIEW];
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        memcpy(buf, s, STR_PREVIEW); 
+        fprintf(f, "--- Low Segment:  \"%.*s\"...\n", STR_PREVIEW, buf);
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        memcpy(buf, s[len - STR_PREVIEW - 1], STR_PREVIEW);
+        fprintf(f, "--- High Segment: \"%.*s\"...\n", STR_PREVIEW, buf);
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        fprintf(f, "--- Length: %zu\n", len);
+        for (int i = 0; i < tab_depth; ++i) fputs(TAB, f);
+        fputc('>', f);
     }
 }
-static inline void print_bigint(FILE *f, const bigInt *x) {
-    fprintf(f, " < Sign = %c | Limb Count = %zu | ", x->sign < 0 ? '-' : '+', x->n);
+static inline void _print_bigint(FILE *f, const bigInt *x, int tab_depth) {
+    /* Example:
+        +) .... I love femboy text ...: <
+            --- Limb Count: 1024 (limbs)
+            --- Sign: 1 (Positive +)
+            --- Low Limbs: [12345678901234567890, ...]
+            --- High Limbs: [..., 12345678901234567890]
+        >
+    */
+    fputs("<\n", f);
+    for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+    fprintf(f, "--- Limb Count: %zu\n", x->n);
+    for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+    fprintf(f, "--- Sign: %" PRIu8 " (%s %c)\n", x->sign, 
+        (x->sign == 1) ? "Positive" : "Negative", 
+        (x->sign == 1) ? '+' : '-'
+    );
     if (x->n <= BIGINT_PREVIEW) {
-        fputc('[', f);
+        // Full Limbs
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        fputs("--- Limbs: [", f); 
         for (size_t i = 0; i < x->n; ++i) {
-            fprintf(f, "%016" PRIx64 " ", x->limbs[i]);
-        } fputc(']', f);
+            fprintf(f, "%016" PRIx64 ", ", x->limbs[i]);
+        } fputs("]\n", f);
     } else {
-        fprintf(f, "low=[");
+        // Low Limbs
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        fputs("--- Low Limbs: [", f); 
         for (size_t i = 0; i < BIGINT_PREVIEW/2; ++i) {
             fprintf(f, "%016" PRIx64 " ", x->limbs[i]);
-        } fprintf(f, "] high=[");
+        } fputs("]\n", f);
+
+        // High Limbs
+        for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
+        fputs("--- High Limbs: [", f);
         for (size_t i = x->n - BIGINT_PREVIEW/2; i < x->n; ++i) {
             fprintf(f, "%016" PRIx64 " ", x->limbs[i]);
-        } fputc(']', f);
-    } fputs(" >", f);
+        } fputs(']', f);
+    }
+    // The final close-bracket ">"
+    for (int i = 0; i < tab_depth; ++i) fputs(TAB, f);
+    fputc('>', f);
 }
-static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth, bool top_tab) {
-    const char *tab = "    ";
-    if (top_tab) for (int i = 0; i < tab_depth; ++i) fputs(tab, f);
+static inline void _print_str_res(const str_res *a, FILE *f, int tab_depth) {
     fputs("< -- STR-RES --\n", f);
-    for (int i = 0; i <= tab_depth; ++i) fputs(tab, f);
+    for (int i = 0; i <= tab_depth; ++i) fputs(TAB, f);
     fputs("+) Status: ", f); _print_dnml_status(a->status, f); fputc('\n', f);
-    for (int i = 0; i <= tab_depth; ++i) fputs(tab, f);
-    fputs("+) Data:   ", f); switch (a->type) { 
-        case BIGINT: print_bigint(f, &a->data.bi); break;
-        case STRING: print_str(f, a->str, a->data.len); break;
-    } for (int i = 0; i < tab_depth; ++i) fputs(tab, f); 
+    fputs("+) Data:   ", f); switch (a->type) {
+        case BIGINT: _print_bigint(f, &a->data.bi, tab_depth); break;
+        case STRING: _print_str(f, a->str, a->data.len, tab_depth); break;
+    } for (int i = 0; i < tab_depth; ++i) fputs(TAB, f); 
     fputs("\n>", f);
 }
 
@@ -119,8 +155,8 @@ typedef void (*dnml_inv_fn)(const void *in, const str_res out, void *reconstruct
 typedef bool (*dnml_cmp_inv_fn)(const void *original, const str_res *out, const void *recon, void *ctx);
 typedef bool (*dnml_cmp_eval_fn)(const str_res *full, const str_res *out);
 // Printing & Formatting
-typedef void (*dnml_fmt_in_fn)(FILE *f, const void *in);
-typedef void (*dnml_fmt_recon_fn)(FILE *f, const void* recon);
+typedef void (*dnml_fmt_in_fn)(FILE *f, const void *in, int tab_depth);
+typedef void (*dnml_fmt_recon_fn)(FILE *f, const void* recon, int tab_depth);
 
 static str_res *alloc_res(dnml_dratch *a, size_t len) {
     str_res *r = (str_res*)(dratch_alloc(a, sizeof(str_res) + len + 1));
@@ -294,18 +330,18 @@ static inline void _dnml_log_suite(_libdnml_str_suite *s) {
                 >
                - Got:      < -- STR-RES --
                     +) Status: STR_SUCCESS
-                    +) Data: "123456789abcdefghijk...123456789abcdefghijk" (Length = 1024)
+                    +) Data: "123456789abcdef...123456789abcdef" (Length = 1024)
                 >
         */
         fprintf(f,  "o) Edge case %d:\n", s->fail_enums[i]);
-        fputs(      "   - Input: ", f);
-        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i]);
+        fputs(      "    - Input: ", f);
+        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i], 1);
         else fputs("<ERROR: NO-FORMATTER>", f);
         fputc('\n', f);
-        fputs(      "   - Expected: ", f);
-        _print_str_res(&s->fail_eexp[i], f, 1, false); fputc('\n', f);
-        fputs(      "   - Got:      ", f);
-        _print_str_res(&s->fail_eres[i], f, 1, false); fputc('\n', f);
+        fputs(      "    - Expected: ", f);
+        _print_str_res(&s->fail_eexp[i], f, 1); fputc('\n', f);
+        fputs(      "    - Got:      ", f);
+        _print_str_res(&s->fail_eres[i], f, 1); fputc('\n', f);
     }
 
     //* PRINTS RANDOM CASES *//
@@ -323,15 +359,15 @@ static inline void _dnml_log_suite(_libdnml_str_suite *s) {
                 >
         */
         fprintf(f, "o) Rand case %" PRIu16 ":\n", i + 1);
-        fputs(      "   - Input: ", f);
-        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i]);
+        fputs(      "    - Input: ", f);
+        if (s->fmtin_fn) (*s->fmtin_fn)(f, s->fail_rin[i], 1);
         else fputs("<ERROR: NO-FORMATTER>", f);
         fputc('\n', f);
-        fputs(      "   - Output: ", f);
-        _print_str_res(&s->fail_rres[i], f, 1, false); fputc('\n', f);
-        fputs(      "   - Reconstructed: ", f);
+        fputs(      "    - Output: ", f);
+        _print_str_res(&s->fail_rres[i], f, 1); fputc('\n', f);
+        fputs(      "    - Reconstructed: ", f);
         void *idk[1] = { s->fail_rrecons[i] };
-        if (s->fmtrecon_fn) (*s->fmtrecon_fn)(f, idk);
+        if (s->fmtrecon_fn) (*s->fmtrecon_fn)(f, idk, 1);
         else fputs("<ERROR: NO-FORMATTER>", f);
     } fclose(f);
 }
@@ -378,12 +414,12 @@ static inline void _dnml_render_esuite(_libdnml_str_suite *s, uint8_t suite_num,
 
         freopen(NULL, "w", tmp);
         fputs("    - Expected: ", tmp);
-        _print_str_res(&s->fail_eexp[i], tmp, 1, false);
+        _print_str_res(&s->fail_eexp[i], tmp, 1);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         freopen(NULL, "w", tmp);
         fputs("    - Got: ", tmp);
-        _print_str_res(&s->fail_eres[i], tmp, 1, false);
+        _print_str_res(&s->fail_eres[i], tmp, 1);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         _dnml_delay_ms(delay_ms);
@@ -419,17 +455,17 @@ static inline void _dnml_render_rsuite(_libdnml_str_suite *s, uint8_t suite_num,
 
         freopen(NULL, "w", tmp);
         fputs("    - Input: ", tmp);
-        (*s->fmtin_fn)(tmp, s->fail_rin[i]);
+        (*s->fmtin_fn)(tmp, s->fail_rin[i], 1);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         freopen(NULL, "w", tmp);
         fputs("    - Output: ", tmp);
-        _print_str_res(&s->fail_rres[i], tmp, 1, false);
+        _print_str_res(&s->fail_rres[i], tmp, 1);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         freopen(NULL, "w", tmp);
         fputs("    - Reconstruction: ", tmp);
-        (*s->fmtrecon_fn)(tmp, s->fail_rrecons[i]);
+        (*s->fmtrecon_fn)(tmp, s->fail_rrecons[i], 1);
         _dnml_box_fmultiline(tmp, bw); putchar('\n');
 
         _dnml_delay_ms(delay_ms);
