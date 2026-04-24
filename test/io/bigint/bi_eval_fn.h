@@ -81,21 +81,33 @@
 stinl bool stat_bitos_conv_nob(cvoid *vin, dnml_status res_status) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return STR_INVALID_CAP;
+    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, 10);
-    if (in->len < digit_needed + sign_space) return STR_INVALID_CAP;
+    if (in->len < digit_needed + sign_space) return (res_status == STR_INVALID_CAP);
+    return (res_status == STR_SUCCESS);
 }
 stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return STR_INVALID_CAP;
+    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
-    if (in->len < digit_needed + sign_space) return STR_INVALID_CAP;
+    if (in->len < digit_needed + sign_space) return (res_status == STR_INVALID_CAP);
+    return (res_status == STR_SUCCESS);
+}
+stinl bool stat_bitos_conv_f(cvoid *vin, dnml_status res_status) {
+    bitos_conv_in *in = (bitos_conv_in*)vin;
+    uint8_t sign_space = (in->x.sign == -1) ? 1 : 0,
+    prefix_space = (in->base == 2 || in->base == 8 || in->base == 16) ? 2 : 0;
+    if (in->len <= sign_space + prefix_space) return (res_status == STR_INVALID_CAP);
+    size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
+    if (in->len < digit_needed + sign_space + prefix_space) return (res_status == STR_INVALID_CAP);
+    return (res_status == STR_SUCCESS);
 }
 stinl bool stat_bitos_tconv(cvoid *vin, dnml_status res_status) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return STR_INVALID_CAP;
+    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
+    return (res_status == STR_SUCCESS);
 }
 // BITOS Conversions Inverses & Evaluators
 stinl void inv_bitos_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
@@ -180,8 +192,86 @@ stinl void eval_bitos_tserialize(cvoid *vin, str_res *exp, void *vctx) { DNML_UN
 
 
 //* ========================= STOBI EVALUATION WRAPPERS ======================= *//
-// STOBI Status Checkers
-
+// STOBI_CONV Status Checkers
+stinl bool stat_stobi_from_str(cvoid *vin, dnml_status res_status) {
+    stobi_conv_in *in = (stobi_conv_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_size(in->str, strlen(in->str), &base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_from_strb(cvoid *vin, dnml_status res_status) {
+    stobi_conv_in *in = (stobi_conv_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizeb(in->str, strlen(in->str), in->base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_from_strn(cvoid *vin, dnml_status res_status) {
+    stobi_conv_in *in = (stobi_conv_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_size(in->str, in->len, &base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_from_strnb(cvoid *vin, dnml_status res_status) {
+    stobi_conv_in *in = (stobi_conv_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizeb(in->str, in->len, in->base, &exp);
+    return (res_status == exp);
+}
+// STOBI_CONV Status Checkers
+/* Subnote 1:
+    - stat_stobi_get_str and its subsequent variants are used for both:
+        +) get_str (and its subsequent variants) - GROWTH API
+        +) tget_str (and its subsequent variants) - TRUNCATIVE API
+    - stat_stobi_sget_str and its subsequent variants are only used for,
+      as the name suggest:
+        +) sget_Str (and its subsequent variants) - SAFE/STRICT API
+*/
+stinl bool stat_stobi_get_str(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_size(in->str, strlen(in->str), &base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_get_strb(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizeb(in->str, strlen(in->str), in->base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_get_strn(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_size(in->str, in->len, &base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_get_strnb(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizeb(in->str, in->len, in->base, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_sget_str(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizesa(in->str, strlen(in->str), &base, in->bi_size, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_sget_strb(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin; dnml_status exp;
+    bigInt_get_sizebsa(in->str, strlen(in->str), in->base, in->bi_size, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_sget_strn(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin;
+    dnml_status exp; uint8_t base = 0;
+    bigInt_get_sizesa(in->str, in->len, &base, in->bi_size, &exp);
+    return (res_status == exp);
+}
+stinl bool stat_stobi_sget_strnb(cvoid *vin, dnml_status res_status) {
+    stobi_assign_in *in = (stobi_assign_in*)vin; dnml_status exp;
+    bigInt_get_sizebsa(in->str, in->len, in->base, in->bi_size, &exp);
+    return (res_status == exp);
+}
 // STOBI Initialization Inverses
 stinl void inv_stobi_init_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for bigInt_strint & bigInt_strninit

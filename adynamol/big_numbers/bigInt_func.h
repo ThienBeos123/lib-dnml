@@ -408,6 +408,16 @@ bigInt bigInt_from_strnb(const char* str, size_t len, uint8_t base, dnml_status 
 //* -------------------------- BigInt Assignments -------------------------- *//
 size_t bigInt_get_size(const char *str, size_t len, uint8_t *baseout, dnml_status *err);
 size_t bigInt_get_sizeb(const char *str, size_t len, uint8_t base, dnml_status *err);
+size_t bigInt_get_sizesa(
+    const char *str, size_t len, 
+    uint8_t *baseout, size_t bisize, 
+    dnml_status *err
+);
+size_t bigInt_get_sizebsa(
+    const char *str, size_t len, 
+    uint8_t base, size_t bisize, 
+    dnml_status *err
+);
 /* Default String --> BigInt */
 dnml_status bigInt_get_str(bigInt *x, const char *str);
 dnml_status bigInt_get_strb(bigInt *x, const char *str, uint8_t base);
