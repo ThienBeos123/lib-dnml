@@ -12,6 +12,18 @@
 #include "../_ioconv.h"
 
 
+void _suite_slices(
+    void** slices, void* storage, 
+    size_t elements_per_suite, size_t element_size, 
+    u8 suite_count
+) {
+    for (size_t i = 0; i < suite_count; ++i) {
+        size_t increments = i * elements_per_suite * element_size;
+        slices[i] = (void*)((char*)storage + increments);
+    } return;
+}
+
+
 //* ========================= COMPARISONS WRAPPERS ======================= *//
 // Invsere Comparator - BITOS
 stinl bool cmp_inv_bitos_conv(cvoid *orin, csres *out, cvoid *recon, void *vctx) {

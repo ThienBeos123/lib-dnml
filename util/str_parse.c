@@ -1,5 +1,11 @@
 #include "util.h"
 
+#define PRECHECK_NLEN(str, curr_pos, off_plus, checked, len) do { \
+    if (*curr_pos + off_plus == len - 1) return 3; \
+    if (str[*curr_pos + off_plus] != checked) return 2; \
+} while (0)
+
+
 uint8_t is_numeric(char c) { return (c <= '9' && c >= '0'); }
 uint16_t _fskip_whitespace__(FILE *stream) {
     uint16_t c;
@@ -25,6 +31,28 @@ uint8_t _is_valid_digit__(uint16_t *curr_char) {
 /* ----------------------- */
 /* --- Normal variants --- */
 /* ----------------------- */
+// _arbit_bprefix returns 
+// either 1 (overflowed) or 0 (didn't overflowed) 
+// and also 2 ---> END OF STRING
+// and also 3 ---> INVALID CHARACTER
+// for the uint8_t base limit
+uint8_t _arbit_bprefix(const char *str, size_t *curr_pos, uint8_t *base) {
+    uint16_t tmp_base = 0; *curr_pos += 3;
+    tmp_base += (uint16_t)('0' + str[*curr_pos]);
+    tmp_base *= 10; *curr_pos++;
+    if (str[*curr_pos] == '\0') return 2;
+    else if (str[*curr_pos] != '}' || !is_numeric(str[*curr_pos])) return 3;
+    else if (str[*curr_pos] == '}') { *base = (uint8_t)(tmp_base); return 0; }
+    tmp_base += (uint16_t)('0' + str[*curr_pos]);
+    tmp_base *= 10; *curr_pos++;
+    if (str[*curr_pos] == '\0') return 2;
+    else if (str[*curr_pos] != '}' || !is_numeric(str[*curr_pos])) return 3;
+    else if (str[*curr_pos] == '}') { *base = (uint8_t)(tmp_base); return 0; }
+    tmp_base += (uint16_t)('0' + str[*curr_pos]); *curr_pos++;
+    if (str[*curr_pos] != '}') return 3;
+    if (tmp_base > UINT8_MAX) return 1;
+    *base = (uint8_t)(tmp_base); return 0;
+}
 uint8_t _sign_handle_(const char *str, size_t *curr_pos, uint8_t *sign) {
     *sign = 1;
     if (str[*curr_pos] == '-') { 
@@ -42,74 +70,117 @@ uint8_t _sign_handle_(const char *str, size_t *curr_pos, uint8_t *sign) {
     return 0;
 }
 uint8_t _prefix_handle_(const char *str, size_t *curr_pos, uint8_t *base) {
-    *base = 10;
+    *base = 10; if (str[*curr_pos] == '\0') return 3; // Ended ("\0")
     if (is_numeric(str[*curr_pos]) && str[*curr_pos] != '0') return 1; // A decimal (eg: 9...)
-    else { // The string is currently "0..."
-        if (str[*curr_pos + 1] == '\0') return 0; // The string currently is "0\null"
-        else if (is_numeric(str[*curr_pos + 1])) { // The string currently is "0(numerical)" (eg: 0942)
-            *curr_pos += 1; // A leading zero --> Decimal
+    else { *curr_pos++; // The string is currently "0..."
+        if (str[*curr_pos] == '\0') return 0; // The string currently is "0\null"
+        else if (is_numeric(str[*curr_pos])) { // The string currently is "0(numerical)" (eg: 0942)
+            *curr_pos++; // A leading zero --> Decimal
             return 1;
         } else {
-            switch (str[*curr_pos + 1]) {
+            switch (str[*curr_pos]) {
                 // Hexadecimal
-                case 'x':   *base = 16; *curr_pos += 2; break;
-                case 'X':   *base = 16; *curr_pos += 2; break;
+                case 'x':   *base = 16; *curr_pos++; break;
+                case 'X':   *base = 16; *curr_pos++; break;
                 // Binary
-                case 'b':   *base = 2; *curr_pos += 2; break;
-                case 'B':   *base = 2; *curr_pos += 2; break;
+                case 'b':   *base = 2; *curr_pos++; break;
+                case 'B':   *base = 2; *curr_pos++; break;
                 // Octal
-                case 'o':   *base = 8; *curr_pos += 2; break;
-                case 'O':   *base = 8; *curr_pos += 2; break;
+                case 'o':   *base = 8; *curr_pos++; break;
+                case 'O':   *base = 8; *curr_pos++; break;
+                // Arbitrary-base:
+                case '{': {
+                    if (!is_numeric(str[*curr_pos + 1])) { return 2; break; }
+                    *curr_pos++;
+                    if (str[*curr_pos + 1] != '}') return 2; \
+                    if (str[*curr_pos + 2] != '}') return 2; \
+                    if (str[*curr_pos + 3] != '}') return 2; \
+                    _arbit_bprefix(str, curr_pos, base);
+                } break;
                 //! INVALID BASE PREFIX
                 default:    return 2; break;
             }
         }
-    }
+    } return 1;
 }
 
 /* --------------------- */
 /* --- Nlen variants --- */
 /* --------------------- */
+// _arbit_bprefix_nlen returns 
+// either 1 (overflowed) or 0 (didn't overflowed)
+// and also 2 ---> END OF STRING
+// and also 3 ---> INVALID CHARACTER
+// for the uint8_t base limt
+uint8_t _arbit_bprefix_nlen(const char *str, size_t *curr_pos, uint8_t *base, size_t len) {
+    uint16_t tmp_base = 0; *curr_pos += 3;
+    tmp_base += (uint16_t)('0' + str[*curr_pos]);
+    tmp_base *= 10; *curr_pos++;
+    if (str[*curr_pos] == '\0' || *curr_pos == len - 1) return 2;
+    else if (str[*curr_pos] != '}' || !is_numeric(str[*curr_pos])) return 3;
+    else if (str[*curr_pos] == '}') { *base = (uint8_t)(tmp_base); return 0; }
+    tmp_base += (uint16_t)('0' + str[*curr_pos]);
+    tmp_base *= 10; *curr_pos++;
+    if (str[*curr_pos] == '\0' || *curr_pos == len - 1) return 2;
+    else if (str[*curr_pos] != '}' || !is_numeric(str[*curr_pos])) return 3;
+    else if (str[*curr_pos] == '}') { *base = (uint8_t)(tmp_base); return 0; }
+    tmp_base += (uint16_t)('0' + str[*curr_pos]); *curr_pos++;
+    if (str[*curr_pos] != '}') return 3;
+    if (tmp_base > UINT8_MAX) return 1;
+    *base = (uint8_t)(tmp_base); return 0;
+    
+}
 uint8_t _sign_handle_nlen_(const char *str, size_t *curr_pos, uint8_t *sign, size_t len) {
     *sign = 1;
     if (str[*curr_pos] == '-') { 
         *sign = -1; *curr_pos += 1; 
         // In this case, the string is "-\null" or ended as "-"
-        if (str[*curr_pos] == '\0' || *curr_pos == len - 1) return 3;
+        if (*curr_pos == len - 1 || str[*curr_pos] == '\0') return 3;
     }
     else if (str[*curr_pos] == '+') {
         *curr_pos += 1;
         // In this case, the string is "+\null" or ended as "+"
-        if (str[*curr_pos] == '\0'|| *curr_pos == len - 1) return 3;
+        if (*curr_pos == len - 1 || str[*curr_pos] == '\0') return 3;
     }
     // This case forces the next character to be 0->9 for the prefix/a decimal
     else if (str[*curr_pos] && !is_numeric(str[*curr_pos])) return 4;
 }
 uint8_t _prefix_handle_nlen_(const char *str, size_t *curr_pos, uint8_t *base, size_t len) {
-    *base = 10;
+    *base = 10; if (*curr_pos == len - 1 || str[*curr_pos] == '\0') return 3; // Ended ("\0")
     if (is_numeric(str[*curr_pos]) && str[*curr_pos] != '0') return 1; // A decimal (eg: 9...)
-    else { // The string is currently "0..."
-        if (str[*curr_pos + 1] == '\0') return 0; // The string currently is "0\null"
-        else if (*curr_pos == len - 1) return 0; // The string ended as "0"
-        else if (is_numeric(str[*curr_pos + 1])) { // The string currently is "0(numerical)" (eg: 0942)
+    // The string is currently "0..."
+    else if (str[*curr_pos] == '0') { *curr_pos++;
+        if (*curr_pos == len - 1) return 0; // The string ended as "0"
+        else if (str[*curr_pos] == '\0') return 0; // The string currently is "0\null"
+        else if (is_numeric(str[*curr_pos])) { // The string currently is "0(numerical)" (eg: 0942)
             *curr_pos += 1; // A leading zero --> Decimal
             return 1;
         } else {
-            switch (str[*curr_pos + 1]) {
+            switch (str[*curr_pos]) {
                 // Hexadecimal
-                case 'x':   *base = 16; *curr_pos += 2; break;
-                case 'X':   *base = 16; *curr_pos += 2; break;
+                case 'x':   *base = 16; *curr_pos++; break;
+                case 'X':   *base = 16; *curr_pos++; break;
                 // Binary
-                case 'b':   *base = 2; *curr_pos += 2; break;
-                case 'B':   *base = 2; *curr_pos += 2; break;
+                case 'b':   *base = 2; *curr_pos++; break;
+                case 'B':   *base = 2; *curr_pos++; break;
                 // Octal
-                case 'o':   *base = 8; *curr_pos += 2; break;
-                case 'O':   *base = 8; *curr_pos += 2; break;
+                case 'o':   *base = 8; *curr_pos++; break;
+                case 'O':   *base = 8; *curr_pos++; break;
+                // Arbitrary-base:
+                case '{': {
+                    if (*curr_pos + 1 == len - 1) return 3;
+                    if (!is_numeric(str[*curr_pos + 1])) { return 2; break; }
+                    *curr_pos++;
+                    PRECHECK_NLEN(str, curr_pos, 1, '}', len);
+                    PRECHECK_NLEN(str, curr_pos, 2, '}', len);
+                    PRECHECK_NLEN(str, curr_pos, 3, '}', len);
+                    _arbit_bprefix_nlen(str, curr_pos, base, len);
+                } break;
                 //! INVALID BASE PREFIX
                 default:    return 2; break;
             }
         }
-    }
+    } else return 1;
 }
 
 /* ----------------------------- */

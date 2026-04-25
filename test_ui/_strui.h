@@ -212,7 +212,7 @@ typedef struct _libdnml_str_suite {
 // Main Suite Setup
 static inline void create_str_suite(
     _libdnml_str_suite *curr_suite, const char *name,
-    uint8_t ecount, uint16_t rcorrect,
+    uint8_t ecount, uint16_t rcount,
     _libdnml_scase *ebank, _libdnml_scase *rbank,
 
     rcheck_mode mode, rprint_mode *modebuf,
@@ -221,7 +221,7 @@ static inline void create_str_suite(
 ) {
     curr_suite->suite_name = name;
     curr_suite->ecount = ecount;
-    curr_suite->rcorrect = rcorrect;
+    curr_suite->rcount = rcount;
     curr_suite->log_path = log_path;
     // Filling in the banks
     curr_suite->edge = ebank;
