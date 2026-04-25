@@ -75,39 +75,56 @@
 *      MUST follow step 1 to ensure memory-safe and efficient test runs
 */
 
+// Any settings of other metadata outside of out->status are for safety measures
+#define BITOS_INVALCAP(out) do { \
+    out->status = STR_INVALID_CAP;              \
+    out->type = OP_NONE;                        \
+    out->data.len = 0;                          \
+    out->str[0] = '\0'; out->cap = 0;           \
+} while (0);
+#define BITOS_SUCCESS(out) do { \
+    out->status = STR_SUCCESS;                  \
+    out->type = OP_NONE;                        \
+    out->data.len = 0;                          \
+    out->str[0] = '\0'; out->cap = 0;           \
+} while (0);
+
 
 //* ========================= BITOS EVALUATION WRAPPERS ======================= *//
 // BITOS Status Checkers
-stinl bool stat_bitos_conv_nob(cvoid *vin, dnml_status res_status) {
+stinl bool stat_bitos_conv_nob(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
+    if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, 10);
-    if (in->len < digit_needed + sign_space) return (res_status == STR_INVALID_CAP);
-    return (res_status == STR_SUCCESS);
+    if (in->len < digit_needed + sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
+    BITOS_SUCCESS(out); return (res_status == STR_INVALID_CAP); 
 }
-stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status) {
+stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
+    if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
-    if (in->len < digit_needed + sign_space) return (res_status == STR_INVALID_CAP);
-    return (res_status == STR_SUCCESS);
+    if (in->len < digit_needed + sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
+    BITOS_SUCCESS(out); return (res_status == STR_INVALID_CAP); 
 }
-stinl bool stat_bitos_conv_f(cvoid *vin, dnml_status res_status) {
+stinl bool stat_bitos_conv_f(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0,
     prefix_space = (in->base == 2 || in->base == 8 || in->base == 16) ? 2 : 0;
-    if (in->len <= sign_space + prefix_space) return (res_status == STR_INVALID_CAP);
+    if (in->len <= sign_space + prefix_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
-    if (in->len < digit_needed + sign_space + prefix_space) return (res_status == STR_INVALID_CAP);
+    if (in->len < digit_needed + sign_space + prefix_space) { 
+        BITOS_INVALCAP(out);
+        return (res_status == STR_INVALID_CAP);
+    } BITOS_SUCCESS(out);
     return (res_status == STR_SUCCESS);
 }
-stinl bool stat_bitos_tconv(cvoid *vin, dnml_status res_status) {
+stinl bool stat_bitos_tconv(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
-    if (in->len <= sign_space) return (res_status == STR_INVALID_CAP);
-    return (res_status == STR_SUCCESS);
+    if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
+    BITOS_SUCCESS(out); return (res_status == STR_SUCCESS);
 }
 // BITOS Conversions Inverses & Evaluators
 stinl void inv_bitos_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
@@ -384,30 +401,44 @@ stinl void inv_stobi_deserial(cvoid *vin, csres *out, void *recon, void *vctx) {
 stinl void eval_stobi_ftread(cvoid *vin, str_res *exp, void *vctx) { DNML_UNFINISHED(); }
 
 
+// Any settings of other metadata outside of out->status are for safety measures
+#define STOBI_STAT_SETOUT(out, received_status) do { \
+    out->status = received_status;      \
+    out->type = OP_NONE;                \
+    out->data.bi = {                    \
+        .limbs = NULL, .n = 1,          \
+        .cap = 0, .sign = 0 };          \
+    out->str[0] = '\0'; out->cap = 0;   \
+} while (0);
+
 //* ========================= STOBI STATUS CHECKING WRAPPERS ======================= *//
 // STOBI_CONV Status Checkers
-stinl bool stat_stobi_from_str(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_from_str(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_conv_in *in = (stobi_conv_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_size(in->str, strlen(in->str), &base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_from_strb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_from_strb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_conv_in *in = (stobi_conv_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizeb(in->str, strlen(in->str), in->base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_from_strn(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_from_strn(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_conv_in *in = (stobi_conv_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_size(in->str, in->len, &base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_from_strnb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_from_strnb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_conv_in *in = (stobi_conv_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizeb(in->str, in->len, in->base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
 // STOBI_ASSIGN Status Checkers
@@ -419,50 +450,58 @@ stinl bool stat_stobi_from_strnb(cvoid *vin, dnml_status res_status) {
       as the name suggest:
         +) sget_Str (and its subsequent variants) - SAFE/STRICT API
 */
-stinl bool stat_stobi_get_str(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_get_str(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_size(in->str, strlen(in->str), &base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_get_strb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_get_strb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizeb(in->str, strlen(in->str), in->base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_get_strn(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_get_strn(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_size(in->str, in->len, &base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_get_strnb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_get_strnb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizeb(in->str, in->len, in->base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_sget_str(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_sget_str(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizesa(in->str, strlen(in->str), &base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_sget_strb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_sget_strb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin; dnml_status exp;
     bigInt_get_sizebsa(in->str, strlen(in->str), in->base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_sget_strn(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_sget_strn(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_get_sizesa(in->str, in->len, &base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_sget_strnb(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_sget_strnb(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_assign_in *in = (stobi_assign_in*)vin; dnml_status exp;
     bigInt_get_sizebsa(in->str, in->len, in->base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
 // STOBI_SCAN Status Checkers
@@ -472,26 +511,30 @@ stinl bool stat_stobi_sget_strnb(cvoid *vin, dnml_status res_status) {
     +) nobsa    = nob + Size-awarenes ---> Consider output buffer's size
     +) bsa      = b + Size-awareness ----> Consider output buffer's size
 */
-stinl bool stat_stobi_fscan_nob(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_fscan_nob(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_scan_in *in = (stobi_scan_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_fscan_size(in->stream, &base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_fscan_b(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_fscan_b(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_scan_in *in = (stobi_scan_in*)vin; dnml_status exp;
     bigInt_fscanb_size(in->stream, in->base, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_fscan_nobsa(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_fscan_nobsa(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_scan_in *in = (stobi_scan_in*)vin;
     dnml_status exp; uint8_t base = 0;
     bigInt_fscansa_size(in->stream, &base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
-stinl bool stat_stobi_fscan_bsa(cvoid *vin, dnml_status res_status) {
+stinl bool stat_stobi_fscan_bsa(cvoid *vin, dnml_status res_status, str_res *out) {
     stobi_scan_in *in = (stobi_scan_in*)vin; dnml_status exp;
     bigInt_fscanbsa_size(in->stream, in->base, in->bi_size, &exp);
+    STOBI_STAT_SETOUT(out, exp);
     return (res_status == exp);
 }
 
