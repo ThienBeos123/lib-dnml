@@ -14,7 +14,7 @@ uint16_t _fskip_whitespace__(FILE *stream) {
 }
 size_t _skip_whitespace(const char *str, size_t len, size_t *pos) {
     size_t total_whitespace = 0;
-    while (*pos < len && isspace(str[*pos])) { 
+    while (*pos < len && str[*pos] != '\0' && isspace(str[*pos])) { 
         *pos++; ++total_whitespace; 
     } return total_whitespace;
 }

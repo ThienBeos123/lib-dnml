@@ -82,6 +82,12 @@
     out->data.len = 0;                          \
     out->str[0] = '\0'; out->cap = 0;           \
 } while (0);
+#define BITOS_INVALBASE(out) do { \
+    out->status = STR_INVALID_BASE;             \
+    out->type = OP_NONE;                        \
+    out->data.len = 0;                          \
+    out->str[0] = '\0'; out->cap = 0;           \
+} while (0);
 #define BITOS_SUCCESS(out) do { \
     out->status = STR_SUCCESS;                  \
     out->type = OP_NONE;                        \
@@ -102,6 +108,7 @@ stinl bool stat_bitos_conv_nob(cvoid *vin, dnml_status res_status, str_res *out)
 }
 stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
+    if (!in->base) { BITOS_INVALBASE(out); return (res_status == STR_INVALID_BASE); }
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
     if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
     size_t digit_needed = __BIGINT_COUNTDB__(&in->x, in->base);
@@ -110,6 +117,7 @@ stinl bool stat_bitos_conv_b(cvoid *vin, dnml_status res_status, str_res *out) {
 }
 stinl bool stat_bitos_conv_f(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
+    if (!in->base) { BITOS_INVALBASE(out); return (res_status == STR_INVALID_BASE); }
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0,
     prefix_space = (in->base == 2 || in->base == 8 || in->base == 16) ? 2 : 0;
     if (in->len <= sign_space + prefix_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
@@ -120,8 +128,15 @@ stinl bool stat_bitos_conv_f(cvoid *vin, dnml_status res_status, str_res *out) {
     } BITOS_SUCCESS(out);
     return (res_status == STR_SUCCESS);
 }
-stinl bool stat_bitos_tconv(cvoid *vin, dnml_status res_status, str_res *out) {
+stinl bool stat_bitos_tconv_nob(cvoid *vin, dnml_status res_status, str_res *out) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
+    uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
+    if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
+    BITOS_SUCCESS(out); return (res_status == STR_SUCCESS);
+}
+stinl bool stat_bitos_tconv_b(cvoid *vin, dnml_status res_status, str_res *out) {
+    bitos_conv_in *in = (bitos_conv_in*)vin;
+    if (!in->base) { BITOS_INVALBASE(out); return (res_status == STR_INVALID_BASE); }
     uint8_t sign_space = (in->x.sign == -1) ? 1 : 0;
     if (in->len <= sign_space) { BITOS_INVALCAP(out); return (res_status == STR_INVALID_CAP); }
     BITOS_SUCCESS(out); return (res_status == STR_SUCCESS);
@@ -288,7 +303,8 @@ stinl void eval_stobi_tget_str(cvoid *vin, str_res *exp, void *vctx) {
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(valid_len, base));
     limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
-    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
+    exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strn(&exp->data.bi, in->str, valid_len);
 
     // Explicit status returns (Precendence-accounted)
@@ -307,7 +323,8 @@ stinl void eval_stobi_tget_strb(cvoid *vin, str_res *exp, void *vctx) {
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(valid_len, in->base));
     limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
-    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
+    exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strnb(&exp->data.bi, in->str, valid_len, in->base);
 
     // Explicit status returns (Precendence-accounted)
@@ -360,7 +377,8 @@ stinl void eval_stobi_ftscan(cvoid *vin, str_res *exp, void *vctx) {
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(len + 10, base));
     limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
-    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
+    exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strn(&exp->data.bi, buf, valid_len);
     exp->status = (finval_i < cap_lim) ? fn_stat :
                  ((cap_lim < finval_i) ? STR_TRUNC_SUCCESS : STR_SUCCESS);
@@ -389,7 +407,8 @@ stinl void eval_stobi_ftscanb(cvoid *vin, str_res *exp, void *vctx) {
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(len + 10, in->base));
     limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
-    exp->data.bi = { .limbs = tmp_limbs, .n = 0, .cap = lcnt, .sign = 1 };
+    exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
+    exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strnb(&exp->data.bi, buf, valid_len, in->base);
     exp->status = (finval_i < cap_lim) ? fn_stat :
                  ((cap_lim < finval_i) ? STR_TRUNC_SUCCESS : STR_SUCCESS);
@@ -405,9 +424,10 @@ stinl void eval_stobi_ftread(cvoid *vin, str_res *exp, void *vctx) { DNML_UNFINI
 #define STOBI_STAT_SETOUT(out, received_status) do { \
     out->status = received_status;      \
     out->type = OP_NONE;                \
-    out->data.bi = {                    \
-        .limbs = NULL, .n = 1,          \
-        .cap = 0, .sign = 0 };          \
+    out->data.bi.limbs = NULL;          \
+    out->data.bi.sign = 0;              \
+    out->data.bi.cap = 0;               \
+    out->data.bi.n = 1;                 \
     out->str[0] = '\0'; out->cap = 0;   \
 } while (0);
 

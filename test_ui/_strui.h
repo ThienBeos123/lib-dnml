@@ -58,8 +58,9 @@ typedef struct _libdnml_scase {
 
 static inline bool _comp_str_res(const str_res *a, const str_res *b) {
     if (a->status != b->status) return false;
-    if (a->status != BIGINT_SUCCESS || a->status != STR_SUCCESS) return true;
-    if (a->type != b->type) return false;
+    if (a->status != BIGINT_SUCCESS || a->status != STR_SUCCESS) {
+        return (a->status == b->status);
+    } if (a->type != b->type) return false;
     switch (a->type) {
         case STRING: return strcmp(a->str, b->str) == 0; break;
         case BIGINT: return (__BIGINT_INTERNAL_COMP__(&a->data.bi, &b->data.bi) == 0); break;

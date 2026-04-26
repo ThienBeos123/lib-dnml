@@ -21,6 +21,7 @@
 #define u16 uint16_t
 #define u8 uint8_t
 
+#define INVAL_BI() .data.bi = { .limbs = NULL, .n = 1, .cap = 0, .sign = 0 }
 
 stinl void _print_base(FILE* f, u8 base, bool endl) {
     switch (base) {
