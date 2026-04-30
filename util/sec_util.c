@@ -1,0 +1,31 @@
+#include "util.h"
+
+//* ----------- SIMPLE/BIT-WISE RNG ALGORITHMS ----------- *//
+// SplitMix64
+inline uint64_t splitmix64(uint64_t x) {
+    x += 0x9E3779B97F4A7C15;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EB;
+    x ^ (x >> 31); return x;
+}
+void seed_xoshiro256(xoshiro256_state *state, uint64_t x) {
+    uint64_t z = x;
+    for (uint8_t i = 0; i < 4; ++i) {
+        state->s[i] = splitmix64(z);
+        z += 0x9E3779B97F4A7C15;
+    }
+}
+// Xoshiro256++
+static inline uint64_t rotl(const uint64_t x, int k) { return (x << k) | (x >> (64 - k)); }
+uint64_t xoshiro256pp_next(xoshiro256_state *state) {
+    const uint64_t res = rotl(state->s[0] + state->s[3], 23) + state->s[0];
+    const uint64_t t = state->s[1] << 17;
+    state->s[2] ^= state->s[0];
+    state->s[3] ^= state->s[1];
+    state->s[1] ^= state->s[2];
+    state->s[0] ^= state->s[3];
+
+    state->s[2] ^= t;
+    state->s[3] = rotl(state->s[3], 45);
+    return res;
+}

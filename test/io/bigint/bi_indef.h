@@ -18,7 +18,7 @@
 
 
 //* ===================== BUFFER CONTEXT DEFINITION ===================== *//
-typedef struct { dnml_dratch* buf; } io_ctx;
+typedef struct { dnml_dratch* buf; void *stack_buf; } io_ctx;
 
 //* ===================== INPUT STRUCT DEFINITION ===================== *//
 // BITOS Input Structs

@@ -20,6 +20,8 @@ extern "C" {
 #include "../sconfigs/memory/_ctx.h"
 #include "aconv_macros.h"
 
+typedef struct { uint64_t s[4]; } xoshiro256_state;
+
 /* ---------------------- */
 /* str_parse.c */
 /* ---------------------- */

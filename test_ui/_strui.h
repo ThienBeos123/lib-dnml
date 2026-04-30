@@ -53,6 +53,8 @@ typedef struct _libdnml_scase {
 } _libdnml_scase;
 
 //* =========== TYPE-SPEECIFIC UTILITIES =========== *//
+#define BIGINT_CAP = 32
+#define STR_CAP = 256
 #define STR_PREVIEW 64
 #define BIGINT_PREVIEW 4
 

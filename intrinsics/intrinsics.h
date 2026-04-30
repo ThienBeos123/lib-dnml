@@ -1,8 +1,7 @@
 #ifndef __DNML_INTRINSICS_H
 #define __DNML_INTRINSICS_H
 
-// True Neovim Larp starts from here 😝
-// Larping lazyvim is crazyyyyyyyyyi
+
 
 #include <math.h>
 #include <stdint.h>
@@ -16,6 +15,10 @@
 #include "x86_64/_x86_conn.h"
 #include "risc-v64/_rv64_conn.h"
 #include "zvanillc/_vanillc_conn.h"
+
+#if __OS_MACOS__ || __OS_IOS__ || __OS_BSD__
+    #include <sys/random.h>
+#endif
 
 
 #define min(x, y) ( ((x) < (y)) ? (x) : (y) )
@@ -179,7 +182,8 @@ static inline uint64_t __DIV_HELPER_UI64__(
     uint64_t lo, uint64_t hi, uint64_t div, 
     uint64_t *rhat
 ) {
-    if (hi >= div) { if (_DNML_DEBUG_MODE) { 
+    if (hi >= div) { 
+        if (_DNML_DEBUG_MODE) { 
             fputs("Division Error - Can't contain full quotient in 64 bit", stderr);
             abort();
         } else { *rhat = 0; return 0; }
@@ -197,10 +201,6 @@ static inline uint64_t __DIV_HELPER_UI64__(
         return _libdnml_garith_ftable.wdiv128(lo, hi, div, rhat);
     #endif
 }
-
-//* --------------------------------------------------------------------------------------- *//
-//*                                SINGLE-LIMB MODULAR ARITHMETIC                           *//
-//* --------------------------------------------------------------------------------------- *//
 static inline uint64_t __MODINV_UI64__(uint64_t x) { 
     if (!(x & 1)) return 0;
     return _libdnml_gmarith_ftable.modinv64(x);
@@ -238,9 +238,8 @@ static inline uint64_t __MODEXP_UI64__(uint64_t base, uint64_t exp, uint64_t mod
 }
 
 
-
 //* --------------------------------------------------------------------------------------- *//
-//*                                       GENERAL UTILITIES                                 *//
+//*                                GENERAL MATHEMATICAL UTILITIES                           *//
 //* --------------------------------------------------------------------------------------- *//
 static inline uint8_t __SAFE_EXP__(uint64_t base, uint64_t exp) {
     if (exp == 0) return 1;
@@ -292,5 +291,61 @@ static inline uint64_t __PCNT_UI64__(uint64_t x) {
         return _libdnml_fill_gbitops.pcnt64(x);
     #endif
 }
+
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                   GENERAL MEMORY UTILITIES                              *//
+//* --------------------------------------------------------------------------------------- *//
+static inline __MEMWIPE_STD__(void *buf, size_t len) {}
+static inline __MEMWIPE_STRICT__(void *buf, size_t len) {}
+
+
+
+
+//* --------------------------------------------------------------------------------------- *//
+//*                                  CRYPTOGRAPHICAL OPERATIONS                             *//
+//* --------------------------------------------------------------------------------------- *//
+// Cryptographical Helpers
+static inline __GET_ENTROPY_UNBL(void *buf, size_t len) {}
+static inline __CPU_RDSEED_RETRY(void *buf, size_t len) {}
+static inline __jitter_harvest(void);
+// Main Operations
+static inline void __GET_ENTROPY_FAST(void* buf, size_t len) {
+    // 1. Fast Hardware-accelerated Entropy collection
+    if (libdnml_caps.x86_rdrand) // __CPU_RDRAND(buf, len);
+
+    // 2. Non-blocking, OS Fall-back
+    if (!__GET_ENTROPY_UNBL(buf, len)) return;
+
+    // 3. Last Reosrt: Jitter Harvesting
+    uint64_t* ptr = (uint64_t*)buf;
+    for (size_t i = 0; i < (len >> 3); ++i) {
+        ptr[i] = __jitter_harvest() ^ (uintptr_t)&ptr[i];
+    }
+}
+static inline void __GET_ENTROPY_STD(void *buf, size_t len) {
+    #if __OS_LINUX__
+        getrandom(buf, len, 0);
+    #elif __OS_WIN64__
+        BCryptGenRandom(
+            NULL, buf, len,
+            BCRYPT_USE_SYSTE_PREFERRED_RNG
+        );
+    #else
+        getentropy(buf, len);
+    #endif
+}
+static inline void __GET_ENTROPY_PQC(void *buf, size_t len) {
+    uint8_t pool_os[len];
+    uint8_t pool_hw[len];
+
+    __CPU_RDSEED_RETRY(pool_hw, len);
+    __GET_ENTROPY_STD(pool_os, len);
+    for (size_t i = 0; i < len; ++i) {
+        ((uint8_t*)buf)[i] = pool_os[i] ^ pool_hw[i];
+    } __MEMWIPE_STRICT__(pool_os, len);
+    __MEMWIPE_STRICT__(pool_hw, len);
+}
+
 
 #endif
