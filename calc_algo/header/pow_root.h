@@ -8,7 +8,7 @@ extern "C" {
 
 
 
-#include "../../system/__include.h"
+#include <include.h>
 #include "../../system/__compiler.h"
 #include "../../sconfigs/settings/numeric_config.h"
 #include "../../sconfigs/memory/_ctx.h"

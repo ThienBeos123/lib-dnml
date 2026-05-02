@@ -2,14 +2,8 @@
 #define ___LIBDNML_IOTEST_UI
 
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <inttypes.h>
-#include <string.h>
-#include <time.h>
 
+#include <include.h>
 #include "../adynamol/big_numbers/bigNums.h"
 #include "../sconfigs/dnml_status.h"
 #include "../sconfigs/memory/_scratch.h"

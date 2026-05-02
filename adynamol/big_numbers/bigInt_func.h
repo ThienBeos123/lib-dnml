@@ -1,7 +1,8 @@
 #ifndef dnml_bi_func
 #define dnml_bi_func
 
-#include "../../system/__include.h"
+#include <include.h>
+#include <char_tables.h>
 #include "../../sconfigs/settings/settings.h"
 #include "../../sconfigs/memory/arena.h"
 #include "../../sconfigs/dnml_status.h"
@@ -451,7 +452,7 @@ void bigInt_fputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase);
 /* --------- Decimal Buffered OUTPUT ---------  */
 void bigInt_sput(const bigInt x);
 void bigInt_sputb(const bigInt x, uint8_t base);
-void bigInt_sputf(const bigInt x, uint8_t base);
+void bigInt_sputf(const bigInt x, uint8_t base, bool uppercase);
 void bigInt_sfput(FILE *stream, const bigInt x);
 void bigInt_sfputb(FILE *stream, const bigInt x, uint8_t base);
 void bigInt_sfputf(FILE *stream, const bigInt x, uint8_t base, bool uppercase);

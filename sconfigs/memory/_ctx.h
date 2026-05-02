@@ -2,7 +2,7 @@
 #define __DNML_CTX__
 
 #include "../../adynamol/big_numbers/bigNums.h"
-#include "../../system/__include.h"
+#include <include.h>
 #include <stdalign.h>
 
 typedef struct mont_ctx {

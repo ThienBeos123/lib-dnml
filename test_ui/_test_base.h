@@ -1,10 +1,7 @@
 #ifndef ___LIBDNML_TEST_BASE
 #define ___LIBDNML_TEST_BASE
 
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <string.h>
+#include <include.h>
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
 #elif defined(__unix__) || defined(__APPLE__)

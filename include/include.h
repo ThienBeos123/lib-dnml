@@ -1,5 +1,5 @@
-#ifndef ___DNML_INCLUDE_H___
-#define ___DNML_INCLUDE_H___
+#ifndef ___DNMLin_INCLUDE_H___
+#define ___DNMLin_INCLUDE_H___
 
 #include <stdio.h>
 #include <stdint.h>
@@ -17,4 +17,3 @@
 typedef uint64_t max_align_t;
 
 #endif
-

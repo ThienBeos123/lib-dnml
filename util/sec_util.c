@@ -17,7 +17,7 @@ void seed_xoshiro256(xoshiro256_state *state, uint64_t x) {
 }
 // Xoshiro256++
 static inline uint64_t rotl(const uint64_t x, int k) { return (x << k) | (x >> (64 - k)); }
-uint64_t xoshiro256pp_next(xoshiro256_state *state) {
+inline uint64_t xoshiro256pp_next(xoshiro256_state *state) {
     const uint64_t res = rotl(state->s[0] + state->s[3], 23) + state->s[0];
     const uint64_t t = state->s[1] << 17;
     state->s[2] ^= state->s[0];
@@ -28,4 +28,8 @@ uint64_t xoshiro256pp_next(xoshiro256_state *state) {
     state->s[2] ^= t;
     state->s[3] = rotl(state->s[3], 45);
     return res;
+}
+inline float xoshiro256pp_fnext01(xoshiro256_state *state) {
+    uint64_t r = xoshiro256pp_next(state);
+    return (r >> 40) * (1.0f / 16777216.0f);
 }

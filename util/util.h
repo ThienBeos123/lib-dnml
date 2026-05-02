@@ -5,13 +5,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <inttypes.h>
-#include <math.h>
-#include <assert.h>
-
+#include <include.h>
 #include "../../adynamol/big_numbers/bigNums.h"
 #include "../intrinsics/intrinsics.h"
 
@@ -20,7 +14,16 @@ extern "C" {
 #include "../sconfigs/memory/_ctx.h"
 #include "aconv_macros.h"
 
+
+/* ---------------------- */
+/* sec_util.c */
+/* ---------------------- */
 typedef struct { uint64_t s[4]; } xoshiro256_state;
+inline uint64_t splitmix64(uint64_t x);
+void seed_xoshiro256(xoshiro256_state *state, uint64_t x);
+inline uint64_t xoshiro256pp_next(xoshiro256_state *state);
+inline float xoshiro256pp_fnext01(xoshiro256_state *state);
+
 
 /* ---------------------- */
 /* str_parse.c */
