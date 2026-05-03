@@ -5,7 +5,6 @@
 #include "../../../util/util.h"
 #include "../_ioconv.h"
 // Utility Components
-#include "../iobuf.h"
 #include "../_ioconv.h"
 
 // Testing framework
@@ -19,6 +18,10 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
-    DNML_UNFINISHED();
-    return 0;
+    fputs(stderr, 
+        "This test unit is yet to be implemented or finished due to:\n \
+        - The feature in the main-unit that is being tested has yet to be implemented \
+        - Test wrappers for this feature has yet to be implemented \
+        - Testing API has yet to stabilized/formalized for this feature"
+    ); return 0;
 }

@@ -15,7 +15,7 @@ typedef enum { LOW_SUITE, IO_SUITE, BIGSUITE } suite_type;
 typedef struct _libdnml_session {
     const char *session_name;
     uint8_t suite_count;
-    void* suites;
+    void* *suites;
     _dnml_output_mode output_mode;
     uint32_t cli_delay; // in ms
     int box_width;
@@ -35,20 +35,20 @@ typedef struct _libdnml_session {
 #define BOX_WIDTH   80
 //* ============== SUITE BOX FUNCTIONS ============== *//
 static inline void _dnml_box_divider(int bw) {
-    printf(BOX_DIV_L);
-    for (int i = 0; i < bw; i++) printf(BOX_H);
-    printf(BOX_DIV_R "\n");
+    puts(BOX_DIV_L);
+    for (int i = 0; i < bw; i++) puts(BOX_H);
+    puts(BOX_DIV_R "\n");
 }
 static inline void _dnml_box_top(const char* suite_name, int bw) {
     printf(BOX_TL " %s ", suite_name); 
     size_t namelen = strlen(suite_name);
-    for (int i = 0; i < bw - (int)namelen - 2; i++) printf(BOX_H);
-    printf(BOX_TR "\n");
+    for (int i = 0; i < bw - (int)namelen - 2; i++) puts(BOX_H);
+    puts(BOX_TR "\n");
 }
 static inline void _dnml_box_bottom(int bw) {
-    printf(BOX_BL);
-    for (int i = 0; i < bw; i++) printf(BOX_H);
-    printf(BOX_BR "\n");
+    puts(BOX_BL);
+    for (int i = 0; i < bw; i++) puts(BOX_H);
+    puts(BOX_BR "\n");
 }
 static inline void _dnml_box_line(const char *text, int bw) {
     int len = (int)strlen(text);
