@@ -16,10 +16,6 @@
     fputs("TERMINATING SESSION...", stderr); abort(); \
 } while(0)
 
-
-//* ===================== BUFFER CONTEXT DEFINITION ===================== *//
-typedef struct { dnml_dratch* buf; void *stack_buf; } io_ctx;
-
 //* ===================== INPUT STRUCT DEFINITION ===================== *//
 // BITOS Input Structs
 typedef struct { size_t len; const bigInt x; uint8_t base; bool uppercase; } bitos_conv_in;

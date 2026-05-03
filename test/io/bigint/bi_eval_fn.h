@@ -143,10 +143,9 @@ stinl bool stat_bitos_tconv_b(cvoid *vin, dnml_status res_status, str_res *out) 
 }
 // BITOS Conversions Inverses & Evaluators
 stinl void inv_bitos_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
-    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
     if (bigInt_get_strn(&tmp, out->str, out->data.len) == BIGINT_ERR_RANGE) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
@@ -155,10 +154,9 @@ stinl void inv_bitos_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void inv_bitos_conv_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     bitos_conv_in *in = (bitos_conv_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
-    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
     if (bigInt_get_strnb(&tmp, out->str, out->data.len, in->base) == BIGINT_ERR_RANGE) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
@@ -168,7 +166,6 @@ stinl void inv_bitos_conv_b(cvoid *vin, csres *out, void *recon, void *vctx) {
 stinl void eval_bitos_tto_str(cvoid *vin, str_res *exp, void *vctx) {
     // For: tto_str, tto_strn
     const bitos_conv_in *in = (bitos_conv_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, 10);
     exp->status = bigInt_to_strn(exp->str, needed + 1, in->x, &needed);
     exp->data.len = needed; exp->type = STRING;
@@ -176,7 +173,6 @@ stinl void eval_bitos_tto_str(cvoid *vin, str_res *exp, void *vctx) {
 stinl void eval_bitos_tto_strb(cvoid *vin, str_res *exp, void *vctx) {
     // For: tto_strb, tto_strnb
     const bitos_conv_in *in = (bitos_conv_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, in->base);
     exp->status = bigInt_to_strnb(
         exp->str, needed + 1, in->x, 
@@ -186,7 +182,6 @@ stinl void eval_bitos_tto_strb(cvoid *vin, str_res *exp, void *vctx) {
 stinl void eval_bitos_tto_strf(cvoid *vin, str_res *exp, void *vctx) {
     // For: tto_strf
     const bitos_conv_in *in = (bitos_conv_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t needed = __BIGINT_COUNTDB__(&in->x, in->base);
     exp->status = bigInt_to_strf(
         exp->str, needed + 1, 
@@ -196,10 +191,9 @@ stinl void eval_bitos_tto_strf(cvoid *vin, str_res *exp, void *vctx) {
 }
 // BITOS Printing & Raw Output Inverses
 stinl void inv_bitos_fput_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, 10);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
-    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
     if (bigInt_get_strn(&tmp, out->str, out->data.len) == BIGINT_ERR_RANGE) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
@@ -208,10 +202,9 @@ stinl void inv_bitos_fput_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void inv_bitos_fput_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     bitos_print_in *in = (bitos_print_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t bcount = __BITCOUNT___(out->data.len, in->base);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(bcount);
-    limb_t *tmp_limbs = (limb_t*)(dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T));
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = lcnt };
     if (bigInt_get_strnb(&tmp, out->str, out->data.len, in->base) == BIGINT_ERR_RANGE) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
@@ -225,10 +218,9 @@ stinl void eval_bitos_tserialize(cvoid *vin, str_res *exp, void *vctx) { DNML_UN
 //* ========================= STOBI EVALUATION WRAPPERS ======================= *//
 // STOBI Initialization Inverses
 stinl void inv_stobi_init_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
-    // for bigInt_strint & bigInt_strninit
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
-    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    // for bigInt_strint & bigInt_strninit size_t tmp = 0,
+    size_t tmp = 0, len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)vctx;
     if (bigInt_to_strn(idk, len, out->data.bi, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -236,10 +228,9 @@ stinl void inv_stobi_init_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void inv_stobi_init_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for bigInt_strbint & bigInt_strnbinit
-    stobi_init_in *in = (stobi_init_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    stobi_init_in *in = (stobi_init_in*)vin; size_t tmp = 0,
     len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    char* idk = (char*)vctx;
     if (bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -247,10 +238,9 @@ stinl void inv_stobi_init_b(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 // STOBI Conversion Inverses
 stinl void inv_stobi_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
-    // for bigInt_from_str & bigInt_from_strn
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
-    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    // for bigInt_from_str & bigInt_from_strn size_t tmp = 0,
+    size_t tmp = 0, len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)vctx;
     if (bigInt_to_strn(idk, len, out->data.bi, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -258,10 +248,9 @@ stinl void inv_stobi_conv_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void inv_stobi_conv_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for bigInt_from_strb & bigInt_from_strnb
-    stobi_conv_in *in = (stobi_conv_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    stobi_conv_in *in = (stobi_conv_in*)vin; size_t tmp = 0,
     len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    char* idk = (char*)vctx;
     if (bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -271,10 +260,9 @@ stinl void inv_stobi_conv_b(cvoid *vin, csres *out, void *recon, void *vctx) {
 stinl void inv_stobi_assign_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for:
     //  - GROWS: bigInt_get_str & bigInt_get_strn
-    //  - SAFE: bigInt_sget_str & bigInt_sget_strn
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
-    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    //  - SAFE: bigInt_sget_str & bigInt_sget_strn size_t tmp = 0,
+    size_t tmp = 0, len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)vctx;
     if (bigInt_to_strn(idk, len, out->data.bi, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -284,10 +272,9 @@ stinl void inv_stobi_assign_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for:
     //  - GROWS: bigInt_get_strb & bigInt_get_strnb
     //  - SAFE: bigInt_sget_strb & bigInt_sget_strnb
-    stobi_assign_in *in = (stobi_assign_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    stobi_assign_in *in = (stobi_assign_in*)vin; size_t tmp = 0,
     len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    char* idk = (char*)vctx;
     if (bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -295,14 +282,13 @@ stinl void inv_stobi_assign_b(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void eval_stobi_tget_str(cvoid *vin, str_res *exp, void *vctx) {
     // For bigInt_tget_str() & bigInt_tget_strn()
-    const stobi_assign_in *in = (stobi_assign_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx; uint8_t base = 10;
+    const stobi_assign_in *in = (stobi_assign_in*)in; uint8_t base = 10;
     size_t cap_lim = __BIGINT_MAXCDB__(in->bi_size, 10),
     finval_i = _finval_char(in->str, in->len, &base);
     size_t valid_len = min(cap_lim, finval_i);
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(valid_len, base));
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
     exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strn(&exp->data.bi, in->str, valid_len);
@@ -316,13 +302,12 @@ stinl void eval_stobi_tget_strb(cvoid *vin, str_res *exp, void *vctx) {
     // For bigInt_tget_str() & bigInt_tget_strn()
     // For bigInt_tget_str() & bigInt_tget_strn()
     const stobi_assign_in *in = (stobi_assign_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx;
     size_t cap_lim = __BIGINT_MAXCDB__(in->bi_size, in->base),
     finval_i = _finval_charb(in->str, in->len, in->base);
     size_t valid_len = min(cap_lim, finval_i);
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(valid_len, in->base));
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
     exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strnb(&exp->data.bi, in->str, valid_len, in->base);
@@ -334,10 +319,9 @@ stinl void eval_stobi_tget_strb(cvoid *vin, str_res *exp, void *vctx) {
 }
 // STOBI Scanning Inversese & Evaluators
 stinl void inv_stobi_scan_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
-    // for: bigInt_fscan & bigInt_fsscan
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
-    len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    // for: bigInt_fscan & bigInt_fsscan size_t tmp = 0,
+    size_t tmp, len = __BIGINT_COUNTDB__(&out->data.bi, 10);
+    char* idk = (char*)vctx;
     if (bigInt_to_strn(idk, len, out->data.bi, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -345,10 +329,9 @@ stinl void inv_stobi_scan_nob(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void inv_stobi_scan_b(cvoid *vin, csres *out, void *recon, void *vctx) {
     // for: bigInt_fscanb & bigInt_fsscanb
-    stobi_scan_in *in = (stobi_scan_in*)vin;
-    io_ctx *ctx = (io_ctx*)vctx; size_t tmp = 0,
+    stobi_scan_in *in = (stobi_scan_in*)vin; size_t tmp = 0,
     len = __BIGINT_COUNTDB__(&out->data.bi, 10);
-    char* idk = (char*)dratch_alloc(ctx->buf, len);
+    char* idk = (char*)vctx;
     if (bigInt_to_strnb(idk, len, out->data.bi, in->base, &tmp) == STR_INVALID_CAP) {
         fputs("Testing allocation / internal processes gone wrong\nTerminating session...", stderr);
         abort();
@@ -356,27 +339,18 @@ stinl void inv_stobi_scan_b(cvoid *vin, csres *out, void *recon, void *vctx) {
 }
 stinl void eval_stobi_ftscan(cvoid *vin, str_res *exp, void *vctx) {
     // For bigInt_ftscan()
-    const stobi_scan_in *in = (stobi_scan_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx; size_t cap = 4096, len = 0;
-    size_t start_offset = dratch_mark(ctx->buf);
-    char *buf = (char*)dratch_alloc(ctx->buf, cap);
+    const stobi_scan_in *in = (const stobi_scan_in*)in;
+    char buf[STR_CAP] = {0};
     rewind(in->stream);
 
-    while (1) {
-        if (len == cap) { cap *=2;
-            dratch_reset(ctx->buf, start_offset);
-            buf = (char*)dratch_alloc(ctx->buf, cap);
-        } size_t n = fread(
-            buf + len, sizeof(char), 
-            cap - len, in->stream
-        ); len += n; if (!n) break;
-    } uint8_t base = 10;
+    size_t len = fread(buf, sizeof(char), STR_CAP, in->stream);
+    uint8_t base = 10;
     size_t finval_i = _finval_char(buf, len, &base);
     size_t cap_lim = __BIGINT_MAXCDB__(in->bi_size, base);
     size_t valid_len = (finval_i < cap_lim) ? finval_i : cap_lim;
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(len + 10, base));
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
     exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strn(&exp->data.bi, buf, valid_len);
@@ -387,26 +361,16 @@ stinl void eval_stobi_ftscan(cvoid *vin, str_res *exp, void *vctx) {
 stinl void eval_stobi_ftscanb(cvoid *vin, str_res *exp, void *vctx) {
     // For bigInt_ftscanb()
     const stobi_scan_in *in = (stobi_scan_in*)in;
-    io_ctx *ctx = (io_ctx*)vctx; size_t cap = 4096, len = 0;
-    size_t start_offset = dratch_mark(ctx->buf);
-    char *buf = (char*)dratch_alloc(ctx->buf, cap);
+    char buf[STR_CAP] = {0};
     rewind(in->stream);
 
-    while (1) {
-        if (len == cap) { cap *=2;
-            dratch_reset(ctx->buf, start_offset);
-            buf = (char*)dratch_alloc(ctx->buf, cap);
-        } size_t n = fread(
-            buf + len, sizeof(char), 
-            cap - len, in->stream
-        ); len += n; if (!n) break;
-    }
+    size_t len = fread(buf, sizeof(char), STR_CAP, in->stream);
     size_t finval_i = _finval_charb(buf, len, in->base),
     cap_lim = __BIGINT_MAXCDB__(in->bi_size, in->base);
     size_t valid_len = (finval_i < cap_lim) ? finval_i : cap_lim;
 
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(len + 10, in->base));
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     exp->data.bi.limbs = tmp_limbs; exp->data.bi.sign = 1;
     exp->data.bi.n = 0; exp->data.bi.cap = lcnt;
     dnml_status fn_stat = bigInt_get_strnb(&exp->data.bi, buf, valid_len, in->base);

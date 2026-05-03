@@ -126,10 +126,10 @@ static inline void exec_bitos_fput(const void *vin, str_res *out, void *vctx) {
         abort();
     } bigInt_fput(tmp, in->x);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) { size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -142,11 +142,11 @@ static inline void exec_bitos_fputb(const void *vin, str_res *out, void *vctx) {
         abort();
     } bigInt_fputb(tmp, in->x, in->base);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) {
         size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -159,11 +159,11 @@ static inline void exec_bitos_fputf(const void *vin, str_res *out, void *vctx) {
         abort();
     } bigInt_fputf(tmp, in->x, in->base, in->uppercase);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) {
         size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -177,11 +177,11 @@ static inline void exec_bitos_sfput(const void *vin, str_res *out, void *vctx) {
         abort();
     } bigInt_sfput(tmp, in->x);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) {
         size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -194,11 +194,11 @@ static inline void exec_bitos_sfputb(const void *vin, str_res *out, void *vctx) 
         abort();
     } bigInt_sfputb(tmp, in->x, in->base);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) {
         size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -211,11 +211,11 @@ static inline void exec_bitos_sfputf(const void *vin, str_res *out, void *vctx) 
         abort();
     } bigInt_sfputf(tmp, in->x, in->base, in->uppercase);
     fflush(tmp); rewind(tmp);
-    char buf[256]; size_t len = 0;
+    char buf[64]; size_t len = 0;
     while (1) {
         size_t n = fread(
             out->str + len, 
-            sizeof(char), 256, tmp
+            sizeof(char), 64, tmp
         ); len += n;
         if (feof(tmp)) break;
     } out->str[len] = '\0'; out->status = STR_SUCCESS;
@@ -302,11 +302,10 @@ static inline void exec_bitos_info(const void *vin, str_res *out, void *vctx) {
 // Initialization - strinint
 static inline void exec_stobi_strinit(const void *vin, str_res *out, void *vctx) {
     const stobi_init_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     out->status = bigInt_strinit(&tmp, in->str);
 
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -314,11 +313,10 @@ static inline void exec_stobi_strinit(const void *vin, str_res *out, void *vctx)
 }
 static inline void exec_stobi_strbinit(const void *vin, str_res *out, void *vctx) {
     const stobi_init_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     out->status = bigInt_strbinit(&tmp, in->str, in->base);
     
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -326,11 +324,10 @@ static inline void exec_stobi_strbinit(const void *vin, str_res *out, void *vctx
 }
 static inline void exec_stobi_strninit(const void *vin, str_res *out, void *vctx) {
     const stobi_init_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     out->status = bigInt_strninit(&tmp, in->str, in->len);
     
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -338,11 +335,10 @@ static inline void exec_stobi_strninit(const void *vin, str_res *out, void *vctx
 }
 static inline void exec_stobi_strnbinit(const void *vin, str_res *out, void *vctx) {
     const stobi_init_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     out->status = bigInt_strnbinit(&tmp, in->str, in->len, in->base);
     
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -351,11 +347,10 @@ static inline void exec_stobi_strnbinit(const void *vin, str_res *out, void *vct
 // Conversions - from_str
 static inline void exec_stobi_from_str(const void *vin, str_res *out, void *vctx) {
     const stobi_conv_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     tmp = bigInt_from_str(in->str, &out->status);
 
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -363,11 +358,10 @@ static inline void exec_stobi_from_str(const void *vin, str_res *out, void *vctx
 }
 static inline void exec_stobi_from_strb(const void *vin, str_res *out, void *vctx) {
     const stobi_conv_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     tmp = bigInt_from_strb(in->str, in->base, &out->status);
 
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -375,11 +369,10 @@ static inline void exec_stobi_from_strb(const void *vin, str_res *out, void *vct
 }
 static inline void exec_stobi_from_strn(const void *vin, str_res *out, void *vctx) {
     const stobi_conv_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     tmp = bigInt_from_strn(in->str, in->len, &out->status);
 
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -387,11 +380,10 @@ static inline void exec_stobi_from_strn(const void *vin, str_res *out, void *vct
 }
 static inline void exec_stobi_from_strnb(const void *vin, str_res *out, void *vctx) {
     const stobi_conv_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; bigInt tmp;
     tmp = bigInt_from_strnb(in->str, in->len, in->base, &out->status);
 
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, tmp.n * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     memcpy(tmp_limbs, tmp.limbs, tmp.n * BYTES_IN_UINT64_T);
     out->data.bi.limbs = tmp_limbs;     out->data.bi.sign = tmp.sign;
     out->data.bi.n = tmp.n;             out->data.bi.cap = tmp.cap;
@@ -400,68 +392,64 @@ static inline void exec_stobi_from_strnb(const void *vin, str_res *out, void *vc
 // Default Assignments - get_str - GROWS
 static inline void exec_stobi_get_str(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; uint8_t base; dnml_status prestat;
     size_t digit = bigInt_get_size(in->str, strlen(in->str), &base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digit, base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = (lcnt) ? lcnt : 1 };
         if (digit) bigInt_get_strn(&temp, in->str, digit);
         out->data.bi = temp;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_get_str(&temp, in->str); out->data.bi = temp;
     } out->status = prestat;
 }
 static inline void exec_stobi_get_strb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; dnml_status prestat;
     size_t digit = bigInt_get_sizeb(in->str, strlen(in->str), in->base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digit, in->base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = (lcnt) ? lcnt : 1 };
         if (digit) bigInt_get_strnb(&temp, in->str, digit, in->base);
         out->data.bi = temp;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_get_strb(&temp, in->str, in->base); out->data.bi = temp;
     } out->status = prestat;
 }
 static inline void exec_stobi_get_strn(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; uint8_t base; dnml_status prestat;
     size_t digit = bigInt_get_size(in->str, in->len, &base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digit, base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = (lcnt) ? lcnt : 1 };
         if (digit) bigInt_get_strn(&temp, in->str, digit);
         out->data.bi = temp;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_get_strn(&temp, in->str, in->len); out->data.bi = temp;
     } out->status = prestat;
 }
 static inline void exec_stobi_get_strnb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; dnml_status prestat;
     size_t digit = bigInt_get_sizeb(in->str, in->len, in->base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digit, in->base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = (lcnt) ? lcnt : 1 };
         if (digit) bigInt_get_strnb(&temp, in->str, digit, in->base);
         out->data.bi = temp;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_get_strnb(&temp, in->str, in->len, in->base); out->data.bi = temp;
     } out->status = prestat;
@@ -469,127 +457,113 @@ static inline void exec_stobi_get_strnb(const void *vin, str_res *out, void *vct
 // Truncative Assignments - tget_str - TRUNCATE
 static inline void exec_stobi_tget_str(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_tget_str(&tmp, in->str); out->data.bi = tmp;
 }
 static inline void exec_stobi_tget_strb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_tget_strb(&tmp, in->str, in->base); out->data.bi = tmp;
 }
 static inline void exec_stobi_tget_strn(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_tget_strn(&tmp, in->str, in->len); out->data.bi = tmp;
 }
 static inline void exec_stobi_tget_strnb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_tget_strnb(&tmp, in->str, in->len, in->base); out->data.bi = tmp;
 }
 // Safe / Strict Assignments - sget_str - RETURNS AN ERROR
 static inline void exec_stobi_sget_str(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_sget_str(&tmp, in->str); out->data.bi = tmp;
 }
 static inline void exec_stobi_sget_strb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_sget_strb(&tmp, in->str, in->base); out->data.bi = tmp;
 }
 static inline void exec_stobi_sget_strn(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_sget_strn(&tmp, in->str, in->len); out->data.bi = tmp;
 }
 static inline void exec_stobi_sget_strnb(const void *vin, str_res *out, void *vctx) {
     const stobi_assign_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_sget_strnb(&tmp, in->str, in->len, in->base); out->data.bi = tmp;
 }
 // Stream-based Input Scanning - fscan
 static inline void exec_stobi_fscan(const void *vin, str_res *out, void *vctx) {
     const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; uint8_t base = 10; dnml_status prestat;
     size_t digits = bigInt_fscan_size(in->stream, &base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digits, base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, 1 * BYTES_IN_UINT64_T);
+        limb_t *tmp_limbs = (limb_t*)vctx;
         bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = 1};
         tmp.limbs[0] = 0;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_fscan(in->stream, &temp); out->data.bi = temp;
     } out->status = prestat;
 }
 static inline void exec_stobi_fscanb(const void *vin, str_res *out, void *vctx) {
     const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx;
     out->type = BIGINT; dnml_status prestat;
     size_t digits = bigInt_fscanb_size(in->stream, in->base, &prestat);
     size_t lcnt = __BIGINT_LIMBS_NEEDED__(__BITCOUNT___(digits, in->base));
     if (prestat != STR_SUCCESS) {
-        limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, 1 * BYTES_IN_UINT64_T);
+        limb_t *tmp_limbs = (limb_t*)vctx;
         bigInt tmp = { .limbs = tmp_limbs, .n = 0, .sign = 1, .cap = 1};
         tmp.limbs[0] = 0;
     } else {
-        limb_t *tmp_limb = (limb_t*)dratch_alloc(ctx->buf, lcnt * BYTES_IN_UINT64_T);
+        limb_t *tmp_limb = (limb_t*)vctx;
         bigInt temp = { .limbs = tmp_limb, .n = 0, .sign = 1, .cap = lcnt };
         bigInt_fscanb(in->stream, &temp, in->base); out->data.bi = temp;
     } out->status = prestat;
 }
 static inline void exec_stobi_fsscan(const void *vin, str_res *out, void *vctx) {
-    const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    const stobi_scan_in *in = vin; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_fsscan(in->stream, &tmp); out->data.bi = tmp;
 }
 static inline void exec_stobi_fsscanb(const void *vin, str_res *out, void *vctx) {
-    const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    const stobi_scan_in *in = vin; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_fsscanb(in->stream, &tmp, in->base); out->data.bi = tmp;
 }
 static inline void exec_stobi_ftscan(const void *vin, str_res *out, void *vctx) {
-    const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    const stobi_scan_in *in = vin; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_ftscan(in->stream, &tmp); out->data.bi = tmp;
 }
 static inline void exec_stobi_ftscanb(const void *vin, str_res *out, void *vctx) {
-    const stobi_scan_in *in = vin;
-    io_ctx *ctx = (io_ctx*)vctx; out->type = BIGINT;
-    limb_t *tmp_limbs = (limb_t*)dratch_alloc(ctx->buf, in->bi_size * BYTES_IN_UINT64_T);
+    const stobi_scan_in *in = vin; out->type = BIGINT;
+    limb_t *tmp_limbs = (limb_t*)vctx;
     bigInt tmp = { .limbs = tmp_limbs, .n = 0, .cap = in->bi_size, .sign = 1 };
     out->status = bigInt_ftscanb(in->stream, &tmp, in->base); out->data.bi = tmp;
 }
