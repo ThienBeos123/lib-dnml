@@ -133,11 +133,16 @@ static void __prep_junk_pool(uint8_t base, uint8_t drift, xoshiro256_state *stat
 static inline char __get_inval_digit(uint8_t base, uint8_t drift, xoshiro256_state *state) {
     uint8_t dr = (xoshiro256pp_next(state) % drift);
     return (base - 1 + dr >= 64) ?
-        _DIGIT_SEN_[base] + dr : 
-        _DIGIT_SEN_[base + dr];
+        _DIGIT_SEN_[base - 1] + dr : 
+        _DIGIT_SEN_[base - 1 + dr];
 }
 static inline char __get_junk(xoshiro256_state *state) {
-    return (char)junk_candidates[__rng_range(state, 0, junk_pool_size)];
+    return junk_candidates[__rng_range(state, 0, junk_pool_size)];
+}
+static inline char __get_valdigit(uint8_t base, xoshiro256_state *state) {
+    assert(base > 1);
+    uint8_t rand_val = __rng_range(state, 0, base - 1);
+    return _DIGIT_SEN_[rand_val];
 }
 // Component Determinators
 SLV _strgen_rseed_include(str_rand_mod* config) {
@@ -373,7 +378,11 @@ STV _strgen_write_num_(char *buf, size_t len, str_rand_mod* config, size_t *curs
         if (config->inval_digit && config->inval_digit_cnt) {
             inval_roll = (float)(fmodf(__seed_to_float(&config->base_state), 100));
             if (inval_roll < config->init_inval_chance) {
-                buf[*cursor] = '0'; config->inval_digit_cnt--;
+                buf[*cursor] = __get_inval_digit(
+                    config->base, 
+                    config->inval_digit_drift, 
+                    &config->base_state
+                ); config->inval_digit_cnt--;
                 size_t digit_left = (config->str_len - *cursor - 1);
                 config->init_inval_chance = (float)(config->inval_digit_cnt / digit_left);
                 *cursor++; continue;
@@ -383,9 +392,12 @@ STV _strgen_write_num_(char *buf, size_t len, str_rand_mod* config, size_t *curs
         if (config->junk && config->max_junk_cnt) {
             junk_roll = (float)(fmodf(__seed_to_float(&config->base_state), 100));
             if (junk_roll < config->junk_chance) {
-                
+                buf[*cursor] = __get_junk(&config->base_state);
+                config->max_junk_cnt--; *cursor++;
+                continue;
             }
-        }
+        } buf[*cursor] = __get_valdigit(config->base, &config->base_state); 
+        *cursor++;
     }
 }
 // Main Functions
