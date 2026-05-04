@@ -5,6 +5,7 @@
 #include <include.h>
 #include <char_tables.h>
 #include "../../../test_ui/_strui.h"
+#include "../../../test_ui/_test_base.h"
 #include "../../../intrinsics/intrinsics.h"
 #include "../../../util/util.h"
 
@@ -53,10 +54,39 @@ static inline float __seed_to_float(xoshiro256_state *state) {
     return (float)(raw >> 11) * (1.0f / 9007199254740992.0f);
 }
 
-// String Generation - str_casegen.c
-inline void strgen_init_sesh(str_rand_mod *config);
+
+
+
+//* ================================ STRING GENERATION - str_casegen.c ================================ *//
+typedef enum { WHITESPACE, LEADING_ZEROS, SIGNS, BASE_PREFIX } str_areas;
+typedef struct { 
+    float chance; 
+    uint8_t low_qbound; uint8_t high_qbound; // Quantitative Bounds
+    float low_pbound; float high_pbound; // Probability Bounds
+} component_prob_t;
+typedef enum { CLEAN_MODE, STANDARD_MODE, FAULTY_MODE } gen_mode;
+typedef struct {
+    xoshiro256_state base_state;
+    size_t str_len; uint8_t base; // base?
+    // Key components configuration
+    bool whitespace; bool lzeros;
+    bool sign; bool bprefix; bool junk;
+    bool inval_digit; bool early_null;
+    
+    // Numerical amounts configuration
+    uint8_t wscount; uint8_t lzcount;
+    bool mixed_sign; bool mixed_bp; size_t bprefix_cnt;
+    float junk_chance; uint8_t junk_drift; size_t max_junk_cnt; // Max Junk Count may never be reached
+    float init_inval_chance; uint8_t inval_digit_cnt; // Inval Digit Count will always be reached
+    uint8_t inval_digit_drift; float enull_chance;
+
+    // Further Configuration Settings
+    gen_mode mod_gen_mode;
+} str_rand_mod;
+
+inline void strgen_init_sesh(str_rand_mod *config, bool bprefix, xoshiro256_state *add_state);
 inline size_t strgen_len(void);
-void strgen_write(char *buf, size_t len, str_rand_mod* config);
+void strgen_write(char *buf, size_t len, str_rand_mod* config, bool bprefix);
 
 
 

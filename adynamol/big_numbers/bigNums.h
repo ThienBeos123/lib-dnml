@@ -6,8 +6,8 @@ extern "C" {
 #endif
 
 #include <include.h>
+#include <system/sys.h>
 #include "../../sconfigs/settings/settings.h"
-#include "../../system/__compiler.h"
 
 // todo =========================================== TYPE DEFINITION
 // =============================================

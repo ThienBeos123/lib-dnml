@@ -1,19 +1,21 @@
-// Functions to compare
-#include "../../../adynamol/big_numbers/bigInt_func.h"
-// Utilities
-#include "../../../sconfigs/memory/_scratch.h"
-#include "../../../util/util.h"
-#include "../_ioconv.h"
-
-// Testing framework
+// STDLIB & /include Utilities
+#include <include.h>
+#include <system/sys.h>
+// Main Components
 #include "../../../test_ui/_strui.h"
+#include "../case_gen/case_gen.h"
+#include "../_ioconv.h"
+// Function wrappers
 #include "bi_indef.h"
 #include "bi_exec_func.h"
 #include "bi_eval_fn.h"
 #include "bi_util_func.h"
-// STDLIB utilities
-#include <stdint.h>
-#include <stdio.h>
+// Functions to be tested
+#include "../../../adynamol/big_numbers/bigInt_func.h"
+// Miscallenous Utilities
+#include "../../../util/util.h"
+#include "../../../intrinsics/intrinsics.h"
+
 
 limb_t multi_val[7] = {123, 255, 42, 63, 0, 17720, 22875};
 limb_t multi_valb[6] = {
@@ -70,7 +72,7 @@ scase ecases[15] = {
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[4], .n = 0, .cap = 1, .sign = 1 }
         }
-    }, { // 9.      |   "   123"                        ---->   STR_SUCCESS (0)                      /
+    }, { // 9.      |   "   123"                        ---->   STR_SUCCESS (123)                    /
         .in = &(stobi_init_in){ .str = "", .len = 0, .base = 10 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
@@ -238,8 +240,7 @@ scase ecases_rawb[12] = {
 };
 
 
-
-
+// Main Code
 int main(int argc, char **argv) {
     // ----------------- PRE-TEST SETUP ----------------- //
     // Parse terminal args + Setup env constants
@@ -251,7 +252,10 @@ int main(int argc, char **argv) {
     } else init_omode = DNML_VOUT;
 
     // Buffer Setup
-    
+    // Rand-case Memory Usage: ... bytes
+    limb_t ectx[16]; // Edge-case Memory Usage: 128 bytes
+    rctx_t init_rand_ctx = {0};
+    stobi_init_in in; char *recon;
     
     return 0;
 }

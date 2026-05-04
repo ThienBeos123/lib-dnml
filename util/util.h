@@ -6,12 +6,11 @@ extern "C" {
 #endif
 
 #include <include.h>
-#include "../../adynamol/big_numbers/bigNums.h"
-#include "../intrinsics/intrinsics.h"
-
-#include "../system/__compiler.h"
+#include <system/sys.h>
 #include "../sconfigs/settings/numeric_config.h"
 #include "../sconfigs/memory/_ctx.h"
+#include "../intrinsics/intrinsics.h"
+#include "../../adynamol/big_numbers/bigNums.h"
 #include "aconv_macros.h"
 
 
@@ -23,6 +22,7 @@ inline uint64_t splitmix64(uint64_t x);
 void seed_xoshiro256(xoshiro256_state *state, uint64_t x);
 inline uint64_t xoshiro256pp_next(xoshiro256_state *state);
 inline float xoshiro256pp_fnext01(xoshiro256_state *state);
+inline xoshiro256_state mix_xoshiro256(xoshiro256_state *stateA, xoshiro256_state *stateB);
 
 
 /* ---------------------- */

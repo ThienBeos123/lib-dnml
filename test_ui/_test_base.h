@@ -2,6 +2,7 @@
 #define ___LIBDNML_TEST_BASE
 
 #include <include.h>
+#include <system/sys.h>
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
 #elif defined(__unix__) || defined(__APPLE__)
@@ -20,6 +21,13 @@ typedef struct _libdnml_session {
     uint32_t cli_delay; // in ms
     int box_width;
 } _libdnml_session;
+
+#define INPUT_BYTE_CAP  512
+// Type-specific Limitations
+#define BIGINT_CAP 64
+#define STR_CAP 512
+#define STR_PREVIEW 64
+#define BIGINT_PREVIEW 4
 
 
 //* =================== INTERFACE/UI TEXT =================== *//

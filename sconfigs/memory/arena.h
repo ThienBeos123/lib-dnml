@@ -2,7 +2,7 @@
 #define __DNML_ARENA_H__
 
 #include <include.h>
-#include "../../system/__compiler.h"
+#include <system/sys.h>
 #include <stdalign.h>
 
 //* ============= Declarations =============

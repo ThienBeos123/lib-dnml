@@ -1,7 +1,0 @@
-#include "__hwcaps.h"
-
-// THIS FILE MAY NOT BE INCLUDED OR USED
-// BY ANY OTHER FILE IN THE PROJECT LIB-DNML,
-// WITH THE SOLE EXCEPTION BEING __HWCAPS.H itself
-
-_dnml_hwcaps libdnml_caps;

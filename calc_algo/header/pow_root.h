@@ -9,7 +9,7 @@ extern "C" {
 
 
 #include <include.h>
-#include "../../system/__compiler.h"
+#include <system/sys.h>
 #include "../../sconfigs/settings/numeric_config.h"
 #include "../../sconfigs/memory/_ctx.h"
 

@@ -2,6 +2,7 @@
 #define __DNML_SCRATCH__
 
 
+#include <system/sys.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdalign.h>

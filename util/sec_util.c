@@ -33,3 +33,13 @@ inline float xoshiro256pp_fnext01(xoshiro256_state *state) {
     uint64_t r = xoshiro256pp_next(state);
     return (r >> 40) * (1.0f / 16777216.0f);
 }
+inline xoshiro256_state mix_xoshiro256(xoshiro256_state *stateA, xoshiro256_state *stateB) {
+    xoshiro256_state res = {0};
+    for (uint8_t i = 0; i < 4; ++i) {
+        // Example mixing for each word
+        res.s[i] = (
+            (stateA->s[i] * 0x9e3779b97f4a7c15ULL) 
+          ^ (stateB->s[i] * 0xbf58476d1ce4e5b9ULL)
+        ); res.s[i] = rotl(res.s[i], 31) ^ (stateA->s[i] + stateB->s[i]); // further scramble
+    } return res;
+}

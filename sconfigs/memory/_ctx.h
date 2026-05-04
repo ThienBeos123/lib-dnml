@@ -1,6 +1,7 @@
 #ifndef __DNML_CTX__
 #define __DNML_CTX__
 
+#include <system/sys.h>
 #include "../../adynamol/big_numbers/bigNums.h"
 #include <include.h>
 #include <stdalign.h>

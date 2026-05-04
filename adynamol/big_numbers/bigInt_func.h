@@ -3,6 +3,7 @@
 
 #include <include.h>
 #include <char_tables.h>
+#include <system/sys.h>
 #include "../../sconfigs/settings/settings.h"
 #include "../../sconfigs/memory/arena.h"
 #include "../../sconfigs/dnml_status.h"
