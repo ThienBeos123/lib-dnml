@@ -1,11 +1,11 @@
 #include "../../intrinsics/risc-v64/_rv64_conn.h"
 #include "../../intrinsics/zvanillc/_vanillc_conn.h"
 // Utilities
-#include "../../system/__hwcaps.h"
 #include "../../util/util.h"
 #include "../../test_ui/lowui.h"
 #include "low_setup.h"
 // STDLIB utilities
+#include <system/sys.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     _libdnml_session rv64_sesh; create_lsession(
         &rv64_sesh, "Low-level RISC-V 64 bit Intrinsics",
         100, rv64_scount, rv64_slist, rv64_omode
-    ); start_session(&rv64_sesh);
+    ); start_low_session(&rv64_sesh);
 
     return 0;
 }

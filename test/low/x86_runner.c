@@ -1,11 +1,11 @@
 #include "../../intrinsics/x86_64/_x86_conn.h"
 #include "../../intrinsics/zvanillc/_vanillc_conn.h"
 // Utilities
-#include "../../system/__hwcaps.h"
 #include "../../util/util.h"
 #include "../../test_ui/lowui.h"
 #include "low_setup.h"
 // STDLIB utilities
+#include <system/sys.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     _libdnml_session x86_sesh; create_lsession(
         &x86_sesh, "Low-level x86_64 Intrinsics",
         100, x86_scount, x86_slist, x86_omode
-    ); start_session(&x86_sesh);
+    ); start_low_session(&x86_sesh);
 
     return 0;
 }

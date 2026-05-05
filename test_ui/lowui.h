@@ -264,7 +264,7 @@ static inline void _dnml_render_rsuite(_libdnml_lsuite *s, uint8_t suite_num, ui
     putchar('\n');
     fflush(stdout);
 }
-static inline void start_session(const _libdnml_session *session) {
+static inline void start_low_session(const _libdnml_session *session) {
     int bw = session->box_width;
     _libdnml_lsuite *session_suites = (_libdnml_lsuite*)(session->suites);
     //* ---- COMPACT MODE ---- *//

@@ -14,6 +14,7 @@
 #define cvoid const void
 #define csres const str_res
 
+#define suite _libdnml_str_suite
 #define scase _libdnml_scase
 #define result str_res
 #define u64 uint64_t
@@ -33,6 +34,17 @@ stinl void _print_base(FILE* f, u8 base, bool endl) {
         case 16:    fputs("16 - (Hexadecimal)", f); break;
         default:    fprintf(f, "%" PRIu8 "", base); break;
     } if (endl) fputc('\n', f);
+}
+
+stinl void _dist_buf(
+    void* *distbuf, void *full_buf, 
+    size_t parts_per_suite, 
+    u8 suite_num, size_t size_per_part
+) {
+    for (size_t i = 0; i < suite_num; ++i) {
+        size_t increments = i * parts_per_suite * size_per_part;
+        distbuf[i] = full_buf + increments;
+    } return;
 }
 
 

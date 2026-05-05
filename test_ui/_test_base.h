@@ -137,4 +137,29 @@ static inline int _dnml_box_width(void) {
 }
 
 
+//* ========================== _STRUI.H BASE TYPES ========================== *//
+typedef enum res_type { BIGINT, STRING, OP_NONE } operated_types;
+typedef enum rcheck_mode { INVERSE, EVAL, NONE } rcheck_mode;
+typedef struct str_res {
+    /* Notes:
+        Instead of using a union to store
+        the varying return types of I/O operations,
+        we seperate results into entirely different struct fields.
+        This is for:
+            - Using a union won't allow for the definition
+                of an incomplete array, forcing the usage of pointers
+                ----> Complicated testing and storing 
+
+            - Incomplete struct fields allow for the independent
+                storage of the string by the struct header, simplifying
+                string storage instead of relying on external storage
+    */
+    operated_types type;
+    dnml_status status;
+    union { bigInt bi; size_t len; } data;
+    size_t cap;
+    char str[];
+} str_res;
+
+
 #endif

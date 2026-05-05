@@ -6,6 +6,7 @@
 #include "../../test_ui/lowui.h"
 #include "low_setup.h"
 // STDLIB utilities
+#include <system/sys.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -97,6 +98,6 @@ int main(int argc, char **argv) {
     _libdnml_session arm64_sesh; create_lsession(
         &arm64_sesh, "Low-level ARM64 Intrinsics",
         100, arm64_scount, arm64_slist, arm64_omode
-    ); start_session(&arm64_sesh);
+    ); start_low_session(&arm64_sesh);
     return 0;
 }

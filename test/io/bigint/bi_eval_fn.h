@@ -50,7 +50,8 @@
 */
 
 
-/* Note 3 - Allocation:
+/* Note 3 - Allocation: ----- OUTDATED
+! ------ NOTE IS OUTDATED ------ 
 *   1) Most of the evaluation and inverse wrappers in bi_eval_fn.h
 *      utilizes scratch allocation seeded from vctx/ctx.
 *   -----> Entails tester and main testing units, when seeding

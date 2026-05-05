@@ -14,8 +14,7 @@
 
 //* =========== TYPE DEFINITIONS =========== *//
 // Small, supporting types
-typedef enum res_type { BIGINT, STRING, OP_NONE } operated_types;
-typedef enum rcheck_mode { INVERSE, EVAL, NONE } rcheck_mode;
+typedef struct strbump_t { void *ctx; size_t off; size_t size } strbump_t;
 typedef enum rcap_mode { 
     SATISFACTORY, NEAR_SATISFACTORY, 
     UNSATISFACTORY, FAULTY 
@@ -30,6 +29,16 @@ typedef struct _libdnml_scase {
 } _libdnml_scase;
 
 //* =========== TYPE-SPECIFIC UTILITIES =========== *//
+static inline int move_forward(strbump_t *ctx, str_res *out) {
+    assert(out->type); size_t amount;
+    switch (out->type) {
+        case BIGINT: amount = out->data.bi.n; break;
+        case STRING: amount =  out->data.len; break;
+    }
+    if (amount > ctx->size) return 1;
+    if (ctx->off + amount > ctx->size) return 1;
+    ctx += amount; return 0;
+}
 static inline rcap_mode _rand_rcap(xoshiro256_state *state) {
     float roll = fmodf(__seed_to_float(state), 100.0f);
     if (roll < 25.0f) return FAULTY;
@@ -180,7 +189,7 @@ typedef struct _libdnml_str_suite {
     dnml_prop_fn *fn_prop;
 
     // Edge cases storage
-    _libdnml_scase *edge; void *ectx;
+    _libdnml_scase *edge; strbump_t ectx;
     uint8_t ecount; uint8_t ecorrect;
     str_res *fail_eres; str_res *fail_eexp;
 
@@ -195,7 +204,8 @@ typedef struct _libdnml_str_suite {
 static inline void create_str_suite(
     _libdnml_str_suite *curr_suite, const char *name,
     uint8_t ecount, uint16_t rcount, _libdnml_scase *ebank,
-    rcheck_mode mode, str_res *fail_ebuf, const char *log_path
+    rcheck_mode mode, str_res *fail_ebuf, const char *log_path,
+    strbump_t ectx
 ) {
     curr_suite->suite_name = name;
     curr_suite->ecount = ecount;
@@ -203,6 +213,7 @@ static inline void create_str_suite(
     curr_suite->log_path = log_path;
     // Filling in the banks
     curr_suite->edge = ebank;
+    curr_suite->ectx = ectx;
     curr_suite->fail_eres = fail_ebuf;
     curr_suite->fail_eexp = &fail_ebuf[ecount];
     // Assigning random-case failure fail_ebuf
@@ -415,7 +426,8 @@ static inline void _dnml_run_edge(_libdnml_str_suite *s) {
     int enum_i = 0;
     for (uint8_t i = 0; i < s->ecount; ++i) {
         _libdnml_scase *c = &s->edge[i];
-        run_ecase(c, s->fn_test, s->ectx);
+        run_ecase(c, s->fn_test, s->ectx.ctx);
+        assert(!move_forward(&s->ectx, &c->res));
         if (_comp_str_res(&c->res, &c->exp)) s->ecorrect++;
         else { uint8_t findex = (i + 1) - s->ecorrect;
             s->fail_eres[findex] = c->res;
@@ -636,7 +648,7 @@ static inline void _dnml_compact_suite(_libdnml_str_suite *s, uint32_t delay_ms,
 
 
 }
-static inline void start_session(const _libdnml_session *session) {
+static inline void start_str_session(const _libdnml_session *session) {
     int bw = session->box_width;
     _libdnml_str_suite **session_suites = (_libdnml_str_suite**)(session->suites);
     //* ---- COMPACT MODE ---- *//

@@ -3,6 +3,7 @@
 
 
 #include "../../../adynamol/big_numbers/bigNums.h"
+#include "../../../test_ui/_strui.h"
 #include "../../../test_ui/str_ctx.h"
 #include "../../../intrinsics/intrinsics.h"
 #include "../case_gen/case_gen.h"
@@ -198,7 +199,7 @@ void _stobi_scan_ingen_nob(void *in, xoshiro256_state *state, rcap_mode incap, r
     fputs((char*)(rctx->in_buf), vin->stream);
     memset(rctx->in_buf, 0, INPUT_BYTE_CAP); vin->base = config.base;
     vin->bi_size = bisize_to_rcap_dist(config.str_len, config.base, incap, state);
-}
+} 
 void _stobi_scan_ingen_b(void *in, xoshiro256_state *state, rcap_mode incap, rctx_t *rctx) {
     stobi_scan_in *vin = (stobi_scan_in*)in;
     // --- Random Generation

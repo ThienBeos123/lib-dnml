@@ -7,6 +7,7 @@
 #include "../_ioconv.h"
 // Function wrappers
 #include "bi_indef.h"
+#include "bi_setup.h"
 #include "bi_exec_func.h"
 #include "bi_eval_fn.h"
 #include "bi_util_func.h"
@@ -15,6 +16,39 @@
 // Miscallenous Utilities
 #include "../../../util/util.h"
 #include "../../../intrinsics/intrinsics.h"
+
+
+/* Note - STORAGE SETUP: 
+*   +) Further intialization protocols for fail_ebuf parts (str_res)
+*      is not needed in STOBI Function groups, as they utilize ectx_buf
+*      as the storage unit for their bigInt results, and therefore the size
+*      would be accurate for storage since we're using pointer-based storage
+*      instead of header-based FAM storage
+* 
+*   +) However, for BITOS Function groups, it is absolutely necessary 
+*      to declare the failure-handling storage for edge cases to be raw
+*      bytes (uint8_t preferred for cross platform compatibility, but
+*      unsigned char is partly acceptable), initializing with the formula:
+* 
+*           bufsize = ((sizeof(str_res) + MAXIMUM_CAP) * *_ecount << 1) * *_scount
+* 
+*      Where:
+*           - bufsize: The size of the failure-handling buffer that contains both the
+*                      storage of expected output and output
+*           - MAXIMUM_CAP: The upperbound/most memory usage an edge case could've possible used
+*                          for its output. Setting it as INPUT_BYTE_CAP is only acceptable during
+*                          prototypical stages, and must be replaced with the correct, peak memory
+*                          usage that a case can use for its output
+*           - *_ecount: The amount of edge cases for specific operation 
+*                       (replace * with the operation name) 
+*           - *_scount: The amount of suites that is needed to holistically test the entire function
+*                       category (containing all of its variants)
+*     
+*      Afterwards, usage can be either implicitly interpreted as spaces of a str_res struct header,
+*      for _strui.h automatically interprets such inputted buffers for edge case as str_res, or,
+*      preferrably, explicit through type-casting.
+*/
+
 
 
 limb_t multi_val[7] = {123, 255, 42, 63, 0, 17720, 22875};
@@ -33,7 +67,7 @@ limb_t multi_valb[6] = {
     UINT64_C(11976055582626787546),
     UINT64_C(2537941837315),
 };
-scase ecases[15] = {
+scase ecases_bprefix[27] = {
     /* -------------------------------------------------------------------------------------------- */
     // Case Number  |   Input                               |   Expected Ouput                       /
     /* ------------------------------ PREPARSE LEXICAL FAILURE CASE ------------------------------- */ 
@@ -110,63 +144,58 @@ scase ecases[15] = {
         .in = &(stobi_init_in){ .str = "1234_5678", .len = 10, .base = 10 },
         .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
     }, 
-    /* --------------------------------------------------------------------------------------------- */
-};
-scase ecases_bprefix[12] = {
-    /* -------------------------------------------------------------------------------------------- */
-    // Case Number  |   Input                               |   Expected Ouput                       /
     /* ----------------------------------- BASE-SPECIFIC FAILURE ---------------------------------- */
-    { // 1.         |   "0x"                            ---->   STR_INCOMPLETE                       /
+    { // 16.        |   "0x"                            ---->   STR_INCOMPLETE                       /
         .in = &(stobi_init_in){ .str = "0x", .len = 3, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INCOMPLETE, .cap = 0, INVAL_BI() }
-    }, { // 2.      |   "0xFG"                          ---->   STR_INVALID_DIGIT                    /
+    }, { // 17.     |   "0xFG"                          ---->   STR_INVALID_DIGIT                    /
         .in = &(stobi_init_in){ .str = "0xFG", .len = 0, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
-    }, { // 3.      |   "0b102"                         ---->   STR_INVALID_DIGIT                    /
+    }, { // 18.     |   "0b102"                         ---->   STR_INVALID_DIGIT                    /
         .in = &(stobi_init_in){ .str = "0b102", .len = 6, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
-    }, { // 4.      |   "0o89"                          ---->   STR_INVALID_DIGIT                    /
+    }, { // 19.     |   "0o89"                          ---->   STR_INVALID_DIGIT                    /
         .in = &(stobi_init_in){ .str = "0o89", .len = 5, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
-    }, { // 5.      |   "00x123"                        ---->   STR_INVALID_BASE_PREFIX              /
+    }, { // 20.     |   "00x123"                        ---->   STR_INVALID_BASE_PREFIX              /
         .in = &(stobi_init_in){ .str = "00x123", .len = 0, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INVALID_BASE_PREFIX, .cap = 0, INVAL_BI() }
-    }, { // 6.      |   "0{11)1234A"                    ---->   STR_INVALID_BASE_PREFIX              /
+    }, { // 21.     |   "0{11)1234A"                    ---->   STR_INVALID_BASE_PREFIX              /
         .in = &(stobi_init_in){ .str = "0{11)1234A", .len = 11, .base = 0 },
         .exp = { .type = BIGINT, .status = STR_INVALID_BASE_PREFIX, .cap = 0, INVAL_BI() }
     },
     /* ---------------------------------- BASE-SPECIFIC SUCCESSES --------------------------------- */
-    { // 7.         |   "0x0"                           ---->   STR_SUCCESS (0)                      /
+    { // 22.        |   "0x0"                           ---->   STR_SUCCESS (0)                      /
         .in = &(stobi_init_in){ .str = "0x0", .len = 4, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[4], .n = 0, .cap = 1, .sign = 1 }
         }
-    }, { // 8.      |   "0xFF"                          ---->   STR_SUCCESS (255)                    /
+    }, { // 23.     |   "0xFF"                          ---->   STR_SUCCESS (255)                    /
         .in = &(stobi_init_in){ .str = "0xFF", .len = 4, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[1], .n = 1, .cap = 1, .sign = 1 }
         }
-    }, { // 9.      |   "0b101010"                      ---->   STR_SUCCESS (42)                     /
+    }, { // 24.     |   "0b101010"                      ---->   STR_SUCCESS (42)                     /
         .in = &(stobi_init_in){ .str = "0b101010", .len = 9, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[2], .n = 1, .cap = 1, .sign = 1 }
         }
-    }, { // 10.     |   "0o77"                          ---->   STR_SUCCESS (63)                     /
+    }, { // 25.     |   "0o77"                          ---->   STR_SUCCESS (63)                     /
         .in = &(stobi_init_in){ .str = "0o77", .len = 5, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[3], .n = 1, .cap = 1, .sign = 1 }
         }
-    }, { // 11.     |   "0{11}1234A"                    ---->   STR_SUCCESS (17720)                  /
+    }, { // 26.     |   "0{11}1234A"                    ---->   STR_SUCCESS (17720)                  /
         .in = &(stobi_init_in){ .str = "0{11}1234A", .len = 11, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
             .data.bi = { .limbs = &multi_val[5], .n = 1, .cap = 1, .sign = 1 }
         }
-    }, { // 12.     |   "0{7}123456"                    ---->   STR_SUCCESS (22875)                  /
+    }, { // 27.     |   "0{7}123456"                    ---->   STR_SUCCESS (22875)                  /
         .in = &(stobi_init_in){ .str = "0{7}123456", .len = 11, .base = 0 },
         .exp = { 
             .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
@@ -175,7 +204,83 @@ scase ecases_bprefix[12] = {
     }, 
     /* --------------------------------------------------------------------------------------------- */
 };
-scase ecases_rawb[12] = {
+scase ecases_base[27] = {
+    /* -------------------------------------------------------------------------------------------- */
+    // Case Number  |   Input                               |   Expected Ouput                       /
+    /* ------------------------------ PREPARSE LEXICAL FAILURE CASE ------------------------------- */ 
+    { // 1.         |   ""                              ---->   STR_EMPTY                            /
+        .in = &(stobi_init_in){ .str = "", .len = 0, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INCOMPLETE, .cap = 0, INVAL_BI() }
+    }, { // 2.      |   "  "                            ---->   STR_EMPTY                            /
+        .in = &(stobi_init_in){ .str = "", .len = 0, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_EMPTY, .cap = 0, INVAL_BI() }
+    }, { // 3.      |   "+"                             ---->   STR_INCOMPLETE                       /
+        .in = &(stobi_init_in){ .str = "  ", .len = 3, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INCOMPLETE, .cap = 0, INVAL_BI() }
+    }, { // 4.      |   "-"                             ---->   STR_INCOMPLETE                       /
+        .in = &(stobi_init_in){ .str = "+", .len = 2, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INCOMPLETE, .cap = 0, INVAL_BI() }
+    }, { // 5.      |   "-0"                            ---->   STR_INVALID_SIGN                     /
+        .in = &(stobi_init_in){ .str = "-0", .len = 3, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INVALID_SIGN, .cap = 0, INVAL_BI() }
+    },
+    /* --------------------------------- ON-THE-EDGE SUCCESS CASE --------------------------------- */ 
+    { // 6.         |   "+0"                            ---->   STR_SUCCESS (0)                      /
+        .in = &(stobi_init_in){ .str = "+0", .len = 3, .base = 10 },
+        .exp = { 
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
+            .data.bi = { .limbs = &multi_val[4], .n = 0, .cap = 1, .sign = 1 }
+        }
+    }, { // 7.      |   "0"                             ---->   STR_SUCCESS (0)                      /
+        .in = &(stobi_init_in){ .str = "0", .len = 2, .base = 10 },
+        .exp = {
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
+            .data.bi = { .limbs = &multi_val[4], .n = 0, .cap = 1, .sign = 1 }
+        }
+    }, { // 8.      |   "000000"                        ---->   STR_SUCCESS (0)                      /
+        .in = &(stobi_init_in){ .str = "000000", .len = 7, .base = 10 },
+        .exp = {
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
+            .data.bi = { .limbs = &multi_val[4], .n = 0, .cap = 1, .sign = 1 }
+        }
+    }, { // 9.      |   "   123"                        ---->   STR_SUCCESS (123)                    /
+        .in = &(stobi_init_in){ .str = "", .len = 0, .base = 10 },
+        .exp = { 
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0,
+            .data.bi = { .limbs = &multi_val[0], .n = 1, .cap = 1, .sign = 1 }
+        }
+    }, { // 10.     |   "18446744073709551616"          ---->   STR_SUCCESS (18446744073709551616)   /
+        .in = &(stobi_init_in){ .str = "18446744073709551616", .len = 21, .base = 10 },
+        .exp = { 
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0, 
+            .data.bi = { .limbs = big_limbs, .n = 2, .cap = 2, .sign = 1 }
+        }
+    }, { // 11.     |   "999999...999999" (Len 128)     ---->   STR_SUCCESS (10^128 - 1)             /
+        .in = &(stobi_init_in){ .str = " \
+            99999999999999999999999999999999 \
+            99999999999999999999999999999999 \
+            99999999999999999999999999999999 \
+            99999999999999999999999999999999 \
+        ", .len = 129, .base = 10 },
+        .exp = { 
+            .type = BIGINT, .status = STR_SUCCESS, .cap = 0, 
+            .data.bi = { .limbs = &big_limbs[2], .n = 7, .cap = 7, .sign = 1 }
+        }
+    },
+    /* -------------------------- NUMERICAL-SEGMENT DIGIT-BASED FAILURE --------------------------- */
+    { // 12.        |   "1234abcd"                      ---->   STR_INVALID_DIGIT                    /
+        .in = &(stobi_init_in){ .str = "1234abcd", .len = 9, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
+    }, { // 13.     |   "1234    "                      ---->   STR_INVALID_DIGIT                    /
+        .in = &(stobi_init_in){ .str = "1234    ", .len = 9, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
+    }, { // 14.     |   "abcd1234"                      ---->   STR_INVALID_DIGIT                    /
+        .in = &(stobi_init_in){ .str = "abcd1234", .len = 9, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
+    }, { // 15.     |   "1234_5678"                     ---->   STR_INVALID_DIGIT                    /
+        .in = &(stobi_init_in){ .str = "1234_5678", .len = 10, .base = 10 },
+        .exp = { .type = BIGINT, .status = STR_INVALID_DIGIT, .cap = 0, INVAL_BI() }
+    }, 
     /* -------------------------------------------------------------------------------------------- */
     // Case Number  |   Input               |   Base        |   Expected Ouput                       /
     /* ----------------------------------- BASE-SPECIFIC FAILURE ---------------------------------- */
@@ -242,20 +347,85 @@ scase ecases_rawb[12] = {
 
 // Main Code
 int main(int argc, char **argv) {
-    // ----------------- PRE-TEST SETUP ----------------- //
+    //* ---------------------------------- PRE-TEST SETUP ---------------------------------- *//
     // Parse terminal args + Setup env constants
     u8 suite_count = 8;
     u16 rcount = (argc >= 1) ? (u16)(_stou64(argv[1], strlen(argv[1]))) : 100;
     _dnml_output_mode init_omode; if (argc >= 2) {
-        uint8_t sesh_count = _stou64(argv[2], strlen(argv[2]));
+        u8 sesh_count = _stou64(argv[2], strlen(argv[2]));
         init_omode = (sesh_count <= 3) ? DNML_VOUT : DNML_COUT;
     } else init_omode = DNML_VOUT;
-
+    u8 init_ecount = 27, init_scount = 4;
     // Buffer Setup
-    // Rand-case Memory Usage: ... bytes
-    limb_t ectx[16]; // Edge-case Memory Usage: 128 bytes
-    rctx_t init_rand_ctx = {0};
-    stobi_init_in in; char *recon;
-    
+    limb_t ectx_buf[19]; // Edge-case Memory Usage: 128 bytes
+    rctx_t init_rand_ctx = {0}; str_res *ebuf_slices[init_scount];
+    str_res fail_ebuf[(init_ecount << 1) * init_scount];
+    strbump_t init_ectx = { .ctx = ectx_buf, .off = 0, .size = 19 };
+    _dist_buf(ebuf_slices, fail_ebuf, init_ecount << 1, init_scount, sizeof(str_res));
+
+
+    //* ---------------------------------- SUITE SETUP ---------------------------------- *//
+    // strinit() -- Base-prefix, No length param
+    suite strinit_suite = {0};
+    create_str_suite( &strinit_suite, 
+        "strinit - String Intialization", 
+        init_scount, rcount, ecases_bprefix, 
+        INVERSE, ebuf_slices[0], 
+        "../logs/biginit_strinit.txt", init_ectx
+    );
+    fill_suite_rinv(&strinit_suite,
+        &_stobi_init_ingen_nob, &exec_stobi_strinit,
+        &inv_stobi_init_nob, NULL, &cmp_inv_stobi_init,
+        &fmt_in_strinit, &fmt_recon_stobi
+    );
+    // strninit() -- Base-prefix, Length param
+    suite strninit_suite = {0};
+    create_str_suite( &strninit_suite,
+        "strninit - String Intialization",
+        init_scount, rcount, ecases_bprefix, 
+        INVERSE, ebuf_slices[1],
+        "../logs/biginit_strinit.txt", init_ectx
+    );
+    fill_suite_rinv(&strinit_suite,
+        &_stobi_init_ingen_nob, &exec_stobi_strninit,
+        &inv_stobi_init_nob, NULL, &cmp_inv_stobi_init,
+        &fmt_in_strninit, &fmt_recon_stobi
+    );
+    // strbinit() -- Base-param, No length param
+    suite strbinit_suite = {0};
+    create_str_suite( &strbinit_suite,
+        "strbinit - String Intialization",
+        init_scount, rcount, ecases_base, 
+        INVERSE, ebuf_slices[2],
+        "../logs/biginit_strinit.txt", init_ectx
+    );
+    fill_suite_rinv(&strinit_suite,
+        &_stobi_init_ingen_b, &exec_stobi_strbinit,
+        &inv_stobi_init_b, NULL, &cmp_inv_stobi_initb,
+        &fmt_in_strbinit, &fmt_recon_stobi
+    );
+    // strnbinit() -- Base-param, Length param
+    suite strnbinit_suite = {0};
+    create_str_suite( &strnbinit_suite,
+        "strninit - String Intialization",
+        init_scount, rcount, ecases_base, 
+        INVERSE, ebuf_slices[3],
+        "../logs/biginit_strinit.txt", init_ectx
+    );
+    fill_suite_rinv(&strinit_suite,
+        &_stobi_init_ingen_b, &exec_stobi_strnbinit,
+        &inv_stobi_init_b, NULL, &cmp_inv_stobi_initb,
+        &fmt_in_strnbinit, &fmt_recon_stobi
+    );
+
+
+    //* ---------------------------------- SESSION STARTUP ---------------------------------- *//
+    _libdnml_str_suite init_suite_arr[init_scount];
+    init_suite_arr[0] = strinit_suite;  init_suite_arr[1] = strninit_suite;
+    init_suite_arr[2] = strbinit_suite; init_suite_arr[3] = strnbinit_suite;
+    _libdnml_session strinit_sesh = {0}; create_str_session(
+        &strinit_sesh, "I/O - BigInt String Initialization",
+        100, init_scount, init_suite_arr, init_omode
+    ); start_str_session(&strinit_sesh);
     return 0;
 }
