@@ -2,8 +2,7 @@
 #define __DNML_THREADS_T__
 
 
-#include "../system/__arch.h"
-#include "../system/__compiler.h"
+#include <system/sys.h>
 
 //* ------ THREADS INTERFACE DETECTION ------ *//
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_THREADS__)

@@ -113,6 +113,9 @@ size_t __BIGINT_COUNTDB__(const bigInt *x, uint8_t base) {
         }
     } return total_digits;
 }
+size_t __BIGINT_MAXCDB__(size_t lcnt, uint8_t base) {
+    return (size_t)(BITS_IN_UINT64_T * lcnt * (log10(2) / log10(base))) + 1;
+}
 size_t __BIGINT_LIMBS_NEEDED__(size_t bits) { 
     return (size_t)(bits / BIGINT_LIMBS_BITS) + 1; 
 }

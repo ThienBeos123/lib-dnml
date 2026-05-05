@@ -1,7 +1,7 @@
 #ifndef ___DNML_COMPILER_H___
 #define ___DNML_COMPILER_H___
 
-#include "__arch.h"
+#include "__platform.h"
 
 /* Compiler Detection */
 #if defined(__clang__) /* Clang Compiler */
